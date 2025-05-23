@@ -108,6 +108,45 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       });
 
       try {
+        // --- START OF NEW CODE FOR BOOKING CHECK ---
+        // Query for existing bookings of this resource that overlap with the requested time
+        final QuerySnapshot existingBookings = await FirebaseFirestore.instance
+            .collection('bookings')
+            .where('resourceId', isEqualTo: widget.resourceDocument.id)
+            .where('status', isEqualTo: 'approved') // Only consider 'approved' bookings as conflicts
+            .get();
+
+        bool isBooked = false;
+        for (var doc in existingBookings.docs) {
+          final existingStartTime = (doc['startTime'] as Timestamp).toDate();
+          final existingEndTime = (doc['endTime'] as Timestamp).toDate();
+
+          // Check for overlap:
+          
+          if (startDateTime.isBefore(existingEndTime) && endDateTime.isAfter(existingStartTime)) {
+            isBooked = true;
+            break; // Found an overlap, no need to check further
+          }
+        }
+
+        if (isBooked) {
+          showDialog(context: context, builder: (context) {
+            return AlertDialog(
+              title: const Text('Booking Conflict'),
+              content: const Text('Resource is already booked for the selected time slot. Please choose another time.'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          });
+          
+          return; // Stop the booking process
+        }
+        // --- END OF NEW CODE FOR BOOKING CHECK ---
+
         // Fetch user's full name from 'users' collection
         DocumentSnapshot userDoc = await FirebaseFirestore.instance
             .collection('users')
@@ -116,7 +155,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
         String userName = 'N/A';
         if (userDoc.exists) {
-          userName = '${userDoc['first name'] ?? ''} ${userDoc['last name'] ?? ''}'.trim();
+          userName = '${userDoc['first_name'] ?? ''} ${userDoc['last_name'] ?? ''}'.trim();
           if (userName.isEmpty) userName = 'N/A'; // Fallback if name fields are empty
         }
 
@@ -131,12 +170,25 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           'endTime': Timestamp.fromDate(endDateTime),
           'purpose': _purposeController.text.trim(),
           'bookingDate': Timestamp.now(), // When the booking was made
-          'status': 'pending', // You might want to add a status (e.g., pending, approved, rejected)
+          'status': 'approved', // You might want to add a status (e.g., pending, approved, rejected)
         });
 
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Resource booked successfully!')),
+        showDialog(
+          context: context,
+          builder: (context) {
+            return AlertDialog(
+              title: const Text('Booking Successful'),
+              content: const Text('Your resource has been booked successfully!'),
+              actions: [
+                TextButton(
+                  onPressed: () => Navigator.of(context).pop(),
+                  child: const Text('OK'),
+                ),
+              ],
+            );
+          },
         );
+       
         Navigator.pop(context); // Go back after successful booking
       } catch (e) {
         print("Error booking resource: $e");
@@ -249,15 +301,18 @@ class _ResourceDetailsState extends State<ResourceDetails> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               if (photoUrl != null && photoUrl.isNotEmpty)
-                Center(
-                  child: Image.asset(
-                    photoUrl,
-                    height: 200, // Adjusted height for more content space
-                    width: double.infinity,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) {
-                      return const Icon(Icons.broken_image, size: 100);
-                    },
+                ClipRRect(
+                  borderRadius: BorderRadius.circular(10),
+                  child: Center(
+                    child: Image.asset(
+                      photoUrl,
+                      height: 200, // Adjusted height for more content space
+                      width: double.infinity,
+                      fit: BoxFit.cover,
+                      errorBuilder: (context, error, stackTrace) {
+                        return const Icon(Icons.broken_image, size: 100);
+                      },
+                    ),
                   ),
                 ),
               const SizedBox(height: 20),

@@ -147,7 +147,7 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                   padding: const EdgeInsets.all(8.0),
                   child: Material(
                     borderRadius: BorderRadius.circular(20),
-                    color: Colors.grey,
+                    color: const Color.fromARGB(255, 255, 255, 255),
                     child: InkWell( // <--- Added InkWell here
                       onTap: () {
                         // Navigate to the detail screen, passing the entire document
@@ -165,32 +165,52 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                         crossAxisAlignment: CrossAxisAlignment.center,
                         children: [
                           const SizedBox(height: 10),
+
                           // Ensure photoUrl is not null before trying to use Image.asset
                           if (photoUrl != null && photoUrl.isNotEmpty)
-                            Image.asset(
-                              photoUrl,
-                              height: 200, // Adjusted height for better card appearance
-                              width: double.infinity, // Make image take full width
-                              fit: BoxFit.cover,
-                              errorBuilder: (context, error, stackTrace) {
-                                return const Icon(Icons.broken_image, size: 100); // Fallback icon
-                              },
+                            ClipRRect(
+                              borderRadius: BorderRadius.circular(20),
+                              child: Image.asset(
+                                photoUrl,
+                                height: 300, // Adjusted height for better card appearance
+                                width: double.infinity, // Make image take full width
+                                fit: BoxFit.cover,
+                                
+                                errorBuilder: (context, error, stackTrace) {
+                                  return const Icon(Icons.broken_image, size: 100); // Fallback icon
+                                },
+                              ),
                             )
                           else
                             const SizedBox(
                               height: 200,
                               child: Center(child: Text("No Image Available")),
                             ),
-                          ListTile(
-                            title: Text(
-                              document['name'],
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
+                           
+                              Padding(
+                                padding: const EdgeInsets.all(8.0),
+                                child: Text(
+                                    document['name'],
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.green
+                                    ),
+                                  ),
                               ),
-                            ),
-                            subtitle: Text(document['location']),
-                          ),
+                              
+                               Padding(
+                                 padding: const EdgeInsets.all(8.0),
+                                 child: Text(
+                                    document['status'],
+                                    style: const TextStyle(
+                                      fontSize: 20,
+                                      fontWeight: FontWeight.bold,
+                                      color: Colors.blue
+                                    ),
+                                  ),
+                               ),
+                             
                         ],
                       ),
                     ),

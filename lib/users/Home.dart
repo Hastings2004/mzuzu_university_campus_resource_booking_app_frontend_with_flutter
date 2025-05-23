@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/components/AppBar.dart'; // This might not be needed anymore
+import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/read_data/getUserData.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Profile.dart';
@@ -76,7 +76,8 @@ class _HomeState extends State<Home> {
             ListTile(
               title: const Text('Home'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+                // Already on Home, just close the drawer
+                Navigator.pop(context);
               },
             ),
             ListTile(
@@ -108,80 +109,143 @@ class _HomeState extends State<Home> {
               title: const Text('Logout'),
               onTap: () {
                 logout();
-                Navigator.pop(context);
+                // Pop all routes until the first route (usually login/welcome)
+                Navigator.of(context).popUntil((route) => route.isFirst);
               },
             ),
           ],
         ),
       ),
-      body: Center(
+      // Wrap the entire Column in a SingleChildScrollView
+      body: SingleChildScrollView(
         child: Column(
+          crossAxisAlignment: CrossAxisAlignment.center, // Align content to start
           children: [
-            const SizedBox(height: 10),
-            Expanded(
-              child: currentUserDocID == null
-                  ? const CircularProgressIndicator() // Show a loading indicator
-                  : Padding(
-                      padding: const EdgeInsets.all(8.0),
-                      child: Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Card(
-                            child: ListTile(
-                                title: Getuserdata(documentId: currentUserDocID!), // Display only the current user's data
-                                subtitle: const Text("Your Profile Details:"),
-                                trailing: IconButton(
-                                  icon: const Icon(Icons.arrow_forward),
-                                  onPressed: () {
-                                    Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
-                                  },
-                                ),),
-                          ),
-                          //const SizedBox(height: 10),
-                          Padding(
-                              padding: const EdgeInsets.all(5.0),
-                              child: Center(
-                                child: Card(
-                                  child: ListTile(
-                                    title: const Text("Make a Booking"),
-                                    subtitle: const Text("Click here to make a booking"),
-                                    trailing: IconButton(
-                                      icon: const Icon(Icons.arrow_forward),
-                                      onPressed: () {
-                                        Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
-                                      },
-                                    ),
-                                  ),
-                                ),
-                          ),
-                        )
-                        ],
-                      )
-                    ),
-            ),
+           
+            const SizedBox(height: 10), // Spacing below welcome text
 
-            /*const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(
-                child: Card(
-                  child: ListTile(
-                    title: const Text("Make a Booking"),
-                    subtitle: const Text("Click here to make a booking"),
-                    trailing: IconButton(
-                      icon: const Icon(Icons.arrow_forward),
-                      onPressed: () {
-                        Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
-                      },
+            // Display user profile card
+            currentUserDocID == null
+                ? const Center(child: CircularProgressIndicator()) // Show a loading indicator
+                : Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Consistent padding
+                    child: Card(
+                      elevation: 4, // Add some shadow
+                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // Rounded corners
+                      child: ListTile(
+                        contentPadding: const EdgeInsets.all(16.0), // Padding inside ListTile
+                        title: Center(
+                          child: const Text(
+                            "Your Profile",
+                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, ),
+                          ),
+                        ),
+                        subtitle: Column(
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const SizedBox(height: 4),
+                            Getuserdata(documentId: currentUserDocID!), // Display current user's data
+                            const SizedBox(height: 8),
+                            const Text(
+                              "Click here to view/edit your profile details.",
+                              style: TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold),
+                            ),
+                          ],
+                        ),
+                        trailing: IconButton(
+                          icon: const Icon(Icons.arrow_forward_ios, color: Colors.green), // Changed icon for modern look
+                          onPressed: () {
+                            Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                          },
+                        ),
+                      ),
                     ),
+                  ),
+            const SizedBox(height: 10),
+
+            // View a Booking Card (leading to ResourcesScreen for new booking)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16.0),
+                  title: const Text(
+                    "Make a New Booking",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    "Browse available resources and make a reservation.",
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.green),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                    },
                   ),
                 ),
               ),
-            )*/
+            ),
+            const SizedBox(height: 10),
+
+            // View Resources Card (leading to ResourcesScreen)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16.0),
+                  title: const Text(
+                    "View All Resources",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    "See all available resources in the system.",
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.green),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            // View My Bookings Card (leading to BookingScreen)
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16.0),
+                  title: const Text(
+                    "My Current Bookings",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    "Review your upcoming and past reservations.",
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.green),
+                    onPressed: () {
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 20), // Add some space at the bottom
           ],
-        )
+        ),
       ),
     );
-
   }
 }
