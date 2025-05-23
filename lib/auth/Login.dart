@@ -3,7 +3,6 @@ import 'package:resource_booking_app/auth/ForgetPassword.dart';
 import 'package:resource_booking_app/components/Button.dart';
 import 'package:resource_booking_app/components/TextField.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/read_data/MyList.dart';
 import 'package:resource_booking_app/users/Home.dart';
 
 class LoginScreen extends StatefulWidget {
