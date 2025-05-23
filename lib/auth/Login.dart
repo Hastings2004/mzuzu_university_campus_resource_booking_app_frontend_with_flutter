@@ -58,11 +58,11 @@ class __LoginScreenState extends State<LoginScreen> {
           password: _passwordController.text.trim()
       );
 
-      Navigator.pop(context);
-
       Navigator.pushReplacement(
         context,
-        MaterialPageRoute(builder: (context) => Home()), // Replace HomeScreen() with your actual home screen widget
+        MaterialPageRoute(
+            builder: (context) => Home()
+        ), // Replace HomeScreen() with your actual home screen widget
       );
 
       Navigator.pop(context);
@@ -170,7 +170,10 @@ class __LoginScreenState extends State<LoginScreen> {
             mainAxisAlignment: MainAxisAlignment.center,
             crossAxisAlignment: CrossAxisAlignment.center,
             children: [
-              Image.asset("assets/images/logo.png", height: 100),
+              Image.asset(
+                  "assets/images/logo.png",
+                  height: 100
+              ),
               const SizedBox(height: 20),
               const Text(
                 "Resource Booking App",
@@ -207,7 +210,9 @@ class __LoginScreenState extends State<LoginScreen> {
               ),
               const SizedBox(height: 10),
               Padding(
-                padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                padding: const EdgeInsets.symmetric(
+                    horizontal: 25.0
+                ),
                 child: Row(
                   mainAxisAlignment: MainAxisAlignment.end,
                   children: [
@@ -232,7 +237,10 @@ class __LoginScreenState extends State<LoginScreen> {
                 ),
               ),
               const SizedBox(height: 10),
-              MyButton(onTap: loginUser, text: "Login"),
+              MyButton(
+                  onTap: loginUser,
+                  text: "Login"
+              ),
               const SizedBox(height: 10),
               GestureDetector(
                 onTap: widget.showRegisterScreen, // Use showRegisterScreen

@@ -1,7 +1,6 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/components/AppBar.dart';
+import 'package:resource_booking_app/components/AppBar.dart'; // This might not be needed anymore
 import 'package:resource_booking_app/read_data/getUserData.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Profile.dart';
@@ -17,25 +16,26 @@ class Home extends StatefulWidget {
 
 class _HomeState extends State<Home> {
   final user = FirebaseAuth.instance.currentUser!;
- 
+
   void logout(){
     FirebaseAuth.instance.signOut();
   }
 
-  List<String> docIDs = [];
+  // We'll store the current user's document ID here
+  String? currentUserDocID;
 
-  Future getDocIDs() async {
-    final snapshot = await FirebaseFirestore.instance.collection('users').get();
-    for (var doc in snapshot.docs) {
-      docIDs.add(doc.id);
-    }
+  @override
+  void initState() {
+    super.initState();
+    _fetchCurrentUserDocID(); // Fetch the current user's document ID on init
   }
 
-  //@override
-  //void initState() {
-    //getDocIDs();
-   // super.initState();
-  //}
+  Future<void> _fetchCurrentUserDocID() async {
+    // Assuming your user documents in Firestore are named by their UID
+    currentUserDocID = user.uid;
+    setState(() {}); // Rebuild the widget to display the user data
+  }
+
 
   @override
   Widget build(BuildContext context) {
@@ -99,7 +99,7 @@ class _HomeState extends State<Home> {
             ),
 
             ListTile(
-              title: const Text('Setings'),
+              title: const Text('Settings'), // Corrected typo
               onTap: () {
                 Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsScreen()));
               },
@@ -117,43 +117,71 @@ class _HomeState extends State<Home> {
       body: Center(
         child: Column(
           children: [
-            Text(
-              "Welcome ${user.email!}",
-              style: TextStyle(
-                fontSize: 20
-              ),
+            const SizedBox(height: 10),
+            Expanded(
+              child: currentUserDocID == null
+                  ? const CircularProgressIndicator() // Show a loading indicator
+                  : Padding(
+                      padding: const EdgeInsets.all(8.0),
+                      child: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Card(
+                            child: ListTile(
+                                title: Getuserdata(documentId: currentUserDocID!), // Display only the current user's data
+                                subtitle: const Text("Your Profile Details:"),
+                                trailing: IconButton(
+                                  icon: const Icon(Icons.arrow_forward),
+                                  onPressed: () {
+                                    Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                                  },
+                                ),),
+                          ),
+                          //const SizedBox(height: 10),
+                          Padding(
+                              padding: const EdgeInsets.all(5.0),
+                              child: Center(
+                                child: Card(
+                                  child: ListTile(
+                                    title: const Text("Make a Booking"),
+                                    subtitle: const Text("Click here to make a booking"),
+                                    trailing: IconButton(
+                                      icon: const Icon(Icons.arrow_forward),
+                                      onPressed: () {
+                                        Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                                      },
+                                    ),
+                                  ),
+                                ),
+                          ),
+                        )
+                        ],
+                      )
+                    ),
             ),
 
-            Expanded(
-              child: FutureBuilder(
-                future: getDocIDs(), 
-                builder: (context, snapshot){
-                  return ListView.builder(
-                    itemCount: docIDs.length,
-                    itemBuilder: (context, index){
-                      return Padding(
-                        padding: const EdgeInsets.all(8.0),
-                        child: Card(
-                          child: ListTile(
-                            title: Getuserdata(documentId: docIDs[index]),
-                            trailing: IconButton(
-                              icon: Icon(Icons.arrow_forward),
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
-                              },
-                            ),
-                          ),
-                        ),
-                      );
-                    }
-                  );
-                }
-              )
-            )
+            /*const SizedBox(height: 10),
+            Padding(
+              padding: const EdgeInsets.all(8.0),
+              child: Center(
+                child: Card(
+                  child: ListTile(
+                    title: const Text("Make a Booking"),
+                    subtitle: const Text("Click here to make a booking"),
+                    trailing: IconButton(
+                      icon: const Icon(Icons.arrow_forward),
+                      onPressed: () {
+                        Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                      },
+                    ),
+                  ),
+                ),
+              ),
+            )*/
           ],
         )
       ),
     );
- 
+
   }
 }

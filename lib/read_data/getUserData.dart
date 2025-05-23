@@ -29,41 +29,48 @@ class Getuserdata extends StatelessWidget {
         Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
         String? photoUrl = data['photo']; // Assuming your field name is 'photoUrl'
 
-        return Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            if (photoUrl != null && photoUrl.isNotEmpty)
-              Padding(
-                padding: const EdgeInsets.only(bottom: 8.0),
-                child: Center(
-                  child: SizedBox(
-                    width: 500, // Adjust as needed
-                    height: 700, // Adjust as needed
-                    child: ClipRRect(
-                      borderRadius: BorderRadius.circular(10), // Optional: for rounded corners
-                      child: Image.asset(
-                        "assets/"+photoUrl,
-                        fit: BoxFit.cover,
-                        errorBuilder: (context, error, stackTrace) {
-                          return const Center(child: Icon(Icons.person)); // Show a default icon on error
-                        },
+        return SingleChildScrollView(
+          child: Padding(
+            padding: const EdgeInsets.all(8.0),
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.center,
+              children: [
+                ClipOval(
+                  child:  Image.asset("assets/images/chari.jpg",
+                  width: 140, // Adjust as needed
+                  height: 150, // Adjust as needed
+                  fit: BoxFit.cover,
+                  errorBuilder: (context, error, stackTrace) {
+                    return const Center(child: Icon(Icons.person)); // Show a default icon on error
+                  },
+                ),
+                ),
+                Padding(
+                  padding: const EdgeInsets.all(8.0),
+                  child: Center(
+                     child: ListTile(
+                        title: Text(
+                          'Welcome ${data['first_name']} ${data['last_name']}\n',
+                          style: TextStyle(
+                            fontSize: 20, fontWeight: 
+                            FontWeight.bold),
+                        ),
+                        subtitle: Text(
+                          '${data['email']}\n'
+                          '${data['phone_number']}',
+                          style: TextStyle(
+                            fontSize: 16,
+                            color: Colors.black54,
+                          ),
+                        ),
                       ),
                     ),
                   ),
-                )
-              ),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Center(
-                child: Text(
-                  '${data['first_name']} ${data['last_name']}\n'
-                  '${data['email']}\n'
-                  '${data['phone_number']}', style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
-                ),
-              ),
-            )
-        ]
-      );
+                
+              ]
+            ),
+          ),
+        );
       },
       
     );
