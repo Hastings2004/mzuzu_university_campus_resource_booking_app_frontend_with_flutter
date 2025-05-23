@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "510279142709",
+    "project_id": "resource-booking-app",
+    "storage_bucket": "resource-booking-app.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:510279142709:android:1c55ec7ef54b56a1bd907c",
+        "android_client_info": {
+          "package_name": "com.example.resource_booking_app"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBI-D2UWI6ZdWsoPpStG9EDv2S5J9a7Or0"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
