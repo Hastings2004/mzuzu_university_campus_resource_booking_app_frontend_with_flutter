@@ -3,53 +3,72 @@ import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 
 class MyAppBar extends StatelessWidget implements PreferredSizeWidget {
+  // Change title to be a Widget instead of just a String
+  final Widget titleWidget;
+  final PreferredSizeWidget? bottomWidget; // Optional bottom widget for search bar
+  final VoidCallback? onSearchPressed; // Callback for search icon press
+  final bool isSearching; // To change the icon (search/close)
 
-  final String title;
-  const MyAppBar({super.key, required this.title});
+  const MyAppBar({
+    super.key,
+    required this.titleWidget,
+    this.bottomWidget,
+    this.onSearchPressed,
+    this.isSearching = false, // Default to not searching
+  });
 
   @override
-  Size get preferredSize => const Size.fromHeight(60);
+  Size get preferredSize => Size.fromHeight(bottomWidget == null ? 60 : 60 + bottomWidget!.preferredSize.height);
 
   @override
   Widget build(BuildContext context) {
     return AppBar(
       backgroundColor: const Color.fromARGB(255, 20, 148, 24),
       centerTitle: true,
-      title: Text(
-        title,
-        style: const TextStyle(
-          fontSize: 20,
-          fontWeight: FontWeight.bold,
-          color: Colors.white,
-        ),
-      ),
+      title: titleWidget, // Use the provided widget for the title
       leading: IconButton(
         onPressed: () {
           Scaffold.of(context).openDrawer();
-        }, 
-        icon: const Icon(Icons.menu, color: Colors.white,),
-    ), 
-    actions: <Widget>[
-      IconButton(
-        icon: const Icon(Icons.notifications,color: Colors.white),
-        onPressed: () {
-          // Handle notification button press
-          Navigator.push(context, MaterialPageRoute(
-            builder: (context) => NotificationScreen(),
-          ));
         },
+        icon: const Icon(
+          Icons.menu,
+          color: Colors.white,
+        ),
       ),
-      IconButton(
-        icon: const Icon(Icons.settings, color: Colors.white),
-        onPressed: () {
-          // Handle settings button press
-          Navigator.push(context, MaterialPageRoute(
-            builder: (context) =>  SettingsScreen(),
-          ));
-        },
-      ),
-      
-    ],
+      actions: <Widget>[
+        // Search Icon
+        if (onSearchPressed != null) // Only show if a callback is provided
+          IconButton(
+            icon: Icon(
+              isSearching ? Icons.close : Icons.search,
+              color: Colors.white,
+            ),
+            onPressed: onSearchPressed,
+          ),
+        IconButton(
+          icon: const Icon(Icons.notifications, color: Colors.white),
+          onPressed: () {
+            // Handle notification button press
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => NotificationScreen(),
+                ));
+          },
+        ),
+        IconButton(
+          icon: const Icon(Icons.settings, color: Colors.white),
+          onPressed: () {
+            // Handle settings button press
+            Navigator.push(
+                context,
+                MaterialPageRoute(
+                  builder: (context) => SettingsScreen(),
+                ));
+          },
+        ),
+      ],
+      bottom: bottomWidget, // Use the provided widget for the bottom
     );
   }
 }

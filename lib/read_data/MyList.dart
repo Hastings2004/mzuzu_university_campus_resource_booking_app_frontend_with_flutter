@@ -28,8 +28,15 @@ class _MylistState extends State<Mylist> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MyAppBar(
-        title: "Resources",
+      appBar: MyAppBar(
+        titleWidget: const Text(
+          "Resources",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
       drawer: Drawer(
         child: ListView(

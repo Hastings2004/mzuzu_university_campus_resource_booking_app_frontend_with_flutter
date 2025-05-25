@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/components/AppBar.dart';
+import 'package:resource_booking_app/components/AppBar.dart'; // Your updated custom AppBar
 import 'package:resource_booking_app/read_data/getUserData.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
+import 'package:resource_booking_app/users/Resourse.dart'; // Ensure this is `ResourcesScreen`
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/users/EditProfile.dart'; // Import the new EditProfileScreen
 
@@ -30,37 +30,47 @@ class _ProfileScreenState extends State<ProfileScreen> {
     setState(() {});
   }
 
-  void logout(){
+  void logout() {
     FirebaseAuth.instance.signOut();
   }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MyAppBar(title: "Profile",),
+      appBar: MyAppBar(
+        titleWidget: const Text( // Now requires a Widget
+          "Profile",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        // No onSearchPressed and isSearching for the Profile screen's AppBar
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
-              decoration: BoxDecoration(
+              decoration: const BoxDecoration( // Added const for BoxDecoration
                 color: Color.fromARGB(255, 20, 148, 24),
               ),
               child: Column(
                 children: [
                   Image.asset(
                     "assets/images/logo.png",
-                    height: 50
+                    height: 50,
                   ),
-                  Text(
+                  const Text( // Added const for Text
                     'Mzuzu University',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
-                  Text(
+                  const Text( // Added const for Text
                     'Campus Resource Booking',
                     style: TextStyle(
                       color: Colors.white,
@@ -73,38 +83,43 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ListTile(
               title: const Text('Home'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+                Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => Home()));
               },
             ),
             ListTile(
               title: const Text('Profile'),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Already on Profile, just close the drawer
               },
             ),
             ListTile(
               title: const Text('Resources'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ResourcesScreen()));
               },
             ),
             ListTile(
               title: const Text('Booking'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => BookingScreen()));
               },
             ),
             ListTile(
               title: const Text('Settings'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => SettingsScreen()));
               },
             ),
             ListTile(
               title: const Text('Logout'),
               onTap: () {
                 logout();
-                Navigator.pop(context);
+                // Pop all routes until the first route (usually login/welcome)
+                Navigator.of(context).popUntil((route) => route.isFirst);
               },
             ),
           ],
@@ -115,8 +130,8 @@ class _ProfileScreenState extends State<ProfileScreen> {
             ? const CircularProgressIndicator()
             : Column(
                 children: [
-                  Padding(
-                    padding: const EdgeInsets.all(16.0),
+                  const Padding( // Added const for Padding
+                    padding: EdgeInsets.all(16.0),
                     child: Text(
                       "Your Profile Details:",
                       style: TextStyle(
@@ -163,8 +178,9 @@ class _ProfileScreenState extends State<ProfileScreen> {
                         });
                       },
                       style: ElevatedButton.styleFrom(
-                        backgroundColor: Color.fromARGB(255, 20, 148, 24), // Green color
-                        padding: EdgeInsets.symmetric(horizontal: 40, vertical: 15),
+                        backgroundColor:
+                            const Color.fromARGB(255, 20, 148, 24), // Green color
+                        padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
                         shape: RoundedRectangleBorder(
                           borderRadius: BorderRadius.circular(10),
                         ),

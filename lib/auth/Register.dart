@@ -1,3 +1,5 @@
+// ignore_for_file: use_build_context_synchronously
+
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/components/Button.dart';
@@ -19,7 +21,7 @@ class _RegisterState extends State<Register> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final phoneNumberController = TextEditingController();
-  final regNumberController = TextEditingController();
+  //final regNumberController = TextEditingController();
   @override
   void dispose() {
     emailController.dispose();
@@ -28,7 +30,7 @@ class _RegisterState extends State<Register> {
     firstNameController.dispose();
     lastNameController.dispose();
     phoneNumberController.dispose();
-    regNumberController.dispose();
+    //regNumberController.dispose();
     super.dispose();
   }
 
@@ -40,7 +42,7 @@ class _RegisterState extends State<Register> {
       await FirebaseFirestore.instance.collection("users").doc(uid).set({
         "first_name": firstNameController.text.trim(),
         "last_name": lastNameController.text.trim(),
-        "reg_number": regNumberController.text.trim(),
+        //"reg_number": regNumberController.text.trim(),
         "phone_number": phoneNumberController.text.trim(),
         "email": emailController.text.trim(),
       });
@@ -53,8 +55,8 @@ class _RegisterState extends State<Register> {
         confirmPasswordController.text.isEmpty ||
         firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
-        phoneNumberController.text.isEmpty ||
-        regNumberController.text.isEmpty
+        phoneNumberController.text.isEmpty 
+       // regNumberController.text.isEmpty
     ){
       showDialog(
           context: context,
@@ -93,10 +95,10 @@ class _RegisterState extends State<Register> {
             email: emailController.text.trim(),
             password: passwordController.text.trim()
         );
-        // ignore: use_build_context_synchronously
-
+        
         // Add user details to the database
         addUserDetails();
+        
         Navigator.pop(context);
       } on FirebaseAuthException catch (e) {
 
@@ -255,14 +257,14 @@ class _RegisterState extends State<Register> {
                     prefixIcon: const Icon(Icons.person_outline),
                   ),
                   const SizedBox(height: 10),
-                  MyTextField(
+                  /*MyTextField(
                     controller: regNumberController,
                     obscureText: false,
                     hintText: "Registration number",
                     keyboardType: TextInputType.text, // Or TextInputType.number if it's purely numeric
                     prefixIcon: const Icon(Icons.badge),
                   ),
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 10),*/
                   MyTextField(
                     controller: phoneNumberController,
                     obscureText: false,

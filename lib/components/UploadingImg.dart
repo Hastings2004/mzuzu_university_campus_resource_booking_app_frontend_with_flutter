@@ -136,8 +136,15 @@ class _ImageUploaderState extends State<ImageUploader> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: const MyAppBar(
-        title: "Nofications",
+      appBar: MyAppBar(
+        titleWidget: const Text(
+          "Upload Image",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
       drawer: Drawer(
         child: ListView(

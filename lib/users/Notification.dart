@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/components/AppBar.dart';
+import 'package:resource_booking_app/components/AppBar.dart'; // Your updated custom AppBar
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
+import 'package:resource_booking_app/users/Resourse.dart'; // Assuming this is ResourcesScreen
 import 'package:resource_booking_app/users/Settings.dart';
 
 class NotificationScreen extends StatelessWidget {
@@ -12,13 +12,24 @@ class NotificationScreen extends StatelessWidget {
 
   final user = FirebaseAuth.instance.currentUser!;
 
-  void logout(){
+  void logout() {
     FirebaseAuth.instance.signOut();
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:const MyAppBar(title: "Nofications",),
+      appBar: MyAppBar(
+        titleWidget: const Text( // Now requires a Widget for the title
+          "Notifications", // Corrected spelling for clarity
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        // No onSearchPressed and isSearching for the Notification screen's AppBar
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -31,14 +42,14 @@ class NotificationScreen extends StatelessWidget {
                 children: [
                   Image.asset(
                     "assets/images/logo.png",
-                    height: 50
+                    height: 50,
                   ),
                   const Text(
                     'Mzuzu University',
                     style: TextStyle(
                       color: Colors.white,
                       fontSize: 24,
-                      fontWeight: FontWeight.bold
+                      fontWeight: FontWeight.bold,
                     ),
                   ),
                   const Text(
@@ -54,32 +65,36 @@ class NotificationScreen extends StatelessWidget {
             ListTile(
               title: const Text('Home'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => Home()));
+                Navigator.push(
+                    context, MaterialPageRoute(builder: (context) => Home()));
               },
             ),
             ListTile(
               title: const Text('Profile'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ProfileScreen()));
               },
             ),
             ListTile(
               title: const Text('Resources'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => ResourcesScreen()));
               },
             ),
             ListTile(
               title: const Text('Booking'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => BookingScreen()));
               },
             ),
-
             ListTile(
-              title: const Text('Setings'),
+              title: const Text('Settings'), // Corrected spelling for consistency
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsScreen()));
+                Navigator.push(context,
+                    MaterialPageRoute(builder: (context) => SettingsScreen()));
               },
             ),
             ListTile(
@@ -95,12 +110,9 @@ class NotificationScreen extends StatelessWidget {
       body: Center(
         child: Text(
           "Notification page of ${user.email!}",
-           style: TextStyle(
-            fontSize: 20
-          ),
+          style: const TextStyle(fontSize: 20), // Added const
         ),
       ),
     );
- 
   }
 }

@@ -24,7 +24,14 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
     return Scaffold(
       appBar: MyAppBar(
-        title: name, // Display the resource name in the app bar
+        titleWidget: Text(
+          name, // Use the resource name as the title
+          style: const TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
       ),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),

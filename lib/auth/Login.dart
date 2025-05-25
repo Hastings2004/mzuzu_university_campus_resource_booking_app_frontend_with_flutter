@@ -52,6 +52,7 @@ class __LoginScreenState extends State<LoginScreen> {
             );
           }
       );
+      Navigator.pop(context);
 
       await FirebaseAuth.instance.signInWithEmailAndPassword(
           email: _emailController.text.trim(),
@@ -65,7 +66,7 @@ class __LoginScreenState extends State<LoginScreen> {
         ), // Replace HomeScreen() with your actual home screen widget
       );
 
-      Navigator.pop(context);
+
 
     } on FirebaseAuthException catch (e) {
       Navigator.pop(context);

@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/components/AppBar.dart';
+import 'package:resource_booking_app/components/AppBar.dart'; // Your updated custom AppBar
 import 'package:resource_booking_app/read_data/getUserData.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
+import 'package:resource_booking_app/users/Resourse.dart'; // Corrected spelling for ResourcesScreen
 import 'package:resource_booking_app/users/Settings.dart';
 
 class Home extends StatefulWidget {
@@ -17,7 +17,7 @@ class Home extends StatefulWidget {
 class _HomeState extends State<Home> {
   final user = FirebaseAuth.instance.currentUser!;
 
-  void logout(){
+  void logout() {
     FirebaseAuth.instance.signOut();
   }
 
@@ -36,39 +36,42 @@ class _HomeState extends State<Home> {
     setState(() {}); // Rebuild the widget to display the user data
   }
 
-
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar:const MyAppBar(title: "Home",),
+      appBar: MyAppBar(
+        titleWidget: const Text( // Use titleWidget as your AppBar now expects a Widget
+          "Home",
+          style: TextStyle(
+            fontSize: 20,
+            fontWeight: FontWeight.bold,
+            color: Colors.white,
+          ),
+        ),
+        // No onSearchPressed and isSearching for the Home screen's AppBar
+        // This ensures the search icon does not appear on the Home screen.
+      ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-             DrawerHeader(
-              decoration: BoxDecoration(
+            DrawerHeader(
+              decoration: const BoxDecoration(
                 color: Color.fromARGB(255, 20, 148, 24),
               ),
               child: Column(
                 children: [
-                  Image.asset(
-                    "assets/images/logo.png",
-                    height: 50
-                  ),
-                  Text(
+                  Image.asset("assets/images/logo.png", height: 50),
+                  const Text(
                     'Mzuzu University',
                     style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold
-                    ),
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold),
                   ),
-                  Text(
+                  const Text(
                     'Campus Resource Booking',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                 ],
               ),
@@ -83,26 +86,37 @@ class _HomeState extends State<Home> {
             ListTile(
               title: const Text('Profile'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                );
               },
             ),
             ListTile(
               title: const Text('Resources'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => ResourcesScreen()),
+                );
               },
             ),
             ListTile(
               title: const Text('Booking'),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => BookingScreen()),
+                );
               },
             ),
-
             ListTile(
               title: const Text('Settings'), // Corrected typo
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context) => SettingsScreen()));
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsScreen()),
+                );
               },
             ),
             ListTile(
@@ -119,43 +133,68 @@ class _HomeState extends State<Home> {
       // Wrap the entire Column in a SingleChildScrollView
       body: SingleChildScrollView(
         child: Column(
-          crossAxisAlignment: CrossAxisAlignment.center, // Align content to start
+          crossAxisAlignment:
+              CrossAxisAlignment.center, // Align content to start
           children: [
-           
             const SizedBox(height: 10), // Spacing below welcome text
-
             // Display user profile card
             currentUserDocID == null
-                ? const Center(child: CircularProgressIndicator()) // Show a loading indicator
+                ? const Center(
+                    child: CircularProgressIndicator(),
+                  ) // Show a loading indicator
                 : Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0), // Consistent padding
+                    padding: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ), // Consistent padding
                     child: Card(
                       elevation: 4, // Add some shadow
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)), // Rounded corners
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ), // Rounded corners
                       child: ListTile(
-                        contentPadding: const EdgeInsets.all(16.0), // Padding inside ListTile
-                        title: Center(
-                          child: const Text(
+                        contentPadding: const EdgeInsets.all(
+                          16.0,
+                        ), // Padding inside ListTile
+                        title: const Center(
+                          child: Text(
                             "Your Profile",
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.w600, ),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.w600,
+                            ),
                           ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
                             const SizedBox(height: 4),
-                            Getuserdata(documentId: currentUserDocID!), // Display current user's data
+                            Getuserdata(
+                              documentId: currentUserDocID!,
+                            ), // Display current user's data
                             const SizedBox(height: 8),
                             const Text(
                               "Click here to view/edit your profile details.",
-                              style: TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                fontSize: 12,
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ],
                         ),
                         trailing: IconButton(
-                          icon: const Icon(Icons.arrow_forward_ios, color: Colors.green), // Changed icon for modern look
+                          icon: const Icon(
+                            Icons.arrow_forward_ios,
+                            color: Colors.green,
+                          ), // Changed icon for modern look
                           onPressed: () {
-                            Navigator.push(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) => ProfileScreen(),
+                              ),
+                            );
                           },
                         ),
                       ),
@@ -163,12 +202,17 @@ class _HomeState extends State<Home> {
                   ),
             const SizedBox(height: 10),
 
-            // View a Booking Card (leading to ResourcesScreen for new booking)
+            // Make a New Booking Card (leading to ResourcesScreen for new booking)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Card(
                 elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16.0),
                   title: const Text(
@@ -180,49 +224,34 @@ class _HomeState extends State<Home> {
                     style: TextStyle(fontSize: 14, color: Colors.black87),
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.green),
+                    icon: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.green,
+                    ),
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ResourcesScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),
               ),
             ),
             const SizedBox(height: 10),
-
-            // View Resources Card (leading to ResourcesScreen)
+// View My Bookings Card (leading to BookingScreen)
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16.0),
-                  title: const Text(
-                    "View All Resources",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: const Text(
-                    "See all available resources in the system.",
-                    style: TextStyle(fontSize: 14, color: Colors.black87),
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.green),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
-                    },
-                  ),
-                ),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
               ),
-            ),
-            const SizedBox(height: 10),
-
-            // View My Bookings Card (leading to BookingScreen)
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
               child: Card(
                 elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16.0),
                   title: const Text(
@@ -234,14 +263,63 @@ class _HomeState extends State<Home> {
                     style: TextStyle(fontSize: 14, color: Colors.black87),
                   ),
                   trailing: IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.green),
+                    icon: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.green,
+                    ),
                     onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => BookingScreen(),
+                        ),
+                      );
                     },
                   ),
                 ),
               ),
             ),
+            // View All Resources Card (leading to ResourcesScreen)
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: ListTile(
+                  contentPadding: const EdgeInsets.all(16.0),
+                  title: const Text(
+                    "View All Resources",
+                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                  ),
+                  subtitle: const Text(
+                    "See all available resources in the system.",
+                    style: TextStyle(fontSize: 14, color: Colors.black87),
+                  ),
+                  trailing: IconButton(
+                    icon: const Icon(
+                      Icons.arrow_forward_ios,
+                      color: Colors.green,
+                    ),
+                    onPressed: () {
+                      Navigator.push(
+                        context,
+                        MaterialPageRoute(
+                          builder: (context) => ResourcesScreen(),
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ),
+            ),
+            const SizedBox(height: 10),
+
+            
             const SizedBox(height: 20), // Add some space at the bottom
           ],
         ),

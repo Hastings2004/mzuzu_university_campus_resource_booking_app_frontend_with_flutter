@@ -36,7 +36,7 @@ class Getuserdata extends StatelessWidget {
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
                 ClipOval(
-                  child:  Image.asset("assets/images/charity.jpg",
+                  child:  Image.asset("assets/images/ju.jpg",
                   width: 140, // Adjust as needed
                   height: 150, // Adjust as needed
                   fit: BoxFit.cover,
@@ -45,9 +45,16 @@ class Getuserdata extends StatelessWidget {
                   },
                 ),
                 ),
-                
                 Text(
-                    'Welcome ${data['first_name']} ${data['last_name']}',
+                    'Welcome',
+                    style: TextStyle(
+                      fontSize: 25, fontWeight:
+                    FontWeight.bold,
+                      color: Colors.black,
+                    )
+                ),
+                Text(
+                    '${data['first_name']} ${data['last_name']}',
                     style: TextStyle(
                       fontSize: 25, fontWeight: 
                         FontWeight.bold,
@@ -57,7 +64,7 @@ class Getuserdata extends StatelessWidget {
                 Text(
                     '${data['email']}',
                       style: TextStyle(
-                        fontSize: 20,
+                        fontSize: 18,
                         color: Colors.grey,
                     ),
                 ),
