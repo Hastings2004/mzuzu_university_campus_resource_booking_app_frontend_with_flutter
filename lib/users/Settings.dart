@@ -390,7 +390,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     'Campus Resource Booking',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 15,
                     ),
                   ),
                 ],
@@ -455,7 +455,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
-              "Logged in as: ${user.email!}",
+              "Logged in as: \n ${user.email!}",
               style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
             ),
             const SizedBox(height: 20),
@@ -627,7 +627,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               title: const Text("About App"),
               onTap: () {
                 _showInfoDialog(
-                    "About Resource Booking App", "Version: 1.0.0\nDeveloped by Mzuzu University ICT Students.\nThis app allows users to book resources on campus easily and efficiently.");
+                    "About Resource Booking App", "Version: 1.0.0\nDeveloped by Hastings.\nThis app allows users to book resources on campus easily and efficiently.");
               },
             ),
           ],

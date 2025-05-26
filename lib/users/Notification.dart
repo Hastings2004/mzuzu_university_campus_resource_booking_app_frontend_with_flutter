@@ -138,7 +138,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     'Campus Resource Booking',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 15,
                     ),
                   ),
                 ],

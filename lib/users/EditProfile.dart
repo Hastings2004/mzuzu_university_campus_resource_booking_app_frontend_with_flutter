@@ -195,7 +195,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                     'Campus Resource Booking',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 15,
                     ),
                   ),
                 ],

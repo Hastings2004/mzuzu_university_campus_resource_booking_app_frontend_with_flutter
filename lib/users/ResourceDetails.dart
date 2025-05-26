@@ -317,7 +317,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
                     'Campus Resource Booking',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 20,
+                      fontSize: 15,
                     ),
                   ),
                 ],

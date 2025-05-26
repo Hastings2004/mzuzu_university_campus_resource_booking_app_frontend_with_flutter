@@ -127,7 +127,7 @@ class _HomeState extends State<Home> {
                   ),
                   Text(
                     'Campus Resource Booking',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
+                    style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
                 ],
               ),
@@ -241,33 +241,45 @@ class _HomeState extends State<Home> {
                 shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                 child: ListTile(
                   contentPadding: const EdgeInsets.all(16.0),
-                  leading: const Icon(Icons.person_pin, size: 40, color: Colors.green),
-                  title: const Text(
-                    "Your Profile",
-                    style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                  ),
-                  subtitle: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      const SizedBox(height: 4),
-                      // Display user's email directly or use Getuserdata for a brief summary
-                      Text(
-                        user.email ?? 'No Email',
-                        style: const TextStyle(fontSize: 14, color: Colors.black87),
-                      ),
-                      const SizedBox(height: 8),
-                      const Text(
-                        "View or edit your personal details.",
-                        style: TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold),
-                      ),
-                    ],
-                  ),
-                  trailing: IconButton(
-                    icon: const Icon(Icons.arrow_forward_ios, color: Colors.green),
-                    onPressed: () {
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                  //leading: const Icon(Icons.person_pin, size: 40, color: Colors.green),
+                  subtitle: GestureDetector(
+                    onTap: () => {                      
+                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()))
                     },
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        Text(
+                          "Your Profile",
+                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+                        ),
+                        const SizedBox(height: 10,),
+                        ClipOval(
+                          child:  Image.asset("assets/images/ju.jpg",
+                            width: 140, // Adjust as needed
+                            height: 150, // Adjust as needed
+                            fit: BoxFit.cover,
+                            errorBuilder: (context, error, stackTrace) {
+                              return const Center(child: Icon(Icons.person)); // Show a default icon on error
+                            },
+                          ),
+                        ),
+                        const SizedBox(height: 4),
+                        // Display user's email directly or use Getuserdata for a brief summary
+                        Text(
+                          user.email ?? 'No Email',
+                          style: const TextStyle(fontSize: 14, color: Colors.black87),
+                        ),
+                        const SizedBox(height: 8),
+                        const Text(
+                          "View or edit your personal details.",
+                          style: TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold),
+                        ),
+                      ],
+                    ),
                   ),
+                 
+                  
                 ),
               ),
             ),
@@ -447,8 +459,8 @@ class _HomeState extends State<Home> {
                     shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
                     child: const ListTile(
                       leading: Icon(Icons.celebration, color: Colors.purple),
-                      title: Text("New: Multipurpose Hall Available!"),
-                      subtitle: Text("Our new Multipurpose Hall is now open for bookings. Check it out!"),
+                      title: Text("Resource Updates"),
+                      subtitle: Text("Currently most resources ara occupied due to clasees"),
                     ),
                   ),
                 ],

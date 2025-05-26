@@ -103,13 +103,13 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                     'Mzuzu University',
                     style: TextStyle(
                       color: Colors.white,
-                      fontSize: 24,
+                      fontSize: 15,
                       fontWeight: FontWeight.bold,
                     ),
                   ),
                   const Text(
                     'Campus Resource Booking',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
+                    style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
                 ],
               ),
@@ -179,16 +179,7 @@ class _ResourseScreenState extends State<ResourcesScreen> {
               onTap: logout,
             ),
             const SizedBox(height: 30),
-            Padding(
-              padding: const EdgeInsets.all(8.0),
-              child: Text(
-                "${user.email!}",
-                style: const TextStyle(
-                  fontSize: 25,
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
-            ),
+
           ],
         ),
       ),

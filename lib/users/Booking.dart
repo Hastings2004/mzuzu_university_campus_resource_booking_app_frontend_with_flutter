@@ -103,7 +103,8 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   const Text(
                     'Campus Resource Booking',
-                    style: TextStyle(color: Colors.white, fontSize: 20),
+                    style: TextStyle(
+                        color: Colors.white, fontSize: 15),
                   ),
                 ],
               ),
