@@ -4,6 +4,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart' show DateFormat;
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/users/Home.dart';
+import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
@@ -58,25 +59,26 @@ class _BookingScreenState extends State<BookingScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppBar(
-        titleWidget: _isSearching
-            ? TextField(
-                controller: _searchController,
-                style: const TextStyle(color: Colors.white, fontSize: 18),
-                decoration: const InputDecoration(
-                  hintText: 'Search bookings...',
-                  hintStyle: TextStyle(color: Colors.white70),
-                  border: InputBorder.none,
-                  prefixIcon: Icon(Icons.search, color: Colors.white),
+        titleWidget:
+            _isSearching
+                ? TextField(
+                  controller: _searchController,
+                  style: const TextStyle(color: Colors.white, fontSize: 18),
+                  decoration: const InputDecoration(
+                    hintText: 'Search bookings...',
+                    hintStyle: TextStyle(color: Colors.white70),
+                    border: InputBorder.none,
+                    prefixIcon: Icon(Icons.search, color: Colors.white),
+                  ),
+                )
+                : const Text(
+                  "My Bookings",
+                  style: TextStyle(
+                    fontSize: 20,
+                    fontWeight: FontWeight.bold,
+                    color: Colors.white,
+                  ),
                 ),
-              )
-            : const Text(
-                "My Bookings",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
         onSearchPressed: _toggleSearching,
         isSearching: _isSearching,
       ),
@@ -101,54 +103,71 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   const Text(
                     'Campus Resource Booking',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 20,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 20),
                   ),
                 ],
               ),
             ),
             ListTile(
               title: const Text('Home'),
+              leading: const Icon(Icons.home),
               onTap: () {
-                Navigator.push(
-                    context, MaterialPageRoute(builder: (context) => Home()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => Home()),
+                );
               },
             ),
             ListTile(
               title: const Text('Profile'),
+              leading: const Icon(Icons.person),
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => ProfileScreen()),
+                );
               },
             ),
             ListTile(
               title: const Text('Resources'),
+              leading: const Icon(Icons.grid_view),
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => ResourcesScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => ResourcesScreen()),
+                );
               },
             ),
             ListTile(
-              title: const Text('Booking'),
+              title: const Text('Bookings'),
+              leading: const Icon(Icons.book_online, color: Colors.blueAccent),
               onTap: () {
                 Navigator.pop(context);
               },
             ),
-            ListTile(
-              title: const Text('Settings'),
+             ListTile(
+              title: const Text('Notifications'),
+              leading: const Icon(Icons.notifications), // Highlight current page
               onTap: () {
-                Navigator.push(context,
-                    MaterialPageRoute(builder: (context) => SettingsScreen()));
+                // Already on notifications screen, close drawer
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => NotificationScreen()));
               },
             ),
             ListTile(
-              title: const Text('Logout'),
+              title: const Text('Settings'),
+              leading: const Icon(Icons.settings),
               onTap: () {
-                logout();
-                Navigator.of(context).popUntil((route) => route.isFirst);
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => SettingsScreen()),
+                );
               },
+            ),
+            const Divider(), // Separator
+            ListTile(
+              title: const Text('Logout'),
+              leading: const Icon(Icons.logout, color: Colors.red),
+              onTap: logout,
             ),
           ],
         ),
@@ -159,20 +178,18 @@ class _BookingScreenState extends State<BookingScreen> {
             padding: EdgeInsets.all(16.0),
             child: Text(
               "Current Bookings",
-              style: TextStyle(
-                fontSize: 20,
-                fontWeight: FontWeight.bold,
-              ),
+              style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold),
               textAlign: TextAlign.center,
             ),
           ),
           Expanded(
             child: StreamBuilder<QuerySnapshot>(
-              stream: FirebaseFirestore.instance
-                  .collection('bookings')
-                  .where('userId', isEqualTo: user.uid)
-                 // .orderBy('startTime', descending: true) // Ordering for better display
-                  .snapshots(),
+              stream:
+                  FirebaseFirestore.instance
+                      .collection('bookings')
+                      .where('userId', isEqualTo: user.uid)
+                      // .orderBy('startTime', descending: true) // Ordering for better display
+                      .snapshots(),
               builder: (context, snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(child: CircularProgressIndicator());
@@ -191,21 +208,26 @@ class _BookingScreenState extends State<BookingScreen> {
                   );
                 }
 
-                final filteredDocs = snapshot.data!.docs.where((booking) {
-                  final resourceName = (booking['resourceName'] ?? '')
-                      .toString()
-                      .toLowerCase();
-                  final purpose = (booking['purpose'] ?? '').toString().toLowerCase();
-                  final location = (booking['resourceLocation'] ?? '')
-                      .toString()
-                      .toLowerCase();
-                  final status = (booking['status'] ?? '').toString().toLowerCase();
+                final filteredDocs =
+                    snapshot.data!.docs.where((booking) {
+                      final resourceName =
+                          (booking['resourceName'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                      final purpose =
+                          (booking['purpose'] ?? '').toString().toLowerCase();
+                      final location =
+                          (booking['resourceLocation'] ?? '')
+                              .toString()
+                              .toLowerCase();
+                      final status =
+                          (booking['status'] ?? '').toString().toLowerCase();
 
-                  return resourceName.contains(_searchQuery) ||
-                      purpose.contains(_searchQuery) ||
-                      location.contains(_searchQuery) ||
-                      status.contains(_searchQuery);
-                }).toList();
+                      return resourceName.contains(_searchQuery) ||
+                          purpose.contains(_searchQuery) ||
+                          location.contains(_searchQuery) ||
+                          status.contains(_searchQuery);
+                    }).toList();
 
                 if (filteredDocs.isEmpty) {
                   return const Center(
@@ -221,16 +243,20 @@ class _BookingScreenState extends State<BookingScreen> {
                   itemBuilder: (context, index) {
                     var booking = filteredDocs[index];
                     String resourceName = booking['resourceName'] ?? 'N/A';
-                    String resourceLocation = booking['resourceLocation'] ?? 'N/A';
-                    String purpose = booking['purpose'] ?? 'No purpose provided';
+                    String resourceLocation =
+                        booking['resourceLocation'] ?? 'N/A';
+                    String purpose =
+                        booking['purpose'] ?? 'No purpose provided';
                     Timestamp startTime = booking['startTime'];
                     Timestamp endTime = booking['endTime'];
                     String status = booking['status'] ?? 'unknown';
 
-                    String formattedStartTime =
-                        DateFormat('MMM d, yyyy HH:mm').format(startTime.toDate());
-                    String formattedEndTime =
-                        DateFormat('MMM d, yyyy HH:mm').format(endTime.toDate());
+                    String formattedStartTime = DateFormat(
+                      'MMM d, yyyy HH:mm',
+                    ).format(startTime.toDate());
+                    String formattedEndTime = DateFormat(
+                      'MMM d, yyyy HH:mm',
+                    ).format(endTime.toDate());
 
                     Color statusColor;
                     switch (status.toLowerCase()) {
@@ -252,10 +278,13 @@ class _BookingScreenState extends State<BookingScreen> {
 
                     return Card(
                       margin: const EdgeInsets.symmetric(
-                          horizontal: 16.0, vertical: 8.0),
+                        horizontal: 16.0,
+                        vertical: 8.0,
+                      ),
                       elevation: 4,
                       shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10)),
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: Padding(
                         padding: const EdgeInsets.all(16.0),
                         child: Column(
@@ -290,18 +319,24 @@ class _BookingScreenState extends State<BookingScreen> {
                                     Text(
                                       'Start: $formattedStartTime',
                                       style: const TextStyle(
-                                          fontSize: 14, color: Colors.grey),
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                     Text(
                                       'End: $formattedEndTime',
                                       style: const TextStyle(
-                                          fontSize: 14, color: Colors.grey),
+                                        fontSize: 14,
+                                        color: Colors.grey,
+                                      ),
                                     ),
                                   ],
                                 ),
                                 Container(
                                   padding: const EdgeInsets.symmetric(
-                                      horizontal: 8, vertical: 4),
+                                    horizontal: 8,
+                                    vertical: 4,
+                                  ),
                                   decoration: BoxDecoration(
                                     color: statusColor.withOpacity(0.2),
                                     borderRadius: BorderRadius.circular(5),

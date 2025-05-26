@@ -2,9 +2,9 @@
 
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:resource_booking_app/components/Button.dart';
 import 'package:resource_booking_app/components/TextField.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 
 class Register extends StatefulWidget {
   final VoidCallback showLoginScreen;
@@ -21,7 +21,7 @@ class _RegisterState extends State<Register> {
   final firstNameController = TextEditingController();
   final lastNameController = TextEditingController();
   final phoneNumberController = TextEditingController();
-  //final regNumberController = TextEditingController();
+
   @override
   void dispose() {
     emailController.dispose();
@@ -30,175 +30,171 @@ class _RegisterState extends State<Register> {
     firstNameController.dispose();
     lastNameController.dispose();
     phoneNumberController.dispose();
-    //regNumberController.dispose();
     super.dispose();
   }
 
-  Future addUserDetails() async{
-    final user = FirebaseAuth.instance.currentUser;
-    final uid = user?.uid;
-
-    if(uid != null){
-      await FirebaseFirestore.instance.collection("users").doc(uid).set({
-        "first_name": firstNameController.text.trim(),
-        "last_name": lastNameController.text.trim(),
-        //"reg_number": regNumberController.text.trim(),
-        "phone_number": phoneNumberController.text.trim(),
-        "email": emailController.text.trim(),
-      });
-    }
+  Future<void> addUserDetails(String uid) async {
+    await FirebaseFirestore.instance.collection("users").doc(uid).set({
+      "first_name": firstNameController.text.trim(),
+      "last_name": lastNameController.text.trim(),
+      "phone_number": phoneNumberController.text.trim(),
+      "email": emailController.text.trim(),
+      "email_verified": false, // New field to track email verification status
+    });
   }
-  Future signUpUser() async{
 
-    if(emailController.text.isEmpty ||
+  Future<void> signUpUser() async {
+    // Basic validation for empty fields
+    if (emailController.text.isEmpty ||
         passwordController.text.isEmpty ||
         confirmPasswordController.text.isEmpty ||
         firstNameController.text.isEmpty ||
         lastNameController.text.isEmpty ||
-        phoneNumberController.text.isEmpty 
-       // regNumberController.text.isEmpty
-    ){
+        phoneNumberController.text.isEmpty) {
       showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              content: const Text("Please fill in all fields"),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text("OK")
-                )
-              ],
-            );
-          }
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: const Text("Please fill in all fields"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
       );
       return;
     }
 
+    // Password confirmation check
+    if (!passwordConfirm()) {
+      return; // If passwords don't match, passwordConfirm() already shows a dialog
+    }
 
-    if(passwordConfirm()){
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(),
+        );
+      },
+    );
 
-      showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
+    try {
+      // 1. Create User with Email and Password
+      UserCredential userCredential = await FirebaseAuth.instance.createUserWithEmailAndPassword(
+        email: emailController.text.trim(),
+        password: passwordController.text.trim(),
       );
 
-      try {
-        await FirebaseAuth.instance.createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text.trim()
-        );
-        
-        // Add user details to the database
-        addUserDetails();
-        
-        Navigator.pop(context);
-      } on FirebaseAuthException catch (e) {
-
-        Navigator.pop(context);
-
-        if(e.code == 'weak-password') {
-          showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  content: const Text("Password is too weak"),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("OK")
-                    )
-                  ],
-                );
-              }
-          );
-        } else if (e.code == 'email-already-in-use') {
-          showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  content: const Text("Email already in use"),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("OK")
-                    )
-                  ],
-                );
-              }
-          );
-
-        } else if (e.code == 'invalid-email') {
-          showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  content: const Text("Invalid email"),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("OK")
-                    )
-                  ],
-                );
-              }
-          );
-        } else {
-          showDialog(
-              context: context,
-              builder: (context) {
-                return AlertDialog(
-                  content: const Text("An error occurred"),
-                  actions: [
-                    TextButton(
-                        onPressed: () {
-                          Navigator.pop(context);
-                        },
-                        child: const Text("OK")
-                    )
-                  ],
-                );
-              }
-          );
-        }
+      // 2. Send Email Verification
+      User? user = userCredential.user;
+      if (user != null) {
+        await user.sendEmailVerification();
       }
+
+      // 3. Add User Details to Firestore (initially with email_verified: false)
+      if (user != null && user.uid.isNotEmpty) {
+        await addUserDetails(user.uid);
+      }
+
+      Navigator.pop(context); // Dismiss loading indicator
+
+      // Show success and instructions for email verification
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            title: const Text("Registration Successful!"),
+            content: const Text(
+                "A verification link has been sent to your email address. Please verify your email before logging in."),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context); // Close success dialog
+                  widget.showLoginScreen(); // Navigate to login screen
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+    } on FirebaseAuthException catch (e) {
+      Navigator.pop(context); // Dismiss loading indicator on error
+
+      String errorMessage;
+      if (e.code == 'weak-password') {
+        errorMessage = "Password is too weak.";
+      } else if (e.code == 'email-already-in-use') {
+        errorMessage = "This email is already registered.";
+      } else if (e.code == 'invalid-email') {
+        errorMessage = "The email address is not valid.";
+      } else {
+        errorMessage = "An unexpected error occurred: ${e.message}";
+      }
+
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Text(errorMessage),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
+    } catch (e) {
+      Navigator.pop(context); // Dismiss loading indicator for other errors
+      showDialog(
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: Text("An error occurred: $e"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
+      );
     }
   }
 
-
-
   bool passwordConfirm() {
-    if(passwordController.text.trim() == confirmPasswordController.text.trim()){
+    if (passwordController.text.trim() == confirmPasswordController.text.trim()) {
       return true;
-    }else{
+    } else {
       showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              content: const Text("Password do not match"),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text("OK")
-                )
-              ],
-            );
-          }
+        context: context,
+        builder: (context) {
+          return AlertDialog(
+            content: const Text("Passwords do not match"),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("OK"),
+              ),
+            ],
+          );
+        },
       );
       return false;
     }
@@ -257,14 +253,6 @@ class _RegisterState extends State<Register> {
                     prefixIcon: const Icon(Icons.person_outline),
                   ),
                   const SizedBox(height: 10),
-                  /*MyTextField(
-                    controller: regNumberController,
-                    obscureText: false,
-                    hintText: "Registration number",
-                    keyboardType: TextInputType.text, // Or TextInputType.number if it's purely numeric
-                    prefixIcon: const Icon(Icons.badge),
-                  ),
-                  const SizedBox(height: 10),*/
                   MyTextField(
                     controller: phoneNumberController,
                     obscureText: false,
@@ -294,10 +282,11 @@ class _RegisterState extends State<Register> {
                     hintText: "Confirm password",
                     prefixIcon: const Icon(Icons.lock_reset),
                   ),
-                  const SizedBox(height: 20), // Reduced spacing slightly
-                  // Display error message if any
-
-                  MyButton(onTap: signUpUser, text: "Sign Up",),
+                  const SizedBox(height: 20),
+                  MyButton(
+                    onTap: signUpUser,
+                    text: "Sign Up",
+                  ),
                   const SizedBox(
                     height: 20,
                   ),
@@ -317,7 +306,7 @@ class _RegisterState extends State<Register> {
                         ),
                       ],
                     ),
-                  )
+                  ),
                 ],
               ),
             ),
@@ -326,5 +315,4 @@ class _RegisterState extends State<Register> {
       ),
     );
   }
-
 }

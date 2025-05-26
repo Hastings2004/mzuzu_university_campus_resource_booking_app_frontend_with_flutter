@@ -2,7 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:resource_booking_app/components/AppBar.dart'; // Your updated custom AppBar
-import 'package:resource_booking_app/components/ResourceDetails.dart';
+import 'package:resource_booking_app/users/ResourceDetails.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';
@@ -113,59 +113,48 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                 ],
               ),
             ),
-            ListTile(
+                        ListTile(
               title: const Text('Home'),
+              leading: const Icon(Icons.home),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => Home()),
-                );
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home()));
               },
             ),
             ListTile(
               title: const Text('Profile'),
+              leading: const Icon(Icons.person),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()),
-                );
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
               },
             ),
             ListTile(
               title: const Text('Resources'),
+              leading: const Icon(Icons.grid_view),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ResourcesScreen()),
-                );
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ResourcesScreen()));
               },
             ),
             ListTile(
-              title: const Text('Booking'),
+              title: const Text('Bookings'),
+              leading: const Icon(Icons.book_online),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => BookingScreen()),
-                );
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingScreen()));
               },
             ),
             ListTile(
-              title: const Text('Setings'),
+              title: const Text('Settings'),
+              leading: const Icon(Icons.settings),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Logout'),
-              onTap: () {
-                logout();
+                // Already on settings screen, close drawer
                 Navigator.pop(context);
               },
             ),
-            const SizedBox(height: 30),
+            const Divider(), // Separator
+            ListTile(
+              title: const Text('Logout'),
+              leading: const Icon(Icons.logout, color: Colors.red),
+              onTap: logout,
+            ),const SizedBox(height: 30),
             Padding(
               padding: const EdgeInsets.all(8.0),
               child: Text(

@@ -1,8 +1,9 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/components/AppBar.dart'; // Your updated custom AppBar
-import 'package:resource_booking_app/components/ResourceDetails.dart';
+import 'package:resource_booking_app/components/AppBar.dart';
+import 'package:resource_booking_app/users/Notification.dart';
+import 'package:resource_booking_app/users/ResourceDetails.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';
@@ -113,10 +114,12 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                 ],
               ),
             ),
+
             ListTile(
               title: const Text('Home'),
+              leading: const Icon(Icons.home),
               onTap: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => Home()),
                 );
@@ -124,8 +127,9 @@ class _ResourseScreenState extends State<ResourcesScreen> {
             ),
             ListTile(
               title: const Text('Profile'),
+              leading: const Icon(Icons.person),
               onTap: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => ProfileScreen()),
                 );
@@ -133,37 +137,46 @@ class _ResourseScreenState extends State<ResourcesScreen> {
             ),
             ListTile(
               title: const Text('Resources'),
+              leading: const Icon(Icons.grid_view, color: Colors.blueAccent),
               onTap: () {
-                Navigator.push(
-                  context,
-                  MaterialPageRoute(builder: (context) => ResourcesScreen()),
-                );
+                Navigator.pop(context);
               },
             ),
             ListTile(
-              title: const Text('Booking'),
+              title: const Text('Bookings'),
+              leading: const Icon(Icons.book_online),
               onTap: () {
-                Navigator.push(
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => BookingScreen()),
                 );
               },
             ),
-            ListTile(
-              title: const Text('Setings'),
+             ListTile(
+              title: const Text('Notifications'),
+              leading: const Icon(Icons.notifications), // Highlight current page
               onTap: () {
-                Navigator.push(
+                // Already on notifications screen, close drawer
+                Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => SettingsScreen()),
+                  MaterialPageRoute(builder: (context) => NotificationScreen()),
                 );
               },
             ),
             ListTile(
-              title: const Text('Logout'),
+              title: const Text('Settings'),
+              leading: const Icon(Icons.settings),
               onTap: () {
-                logout();
-                Navigator.pop(context);
+               
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SettingsScreen()));
+            
               },
+            ),
+            const Divider(), // Separator
+            ListTile(
+              title: const Text('Logout'),
+              leading: const Icon(Icons.logout, color: Colors.red),
+              onTap: logout,
             ),
             const SizedBox(height: 30),
             Padding(
@@ -191,8 +204,8 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                   final name = document['name']?.toLowerCase() ?? '';
                   final location = document['location']?.toLowerCase() ?? '';
                   //final description =
-                    //  document['description']?.toLowerCase() ??
-                     // ''; // Assuming you have a 'description' field
+                  //  document['description']?.toLowerCase() ??
+                  // ''; // Assuming you have a 'description' field
 
                   return name.contains(_searchQuery) ||
                       location.contains(_searchQuery);
