@@ -278,7 +278,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
               padding: const EdgeInsets.all(8.0),
               itemBuilder: (context, index) {
                 final resource = filteredResources[index];
-                String? imageUrl = resource.imageUrl;
+                //String? imageUrl = resource.imageUrl;
 
                 return Padding(
                   padding: const EdgeInsets.symmetric(vertical: 8.0),
