@@ -1,13 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:resource_booking_app/auth/Auth.dart';
+import 'dart:convert'; // For JSON encoding/decoding
+import 'package:shared_preferences/shared_preferences.dart'; // For managing session
+import 'package:resource_booking_app/auth/Api.dart'; // Your custom API service
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/TextField.dart'; // Assuming you have this for input
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Notification.dart'; // Import NotificationScreen
+import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart'; // Ensure this is ResourcesScreen
+import 'package:resource_booking_app/users/Resourse.dart'; // This should be ResourcesScreen
+
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -17,7 +20,8 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  final user = FirebaseAuth.instance.currentUser!;
+  String? _userEmail; // To store the current user's email
+  int? _userId; // To store the current user's ID
 
   // Controllers for updating email and password
   final TextEditingController _newEmailController = TextEditingController();
@@ -25,9 +29,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
   final TextEditingController _newPasswordController = TextEditingController();
   final TextEditingController _confirmNewPasswordController = TextEditingController();
 
-  // Notification toggles (example)
+  // Notification toggles
   bool _emailNotificationsEnabled = true;
   bool _smsNotificationsEnabled = false;
+
+  @override
+  void initState() {
+    super.initState();
+    _loadUserData();
+    _loadNotificationSettings(); // Load settings when screen initializes
+  }
 
   @override
   void dispose() {
@@ -38,50 +49,106 @@ class _SettingsScreenState extends State<SettingsScreen> {
     super.dispose();
   }
 
-  void logout() async {
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
-      // Pop all routes until the first (usually your splash/auth check screen)
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      // Then navigate to your actual login/authentication screen
-      // Example: Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
-      // Replace `AuthScreen` with the actual name of your initial authentication screen
-    }
+  // Load user data from shared preferences
+  void _loadUserData() async {
+    SharedPreferences localStorage = await SharedPreferences.getInstance();
+    setState(() {
+      _userEmail = localStorage.getString('email');
+      _userId = localStorage.getInt('user_id'); // Assuming you store user_id
+    });
   }
 
-  // --- Account Management Functions ---
-
-  // Function to re-authenticate user
-  Future<bool> _reauthenticateUser(String password) async {
+  // Load notification settings from API
+  Future<void> _loadNotificationSettings() async {
     try {
-      AuthCredential credential = EmailAuthProvider.credential(
-        email: user.email!,
-        password: password,
-      );
-      await user.reauthenticateWithCredential(credential);
-      return true;
-    } on FirebaseAuthException catch (e) {
-      String message;
-      if (e.code == 'wrong-password') {
-        message = 'Incorrect current password.';
-      } else if (e.code == 'user-not-found') {
-        message = 'User not found. Please log in again.';
-      } else if (e.code == 'invalid-credential') {
-        message = 'Invalid credentials. Please check your current password.';
+      final response = await CallApi().getData('user/settings'); // Adjust endpoint as needed
+      final body = json.decode(response.body);
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        setState(() {
+          _emailNotificationsEnabled = body['settings']['email_notifications'] ?? true;
+          _smsNotificationsEnabled = body['settings']['sms_notifications'] ?? false;
+        });
       } else {
-        message = 'Failed to re-authenticate: ${e.message}';
+        print("Failed to load notification settings: ${body['message']}");
       }
-      if (mounted) {
-        _showErrorDialog(message);
-      }
-      return false;
     } catch (e) {
-      if (mounted) {
-        _showErrorDialog('An unexpected error occurred during re-authentication: $e');
-      }
-      return false;
+      print("Error loading notification settings: $e");
     }
   }
+
+  // Update notification settings via API
+  Future<void> _updateNotificationSettings(bool emailEnabled, bool smsEnabled) async {
+    try {
+      final data = {
+        'email_notifications': emailEnabled,
+        'sms_notifications': smsEnabled,
+      };
+      final response = await CallApi().postData(data, 'user/update-notification-settings'); // Adjust endpoint
+      final body = json.decode(response.body);
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(body['message'] ?? 'Notification settings updated.')),
+          );
+        }
+      } else {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(body['message'] ?? 'Failed to update notification settings.')),
+          );
+        }
+      }
+    } catch (e) {
+      print("Error updating notification settings: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(content: Text('Error updating notification settings. Please try again.')),
+        );
+      }
+    }
+  }
+
+  void logout() async {
+    // Show a confirmation dialog
+    final bool confirmLogout = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // User cancels
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true), // User confirms
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
+                child: const Text('Logout', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false; 
+
+    if (confirmLogout) {
+   
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (mounted) {
+        // Navigate to your login/auth screen and remove all previous routes
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        ); 
+       
+      }
+    }
+
+  }
+  // --- Account Management Functions (API based) ---
 
   // Function to change email
   Future<void> _changeEmail() async {
@@ -89,7 +156,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) _showErrorDialog("New email cannot be empty.");
       return;
     }
-    if (_newEmailController.text.trim() == user.email!) {
+    if (_newEmailController.text.trim() == _userEmail) {
       if (mounted) _showErrorDialog("New email cannot be the same as the current email.");
       return;
     }
@@ -105,46 +172,32 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      bool reauthenticated = await _reauthenticateUser(_currentPasswordController.text.trim());
-      if (!reauthenticated) {
-        if (mounted) Navigator.pop(context); // Dismiss loading indicator
-        return;
-      }
+      final data = {
+        'new_email': _newEmailController.text.trim(),
+        'current_password': _currentPasswordController.text.trim(),
+      };
+      final response = await CallApi().postData(data, 'user/update-email'); // Adjust endpoint
+      final body = json.decode(response.body);
 
-      await user.updateEmail(_newEmailController.text.trim());
-      await user.sendEmailVerification(); // Send verification to new email
-
-      // Update Firestore document with new email and reset email_verified status
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).update({
-        "email": _newEmailController.text.trim(),
-        "email_verified": false, // Mark as unverified until new email is confirmed
-      });
-
-      if (mounted) {
-        Navigator.pop(context); // Dismiss loading indicator
-        _showSuccessDialog(
-            "Email updated successfully! A verification link has been sent to your new email. Please verify it.");
-      }
-      _newEmailController.clear();
-      _currentPasswordController.clear();
-      // Optional: You might want to log the user out here to force re-login and verification
-      // if (mounted) {
-      //   logout();
-      // }
-    } on FirebaseAuthException catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
-      String message;
-      if (e.code == 'email-already-in-use') {
-        message = 'The new email is already in use by another account.';
-      } else if (e.code == 'invalid-email') {
-        message = 'The new email address is not valid.';
-      } else if (e.code == 'requires-recent-login') {
-        message = 'You need to log in again to update your email. Please log out and then log back in.';
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        if (mounted) {
+          _showSuccessDialog(
+              body['message'] ?? "Email updated successfully! Please check your new email for verification if required.");
+          // Update local email in shared preferences
+          SharedPreferences localStorage = await SharedPreferences.getInstance();
+          await localStorage.setString('email', _newEmailController.text.trim());
+          setState(() {
+            _userEmail = _newEmailController.text.trim();
+          });
+        }
+        _newEmailController.clear();
+        _currentPasswordController.clear();
       } else {
-        message = 'Failed to update email: ${e.message}';
-      }
-      if (mounted) {
-        _showErrorDialog(message);
+        if (mounted) {
+          _showErrorDialog(body['message'] ?? 'Failed to update email. Please try again.');
+        }
       }
     } catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
@@ -178,32 +231,27 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      bool reauthenticated = await _reauthenticateUser(_currentPasswordController.text.trim());
-      if (!reauthenticated) {
-        if (mounted) Navigator.pop(context); // Dismiss loading indicator
-        return;
-      }
+      final data = {
+        'current_password': _currentPasswordController.text.trim(),
+        'new_password': _newPasswordController.text.trim(),
+        'new_password_confirmation': _confirmNewPasswordController.text.trim(),
+      };
+      final response = await CallApi().postData(data, 'user/update-password'); // Adjust endpoint
+      final body = json.decode(response.body);
 
-      await user.updatePassword(_newPasswordController.text.trim());
-      if (mounted) {
-        Navigator.pop(context); // Dismiss loading indicator
-        _showSuccessDialog("Password updated successfully!");
-      }
-      _currentPasswordController.clear();
-      _newPasswordController.clear();
-      _confirmNewPasswordController.clear();
-    } on FirebaseAuthException catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
-      String message;
-      if (e.code == 'weak-password') {
-        message = 'The new password is too weak.';
-      } else if (e.code == 'requires-recent-login') {
-        message = 'You need to log in again to update your password. Please log out and then log back in.';
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        if (mounted) {
+          _showSuccessDialog(body['message'] ?? "Password updated successfully!");
+        }
+        _currentPasswordController.clear();
+        _newPasswordController.clear();
+        _confirmNewPasswordController.clear();
       } else {
-        message = 'Failed to update password: ${e.message}';
-      }
-      if (mounted) {
-        _showErrorDialog(message);
+        if (mounted) {
+          _showErrorDialog(body['message'] ?? 'Failed to update password. Please try again.');
+        }
       }
     } catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
@@ -215,33 +263,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Function to delete account
   Future<void> _deleteAccount() async {
-    // Show confirmation dialog first
     bool confirm = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Delete Account"),
-        content: const Text(
-            "Are you sure you want to delete your account? This action cannot be undone. You will be permanently logged out."),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.pop(context, false), // Cancel
-            child: const Text("Cancel"),
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text("Delete Account"),
+            content: const Text(
+                "Are you sure you want to delete your account? This action cannot be undone. You will be permanently logged out."),
+            actions: [
+              TextButton(
+                onPressed: () => Navigator.pop(context, false),
+                child: const Text("Cancel"),
+              ),
+              TextButton(
+                onPressed: () => Navigator.pop(context, true),
+                child: const Text("Delete", style: TextStyle(color: Colors.red)),
+              ),
+            ],
           ),
-          TextButton(
-            onPressed: () => Navigator.pop(context, true), // Confirm
-            child: const Text("Delete", style: TextStyle(color: Colors.red)),
-          ),
-        ],
-      ),
-    ) ??
+        ) ??
         false;
 
     if (!confirm) {
       return;
     }
 
-    // Show password input dialog for re-authentication
-    _currentPasswordController.clear(); // Clear before showing
+    _currentPasswordController.clear();
     String? password = await showDialog<String>(
       context: context,
       builder: (context) => AlertDialog(
@@ -256,7 +302,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         actions: [
           TextButton(
             onPressed: () {
-              Navigator.pop(context); // Dismiss dialog
+              Navigator.pop(context);
             },
             child: const Text("Cancel"),
           ),
@@ -282,36 +328,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
 
     try {
-      bool reauthenticated = await _reauthenticateUser(password);
-      if (!reauthenticated) {
-        if (mounted) Navigator.pop(context); // Dismiss loading indicator
-        return;
-      }
+      final data = {'current_password': password};
+      final response = await CallApi().postData(data, 'user/delete-account'); // Adjust endpoint
+      final body = json.decode(response.body);
 
-      // Delete user data from Firestore first
-      await FirebaseFirestore.instance.collection("users").doc(user.uid).delete();
-
-      // Delete user from Firebase Authentication
-      await user.delete();
-
-      if (mounted) {
-        Navigator.pop(context); // Dismiss loading indicator
-        _showSuccessDialog("Account deleted successfully!");
-      }
-      _currentPasswordController.clear();
-      logout(); // Log out and navigate to login/auth screen
-    } on FirebaseAuthException catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
-      String message;
-      if (e.code == 'requires-recent-login') {
-        message = 'You need to log in again to delete your account. Please log out and then log back in.';
-      } else if (e.code == 'user-mismatch') {
-        message = 'The provided credentials do not match the current user.';
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        if (mounted) {
+          _showSuccessDialog(body['message'] ?? "Account deleted successfully!");
+        }
+        SharedPreferences localStorage = await SharedPreferences.getInstance();
+        await localStorage.clear(); // Clear local storage completely
+        if (mounted) {
+          Navigator.pushAndRemoveUntil(
+            context,
+            MaterialPageRoute(builder: (context) => Auth()), // Go back to auth gate
+            (Route<dynamic> route) => false,
+          );
+        }
       } else {
-        message = 'Failed to delete account: ${e.message}';
-      }
-      if (mounted) {
-        _showErrorDialog(message);
+        if (mounted) {
+          _showErrorDialog(body['message'] ?? 'Failed to delete account. Please try again.');
+        }
       }
     } catch (e) {
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
@@ -358,9 +397,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
     );
   }
 
+  void _showInfoDialog(String title, String content) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title),
+          content: Text(content),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: BottomAppBar(),
       appBar: MyAppBar(
         titleWidget: const Text(
           "Settings",
@@ -375,13 +433,14 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader( // Added const
+            const DrawerHeader(
               decoration: BoxDecoration(
                 color: Color.fromARGB(255, 20, 148, 24),
               ),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image(image: AssetImage("assets/images/logo.png"), height: 50), // Corrected image usage
+                  Image(image: AssetImage("assets/images/logo.png"), height: 50),
                   Text(
                     'Mzuzu University',
                     style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
@@ -425,22 +484,20 @@ class _SettingsScreenState extends State<SettingsScreen> {
               },
             ),
             ListTile(
-              title: const Text('Notifications'), // Corrected typo
-              leading: const Icon(Icons.notifications), // No longer highlight here
+              title: const Text('Notifications'),
+              leading: const Icon(Icons.notifications),
               onTap: () {
-                // Navigate to NotificationScreen
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
               },
             ),
             ListTile(
               title: const Text('Settings'),
-              leading: const Icon(Icons.settings, color: Colors.blueAccent), // Highlight current page
+              leading: const Icon(Icons.settings, color: Colors.blueAccent),
               onTap: () {
-                // Already on settings screen, close drawer
-                Navigator.pop(context);
+                Navigator.pop(context); // Already on settings screen, close drawer
               },
             ),
-            const Divider(), // Separator
+            const Divider(),
             ListTile(
               title: const Text('Logout'),
               leading: const Icon(Icons.logout, color: Colors.red),
@@ -454,10 +511,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Text(
-              "Logged in as: \n ${user.email!}",
-              style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-            ),
+            if (_userEmail != null)
+              Text(
+                "Logged in as: \n $_userEmail",
+                style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              )
+            else
+              const Text(
+                "Loading user email...",
+                style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
+              ),
             const SizedBox(height: 20),
 
             // --- Account Settings Section ---
@@ -470,7 +533,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: const Icon(Icons.email),
               title: const Text("Change Email"),
               onTap: () {
-                _newEmailController.clear(); // Clear previous inputs
+                _newEmailController.clear();
                 _currentPasswordController.clear();
                 showDialog(
                   context: context,
@@ -578,11 +641,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (bool value) {
                 setState(() {
                   _emailNotificationsEnabled = value;
-                  // TODO: Implement logic to save this preference to Firestore/local storage
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('Email notifications ${value ? 'enabled' : 'disabled'}')),
-                  );
                 });
+                _updateNotificationSettings(value, _smsNotificationsEnabled);
               },
             ),
             SwitchListTile(
@@ -591,11 +651,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
               onChanged: (bool value) {
                 setState(() {
                   _smsNotificationsEnabled = value;
-                  // TODO: Implement logic to save this preference to Firestore/local storage
-                  ScaffoldMessenger.of(context).showSnackBar(
-                    SnackBar(content: Text('SMS notifications ${value ? 'enabled' : 'disabled'}')),
-                  );
                 });
+                _updateNotificationSettings(_emailNotificationsEnabled, value);
               },
             ),
             const SizedBox(height: 30),
@@ -610,7 +667,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: const Icon(Icons.policy),
               title: const Text("Privacy Policy"),
               onTap: () {
-                // Implement navigation to a Privacy Policy page or open a URL
                 _showInfoDialog("Privacy Policy", "Link to your app's privacy policy will open here.");
               },
             ),
@@ -618,7 +674,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               leading: const Icon(Icons.description),
               title: const Text("Terms of Service"),
               onTap: () {
-                // Implement navigation to a Terms of Service page or open a URL
                 _showInfoDialog("Terms of Service", "Link to your app's terms of service will open here.");
               },
             ),
@@ -633,24 +688,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ],
         ),
       ),
-    );
-  }
-
-  void _showInfoDialog(String title, String content) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(title),
-          content: Text(content),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
-            ),
-          ],
-        );
-      },
     );
   }
 }

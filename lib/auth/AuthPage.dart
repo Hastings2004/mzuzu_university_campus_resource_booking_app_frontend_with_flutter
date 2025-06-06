@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Register.dart';
 import 'package:resource_booking_app/auth/login.dart';
 
+
 class Authpage extends StatefulWidget {
   const Authpage({super.key});
 

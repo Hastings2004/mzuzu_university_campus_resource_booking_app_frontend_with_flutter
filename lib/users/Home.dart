@@ -1,14 +1,15 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:resource_booking_app/auth/Api.dart'; // Import your API helper
 import 'package:resource_booking_app/components/AppBar.dart';
-import 'package:resource_booking_app/read_data/getUserData.dart'; // Assuming this gets user details
+import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart'; // Corrected spelling for ResourcesScreen
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:shared_preferences/shared_preferences.dart'; // For local storage
+import 'dart:convert'; // For JSON decoding
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -18,9 +19,10 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final user = FirebaseAuth.instance.currentUser!;
-  String? currentUserDocID;
+  // Use SharedPreferences to get user data instead of FirebaseAuth
+  int? _userId;
   String _firstName = 'User'; // Default value for welcome message
+  String _userEmail = '';
 
   // Store upcoming booking details
   Map<String, dynamic>? _upcomingBooking;
@@ -33,48 +35,53 @@ class _HomeState extends State<Home> {
   }
 
   Future<void> _fetchCurrentUserAndBookingData() async {
-    currentUserDocID = user.uid;
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    _userId = prefs.getInt('user_id');
+    _firstName = prefs.getString('user_name') ?? 'User';
+    _userEmail = prefs.getString('user_email') ?? 'No Email';
 
-    // Fetch user's first name
-    try {
-      DocumentSnapshot userDoc = await FirebaseFirestore.instance
-          .collection('users')
-          .doc(user.uid)
-          .get();
+    print("User ID: $_userId, Name: $_firstName, Email: $_userEmail");
+    setState(() {}); // Update the UI with initial user data
 
-      if (userDoc.exists && userDoc.data() is Map<String, dynamic>) {
-        Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-        setState(() {
-          _firstName = userData['first_name'] ?? 'User';
-        });
+    if (_userId == null) {
+      // If user ID is not found, means not logged in, navigate to login
+      if (mounted) {
+        Navigator.of(context).popUntil((route) => route.isFirst);
+        // Replace with your actual login screen route
+        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
       }
-    } catch (e) {
-      print("Error fetching user data: $e");
+      return;
     }
 
-    // Fetch upcoming booking
+    // Fetch upcoming booking from your API
     try {
-      final now = DateTime.now();
-      QuerySnapshot bookingsSnapshot = await FirebaseFirestore.instance
-          .collection('bookings')
-          .where('userId', isEqualTo: user.uid)
-          .where('endTime', isGreaterThanOrEqualTo: now) // Only future or ongoing bookings
-          .where('status', isEqualTo: 'approved') // Only approved bookings
-          .orderBy('endTime', descending: false) // Order by soonest first
-          .limit(1) // Get only the very next booking
-          .get();
+      var res = await CallApi().getData(
+        'user/upcoming-booking',
+      ); // Assuming an API endpoint like this
+      var body = json.decode(res.body);
 
-      if (bookingsSnapshot.docs.isNotEmpty) {
-        setState(() {
-          _upcomingBooking = bookingsSnapshot.docs.first.data() as Map<String, dynamic>;
-        });
+      if (res.statusCode == 200 && body['success'] == true) {
+        if (body['bookings'] != null && body['bookings'].isNotEmpty) {
+          // Assuming your API returns a list of bookings, take the first one
+          setState(() {
+            _upcomingBooking = body['bookings'][0];
+            print(_upcomingBooking);
+          });
+        } else {
+          setState(() {
+            _upcomingBooking = null; // No upcoming bookings
+          });
+        }
       } else {
+        print(
+          "Error fetching upcoming bookings from API: ${body['message'] ?? 'Unknown error'}",
+        );
         setState(() {
-          _upcomingBooking = null; // No upcoming bookings
+          _upcomingBooking = null; // Clear if error
         });
       }
     } catch (e) {
-      print("Error fetching upcoming bookings: $e");
+      print("Network or parsing error fetching upcoming bookings: $e");
       setState(() {
         _upcomingBooking = null; // Clear if error
       });
@@ -86,17 +93,47 @@ class _HomeState extends State<Home> {
   }
 
   void logout() async {
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      // Navigate to your login/auth screen
-      // e.g., Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
-    }
-  }
+    // Show a confirmation dialog
+    final bool confirmLogout = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // User cancels
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true), // User confirms
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
+                child: const Text('Logout', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false; 
 
+    if (confirmLogout) {
+   
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (mounted) {
+        // Navigate to your login/auth screen and remove all previous routes
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        ); // Assuming '/' is your initial login route
+       
+      }
+    }
+
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: Bottombar(),
       appBar: MyAppBar(
         titleWidget: const Text(
           "Home",
@@ -117,13 +154,17 @@ class _HomeState extends State<Home> {
               ),
               child: Column(
                 children: [
-                  Image(image: AssetImage("assets/images/logo.png"), height: 50),
+                  Image(
+                    image: AssetImage("assets/images/logo.png"),
+                    height: 50,
+                  ),
                   Text(
                     'Mzuzu University',
                     style: TextStyle(
-                        color: Colors.white,
-                        fontSize: 24,
-                        fontWeight: FontWeight.bold),
+                      color: Colors.white,
+                      fontSize: 24,
+                      fontWeight: FontWeight.bold,
+                    ),
                   ),
                   Text(
                     'Campus Resource Booking',
@@ -145,7 +186,9 @@ class _HomeState extends State<Home> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
               },
             ),
@@ -155,7 +198,9 @@ class _HomeState extends State<Home> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ResourcesScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ResourcesScreen(),
+                  ),
                 );
               },
             ),
@@ -173,7 +218,12 @@ class _HomeState extends State<Home> {
               title: const Text('Notifications'),
               leading: const Icon(Icons.notifications),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
@@ -182,7 +232,9 @@ class _HomeState extends State<Home> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
                 );
               },
             ),
@@ -208,7 +260,7 @@ class _HomeState extends State<Home> {
                 child: Text(
                   "Welcome, $_firstName!",
                   style: const TextStyle(
-                    fontSize: 28,
+                    fontSize: 18,
                     fontWeight: FontWeight.bold,
                     color: Colors.green,
                   ),
@@ -222,75 +274,23 @@ class _HomeState extends State<Home> {
                 alignment: Alignment.centerLeft,
                 child: Text(
                   "Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}",
-                  style: const TextStyle(
-                    fontSize: 16,
-                    color: Colors.black54,
-                  ),
+                  style: const TextStyle(fontSize: 14, color: Colors.black54),
                 ),
               ),
             ),
             const SizedBox(height: 20),
 
-            // User Profile Card
-            currentUserDocID == null
-                ? const Center(child: CircularProgressIndicator())
-                : Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-              child: Card(
-                elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
-                child: ListTile(
-                  contentPadding: const EdgeInsets.all(16.0),
-                  //leading: const Icon(Icons.person_pin, size: 40, color: Colors.green),
-                  subtitle: GestureDetector(
-                    onTap: () => {                      
-                      Navigator.push(context, MaterialPageRoute(builder: (context) => const ProfileScreen()))
-                    },
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.center,
-                      children: [
-                        Text(
-                          "Your Profile",
-                          style: TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                        ),
-                        const SizedBox(height: 10,),
-                        ClipOval(
-                          child:  Image.asset("assets/images/ju.jpg",
-                            width: 140, // Adjust as needed
-                            height: 150, // Adjust as needed
-                            fit: BoxFit.cover,
-                            errorBuilder: (context, error, stackTrace) {
-                              return const Center(child: Icon(Icons.person)); // Show a default icon on error
-                            },
-                          ),
-                        ),
-                        const SizedBox(height: 4),
-                        // Display user's email directly or use Getuserdata for a brief summary
-                        Text(
-                          user.email ?? 'No Email',
-                          style: const TextStyle(fontSize: 14, color: Colors.black87),
-                        ),
-                        const SizedBox(height: 8),
-                        const Text(
-                          "View or edit your personal details.",
-                          style: TextStyle(fontSize: 12, color: Colors.blue, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ),
-                 
-                  
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-
             // Quick Look at Upcoming Bookings Section
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Card(
                 elevation: 4,
-                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
                 child: Padding(
                   padding: const EdgeInsets.all(16.0),
                   child: Column(
@@ -301,15 +301,27 @@ class _HomeState extends State<Home> {
                         children: [
                           const Text(
                             "Upcoming Bookings",
-                            style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
                           ),
                           TextButton(
                             onPressed: () {
-                              Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BookingScreen(),
+                                ),
+                              );
                             },
                             child: const Text(
                               "View All",
-                              style: TextStyle(color: Colors.blue, fontWeight: FontWeight.bold),
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
                             ),
                           ),
                         ],
@@ -319,48 +331,76 @@ class _HomeState extends State<Home> {
                           ? const Center(child: CircularProgressIndicator())
                           : _upcomingBooking == null
                           ? const Text(
-                        "You have no upcoming approved bookings.",
-                        style: TextStyle(fontSize: 16, color: Colors.black54),
-                      )
-                          : Column(
-                        crossAxisAlignment: CrossAxisAlignment.start,
-                        children: [
-                          Text(
-                            _upcomingBooking!['resourceName'] ?? 'Unknown Resource',
-                            style: const TextStyle(fontSize: 18, fontWeight: FontWeight.w600),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            'Location: ${_upcomingBooking!['resourceLocation'] ?? 'N/A'}',
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 5),
-                          Text(
-                            'From: ${DateFormat('MMM d, hh:mm a').format((_upcomingBooking!['startTime'] as Timestamp).toDate())}',
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
-                          ),
-                          Text(
-                            'To: ${DateFormat('MMM d, hh:mm a').format((_upcomingBooking!['endTime'] as Timestamp).toDate())}',
-                            style: const TextStyle(fontSize: 14, color: Colors.black87),
-                          ),
-                          const SizedBox(height: 10),
-                          // Optionally add a button to view this specific booking
-                          Align(
-                            alignment: Alignment.centerRight,
-                            child: ElevatedButton(
-                              onPressed: () {
-                                Navigator.push(context, MaterialPageRoute(builder: (context) => BookingScreen()));
-                              },
-                              style: ElevatedButton.styleFrom(
-                                backgroundColor: Colors.lightGreen,
-                                padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
-                                shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-                              ),
-                              child: const Text('Go to Bookings', style: TextStyle(color: Colors.white)),
+                            "You have no upcoming approved bookings.",
+                            style: TextStyle(
+                              fontSize: 16,
+                              color: Colors.black54,
                             ),
+                          )
+                          : Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                _upcomingBooking!['resource']['name'] ??
+                                    'Unknown Resource', // Adjust key as per API
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'Location: ${_upcomingBooking!['resource']['location'] ?? 'N/A'}', // Adjust key as per API
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 5),
+                              Text(
+                                'From: ${DateFormat('MMM d, hh:mm a').format(DateTime.parse(_upcomingBooking!['start_time']))}', // Parse API date string
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              Text(
+                                'To: ${DateFormat('MMM d, hh:mm a').format(DateTime.parse(_upcomingBooking!['end_time']))}', // Parse API date string
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black87,
+                                ),
+                              ),
+                              const SizedBox(height: 10),
+                              Align(
+                                alignment: Alignment.centerRight,
+                                child: ElevatedButton(
+                                  onPressed: () {
+                                    Navigator.push(
+                                      context,
+                                      MaterialPageRoute(
+                                        builder: (context) => BookingScreen(),
+                                      ),
+                                    );
+                                  },
+                                  style: ElevatedButton.styleFrom(
+                                    backgroundColor: Colors.lightGreen,
+                                    padding: const EdgeInsets.symmetric(
+                                      horizontal: 20,
+                                      vertical: 10,
+                                    ),
+                                    shape: RoundedRectangleBorder(
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                  ),
+                                  child: const Text(
+                                    'Go to Bookings',
+                                    style: TextStyle(color: Colors.white),
+                                  ),
+                                ),
+                              ),
+                            ],
                           ),
-                        ],
-                      ),
                     ],
                   ),
                 ),
@@ -370,16 +410,26 @@ class _HomeState extends State<Home> {
 
             // Quick Actions: Make a New Booking & View All Resources
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Row(
                 children: [
                   Expanded(
                     child: Card(
                       elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: InkWell(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ResourcesScreen()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ResourcesScreen(),
+                            ),
+                          );
                         },
                         borderRadius: BorderRadius.circular(10),
                         child: const Padding(
@@ -387,12 +437,19 @@ class _HomeState extends State<Home> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.add_box_outlined, size: 40, color: Colors.blue),
+                              Icon(
+                                Icons.add_box_outlined,
+                                size: 40,
+                                color: Colors.blue,
+                              ),
                               SizedBox(height: 8),
                               Text(
                                 "New Booking",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
@@ -404,10 +461,17 @@ class _HomeState extends State<Home> {
                   Expanded(
                     child: Card(
                       elevation: 4,
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
                       child: InkWell(
                         onTap: () {
-                          Navigator.push(context, MaterialPageRoute(builder: (context) => const ResourcesScreen()));
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ResourcesScreen(),
+                            ),
+                          );
                         },
                         borderRadius: BorderRadius.circular(10),
                         child: const Padding(
@@ -415,12 +479,19 @@ class _HomeState extends State<Home> {
                           child: Column(
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
-                              Icon(Icons.grid_view, size: 40, color: Colors.orange),
+                              Icon(
+                                Icons.grid_view,
+                                size: 40,
+                                color: Colors.orange,
+                              ),
                               SizedBox(height: 8),
                               Text(
                                 "All Resources",
                                 textAlign: TextAlign.center,
-                                style: TextStyle(fontSize: 16, fontWeight: FontWeight.w600),
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
                               ),
                             ],
                           ),
@@ -435,32 +506,47 @@ class _HomeState extends State<Home> {
 
             // Placeholder for Announcements/News
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
                 children: [
                   const Text(
                     "Announcements & News",
-                    style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.green),
+                    style: TextStyle(
+                      fontSize: 20,
+                      fontWeight: FontWeight.bold,
+                      color: Colors.green,
+                    ),
                   ),
                   const Divider(),
                   Card(
                     elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: const ListTile(
                       leading: Icon(Icons.campaign, color: Colors.red),
                       title: Text("System Maintenance Scheduled!"),
-                      subtitle: Text("Expected downtime on 28th May, 8 AM - 10 AM. Bookings may be affected."),
+                      subtitle: Text(
+                        "Expected downtime on 28th May, 8 AM - 10 AM. Bookings may be affected.",
+                      ),
                     ),
                   ),
                   const SizedBox(height: 10),
                   Card(
                     elevation: 2,
-                    shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+                    shape: RoundedRectangleBorder(
+                      borderRadius: BorderRadius.circular(10),
+                    ),
                     child: const ListTile(
                       leading: Icon(Icons.celebration, color: Colors.purple),
                       title: Text("Resource Updates"),
-                      subtitle: Text("Currently most resources ara occupied due to clasees"),
+                      subtitle: Text(
+                        "Currently most resources are occupied due to classes",
+                      ),
                     ),
                   ),
                 ],

@@ -1,22 +1,47 @@
 import 'dart:convert';
-
 import 'package:http/http.dart' as http;
+import 'package:shared_preferences/shared_preferences.dart'; // Import for SharedPreferences
 
-class CallApi{
+class CallApi {
   final String _url = "http://127.0.0.1:8000/api/";
+  String? _token; // To store the authentication token
 
-  postData(data, apiUrl) async{
+  // Private method to get the token from SharedPreferences
+  Future<String?> _getToken() async {
+    SharedPreferences localStorage = await SharedPreferences.getInstance();
+    _token = localStorage.getString('token'); // Assuming 'token' is the key you used to store it
+    return _token;
+  }
+
+  // Method for POST requests
+  postData(data, apiUrl) async {
     var fullUrl = _url + apiUrl;
     return await http.post(
       Uri.parse(fullUrl),
       body: jsonEncode(data),
-      headers: _setHeaders(),
+      headers: await _setHeaders(), // Await headers as they now fetch token
     );
   }
 
-  _setHeaders() => {    
+  // Method for GET requests
+  getData(apiUrl) async {
+    var fullUrl = _url + apiUrl;
+    return await http.get(
+      Uri.parse(fullUrl),
+      headers: await _setHeaders(), // Await headers as they now fetch token
+    );
+  }
+
+  // Helper method to set common headers, now including Authorization
+  _setHeaders() async {
+    await _getToken(); // Ensure token is fetched before setting headers
+    var headers = {
       'Content-Type': 'application/json',
       'Accept': 'application/json',
-  };
+    };
+    if (_token != null) {
+      headers['Authorization'] = 'Bearer $_token'; // Add Authorization header if token exists
+    }
+    return headers;
+  }
 }
-

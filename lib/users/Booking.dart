@@ -1,13 +1,19 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:intl/intl.dart' show DateFormat;
+import 'package:resource_booking_app/auth/Auth.dart';
+import 'package:resource_booking_app/components/BottomBar.dart';
+import 'package:resource_booking_app/users/booking_details_page.dart';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'dart:convert'; // For json.decode
+import 'package:resource_booking_app/auth/Api.dart'; // Your API service
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
+import 'package:resource_booking_app/models/booking.dart'; // Import your new Booking model
+// Assuming this is where you handle initial auth redirection
 
 class BookingScreen extends StatefulWidget {
   BookingScreen({super.key});
@@ -17,19 +23,18 @@ class BookingScreen extends StatefulWidget {
 }
 
 class _BookingScreenState extends State<BookingScreen> {
-  final user = FirebaseAuth.instance.currentUser!;
   String _searchQuery = '';
   bool _isSearching = false;
   final TextEditingController _searchController = TextEditingController();
 
-  void logout() {
-    FirebaseAuth.instance.signOut();
-  }
+  Future<List<Booking>>? _bookingsFuture;
+  int? _userId; // To store the authenticated user's ID
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _loadUserIdAndFetchBookings();
   }
 
   @override
@@ -37,6 +42,24 @@ class _BookingScreenState extends State<BookingScreen> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  Future<void> _loadUserIdAndFetchBookings() async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    setState(() {
+      _userId = prefs.getInt('user_id');
+    });
+    if (_userId != null) {
+      _bookingsFuture = fetchBookings();
+    } else {
+      // Handle case where user ID is not found (e.g., redirect to login)
+      print("User ID not found in shared preferences. Redirecting to login.");
+      Navigator.pushAndRemoveUntil(
+        context,
+        MaterialPageRoute(builder: (context) => Auth()), // Redirect to AuthGate or LoginScreen
+        (Route<dynamic> route) => false,
+      );
+    }
   }
 
   void _onSearchChanged() {
@@ -55,30 +78,91 @@ class _BookingScreenState extends State<BookingScreen> {
     });
   }
 
+  Future<List<Booking>> fetchBookings() async {
+    try {
+      // Assuming CallApi().getData includes the token in headers automatically
+      // And 'get_user_bookings' is the API endpoint for fetching current user's bookings.
+      // Your Laravel backend should filter bookings based on the authenticated user.
+      final res = await CallApi().getData('bookings'); // Or 'bookings/user/$_userId' if needed
+      final body = json.decode(res.body);
+
+      if (res.statusCode == 200 && body['success'] == true) {
+        List<dynamic> bookingJson = body['bookings']; // Assuming 'bookings' is the key holding the array
+        return bookingJson.map((json) => Booking.fromJson(json)).toList();
+      } else {
+        // Handle API error messages
+        String errorMessage = body['message'] ?? 'Failed to load bookings.';
+        throw Exception(errorMessage);
+      }
+    } catch (e) {
+      print("Error fetching bookings: $e");
+      throw Exception('Failed to fetch bookings: $e');
+    }
+  }
+
+  void logout() async {
+    // Show a confirmation dialog
+    final bool confirmLogout = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // User cancels
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true), // User confirms
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
+                child: const Text('Logout', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false; 
+
+    if (confirmLogout) {
+   
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (mounted) {
+        // Navigate to your login/auth screen and remove all previous routes
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        ); // Assuming '/' is your initial login route
+       
+      }
+    }
+
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: Bottombar(),
       appBar: MyAppBar(
-        titleWidget:
-            _isSearching
-                ? TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: Colors.white, fontSize: 18),
-                  decoration: const InputDecoration(
-                    hintText: 'Search bookings...',
-                    hintStyle: TextStyle(color: Colors.white70),
-                    border: InputBorder.none,
-                    prefixIcon: Icon(Icons.search, color: Colors.white),
-                  ),
-                )
-                : const Text(
-                  "My Bookings",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+        titleWidget: _isSearching
+            ? TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white, fontSize: 18),
+                decoration: const InputDecoration(
+                  hintText: 'Search bookings...',
+                  hintStyle: TextStyle(color: Colors.white70),
+                  border: InputBorder.none,
+                  prefixIcon: Icon(Icons.search, color: Colors.white),
                 ),
+              )
+            : const Text(
+                "My Bookings",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
         onSearchPressed: _toggleSearching,
         isSearching: _isSearching,
       ),
@@ -103,8 +187,7 @@ class _BookingScreenState extends State<BookingScreen> {
                   ),
                   const Text(
                     'Campus Resource Booking',
-                    style: TextStyle(
-                        color: Colors.white, fontSize: 15),
+                    style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
                 ],
               ),
@@ -143,14 +226,13 @@ class _BookingScreenState extends State<BookingScreen> {
               title: const Text('Bookings'),
               leading: const Icon(Icons.book_online, color: Colors.blueAccent),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Already on this screen
               },
             ),
-             ListTile(
+            ListTile(
               title: const Text('Notifications'),
-              leading: const Icon(Icons.notifications), // Highlight current page
+              leading: const Icon(Icons.notifications),
               onTap: () {
-                // Already on notifications screen, close drawer
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => NotificationScreen()));
               },
             ),
@@ -184,183 +266,193 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
           Expanded(
-            child: StreamBuilder<QuerySnapshot>(
-              stream:
-                  FirebaseFirestore.instance
-                      .collection('bookings')
-                      .where('userId', isEqualTo: user.uid)
-                      // .orderBy('startTime', descending: true) // Ordering for better display
-                      .snapshots(),
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                }
+            child: _userId == null // Show loading or error if user ID is not loaded
+                ? const Center(child: CircularProgressIndicator())
+                : FutureBuilder<List<Booking>>(
+                    future: _bookingsFuture,
+                    builder: (context, snapshot) {
+                      if (snapshot.connectionState == ConnectionState.waiting) {
+                        return const Center(child: CircularProgressIndicator());
+                      }
 
-                if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                }
+                      if (snapshot.hasError) {
+                        return Center(child: Text('Error: ${snapshot.error}'));
+                      }
 
-                if (!snapshot.hasData || snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'You have no active bookings.',
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                  );
-                }
+                      if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'You have no active bookings.',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        );
+                      }
 
-                final filteredDocs =
-                    snapshot.data!.docs.where((booking) {
-                      final resourceName =
-                          (booking['resourceName'] ?? '')
-                              .toString()
-                              .toLowerCase();
-                      final purpose =
-                          (booking['purpose'] ?? '').toString().toLowerCase();
-                      final location =
-                          (booking['resourceLocation'] ?? '')
-                              .toString()
-                              .toLowerCase();
-                      final status =
-                          (booking['status'] ?? '').toString().toLowerCase();
+                      final allBookings = snapshot.data!;
+                      final filteredBookings = allBookings.where((booking) {
+                        final resourceName = booking.resourceName.toLowerCase();
+                        final purpose = booking.purpose.toLowerCase();
+                        final location = booking.resourceLocation.toLowerCase();
+                        final status = booking.status.toLowerCase();
 
-                      return resourceName.contains(_searchQuery) ||
-                          purpose.contains(_searchQuery) ||
-                          location.contains(_searchQuery) ||
-                          status.contains(_searchQuery);
-                    }).toList();
+                        return resourceName.contains(_searchQuery) ||
+                            purpose.contains(_searchQuery) ||
+                            location.contains(_searchQuery) ||
+                            status.contains(_searchQuery);
+                      }).toList();
 
-                if (filteredDocs.isEmpty) {
-                  return const Center(
-                    child: Text(
-                      'No matching bookings found.',
-                      style: TextStyle(fontSize: 18, color: Colors.grey),
-                    ),
-                  );
-                }
+                      if (filteredBookings.isEmpty) {
+                        return const Center(
+                          child: Text(
+                            'No matching bookings found.',
+                            style: TextStyle(fontSize: 18, color: Colors.grey),
+                          ),
+                        );
+                      }
 
-                return ListView.builder(
-                  itemCount: filteredDocs.length,
-                  itemBuilder: (context, index) {
-                    var booking = filteredDocs[index];
-                    String resourceName = booking['resourceName'] ?? 'N/A';
-                    String resourceLocation =
-                        booking['resourceLocation'] ?? 'N/A';
-                    String purpose =
-                        booking['purpose'] ?? 'No purpose provided';
-                    Timestamp startTime = booking['startTime'];
-                    Timestamp endTime = booking['endTime'];
-                    String status = booking['status'] ?? 'unknown';
+                      return ListView.builder(
+                        itemCount: filteredBookings.length,
+                        itemBuilder: (context, index) {
+                          var booking = filteredBookings[index];
+                          String formattedStartTime = DateFormat(
+                            'MMM d, yyyy HH:mm', // Changed format to yyyy for clarity
+                          ).format(booking.startTime);
+                          String formattedEndTime = DateFormat(
+                            'MMM d, yyyy HH:mm',
+                          ).format(booking.endTime);
 
-                    String formattedStartTime = DateFormat(
-                      'MMM d, yyyy HH:mm',
-                    ).format(startTime.toDate());
-                    String formattedEndTime = DateFormat(
-                      'MMM d, yyyy HH:mm',
-                    ).format(endTime.toDate());
+                          Color statusColor;
+                          switch (booking.status.toLowerCase()) {
+                            case 'pending':
+                              statusColor = Colors.orange;
+                              break;
+                            case 'approved':
+                              statusColor = Colors.green;
+                              break;
+                            case 'rejected':
+                              statusColor = Colors.red;
+                              break;
+                            case 'cancelled':
+                              statusColor = Colors.grey;
+                              break;
+                            default:
+                              statusColor = Colors.grey;
+                          }
 
-                    Color statusColor;
-                    switch (status.toLowerCase()) {
-                      case 'pending':
-                        statusColor = Colors.orange;
-                        break;
-                      case 'approved':
-                        statusColor = Colors.green;
-                        break;
-                      case 'rejected':
-                        statusColor = Colors.red;
-                        break;
-                      case 'cancelled':
-                        statusColor = Colors.grey;
-                        break;
-                      default:
-                        statusColor = Colors.grey;
-                    }
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(
-                        horizontal: 16.0,
-                        vertical: 8.0,
-                      ),
-                      elevation: 4,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                      child: Padding(
-                        padding: const EdgeInsets.all(16.0),
-                        child: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(
-                              resourceName,
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blueAccent,
+                          return GestureDetector(
+                            onTap: () {
+                              // Handle tap if needed, e.g., navigate to booking details
+                              print('Tapped on booking: ${booking.resourceName}');
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => BookingDetailsPage(booking: booking),
+                                ),
+                              );
+                            },
+                            child: Card(
+                              margin: const EdgeInsets.symmetric(
+                                horizontal: 16.0,
+                                vertical: 8.0,
                               ),
-                            ),
-                            const SizedBox(height: 8),
-                            Text(
-                              'Location: $resourceLocation',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(height: 4),
-                            Text(
-                              'Purpose: $purpose',
-                              style: const TextStyle(fontSize: 16),
-                            ),
-                            const SizedBox(height: 8),
-                            const Divider(),
-                            Row(
-                              mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                              children: [
-                                Column(
+                              elevation: 4,
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              child: Padding(
+                                padding: const EdgeInsets.all(16.0),
+                                child: Column(
                                   crossAxisAlignment: CrossAxisAlignment.start,
                                   children: [
                                     Text(
-                                      'Start: $formattedStartTime',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
-                                    ),
-                                    Text(
-                                      'End: $formattedEndTime',
-                                      style: const TextStyle(
-                                        fontSize: 14,
-                                        color: Colors.grey,
-                                      ),
+                                          booking.resourceName,
+                                          style: const TextStyle(
+                                            fontSize: 20,
+                                            fontWeight: FontWeight.bold,
+                                            color: Colors.blueAccent,
+                                          ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Location: ${booking.resourceLocation}',
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                        const SizedBox(height: 4),
+                                        Text(
+                                          'Purpose: ${booking.purpose}',
+                                          style: const TextStyle(fontSize: 16),
+                                        ),
+                                        const SizedBox(height: 8),
+                            
+                                        // Add other resource details here
+                                        if (booking.resourceDescription != null && booking.resourceDescription!.isNotEmpty) ...[
+                                          Text(
+                                            'Description: ${booking.resourceDescription}',
+                                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                          ),
+                                          const SizedBox(height: 4),
+                                        ],
+                                        if (booking.resourceCapacity != null) ...[
+                                          Text(
+                                            'Capacity: ${booking.resourceCapacity}',
+                                            style: const TextStyle(fontSize: 14, color: Colors.black87),
+                                          ),
+                                          const SizedBox(height: 4),
+                                        ],
+                            
+                            
+                                    const Divider(),
+                                    Row(
+                                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                                      children: [
+                                        Column(
+                                          crossAxisAlignment: CrossAxisAlignment.start,
+                                          children: [
+                                            Text(
+                                              'Start: $formattedStartTime',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                            Text(
+                                              'End: $formattedEndTime',
+                                              style: const TextStyle(
+                                                fontSize: 14,
+                                                color: Colors.grey,
+                                              ),
+                                            ),
+                                          ],
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: statusColor.withOpacity(0.2),
+                                            borderRadius: BorderRadius.circular(5),
+                                          ),
+                                          child: Text(
+                                            booking.status.toUpperCase(),
+                                            style: TextStyle(
+                                              color: statusColor,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
                                     ),
                                   ],
                                 ),
-                                Container(
-                                  padding: const EdgeInsets.symmetric(
-                                    horizontal: 8,
-                                    vertical: 4,
-                                  ),
-                                  decoration: BoxDecoration(
-                                    color: statusColor.withOpacity(0.2),
-                                    borderRadius: BorderRadius.circular(5),
-                                  ),
-                                  child: Text(
-                                    status.toUpperCase(),
-                                    style: TextStyle(
-                                      color: statusColor,
-                                      fontWeight: FontWeight.bold,
-                                      fontSize: 12,
-                                    ),
-                                  ),
-                                ),
-                              ],
+                              ),
                             ),
-                          ],
-                        ),
-                      ),
-                    );
-                  },
-                );
-              },
-            ),
+                          );
+                        },
+                      );
+                    },
+                  ),
           ),
         ],
       ),

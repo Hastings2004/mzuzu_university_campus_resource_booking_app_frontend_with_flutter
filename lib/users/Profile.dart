@@ -1,28 +1,27 @@
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart'; // Import Firestore
+import 'package:resource_booking_app/components/BottomBar.dart';
+import 'dart:convert'; // For json.decode
+import 'package:resource_booking_app/auth/Api.dart'; // Your API service
 import 'package:resource_booking_app/components/AppBar.dart';
-import 'package:resource_booking_app/read_data/getUserData.dart'; // Assuming this fetches user data
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Resourse.dart'; // Ensure this is `ResourcesScreen`
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/users/EditProfile.dart'; // Your EditProfileScreen
+import 'package:resource_booking_app/models/user_model.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Import your new UserModel
 
 class ProfileScreen extends StatefulWidget {
-  const ProfileScreen({super.key}); // Use const constructor
+  const ProfileScreen({super.key});
 
   @override
   State<ProfileScreen> createState() => _ProfileScreenState();
 }
 
 class _ProfileScreenState extends State<ProfileScreen> {
-  final User? user = FirebaseAuth.instance.currentUser; // Make it nullable
-  String? currentUserDocID;
-  String _firstName = 'Loading...';
-  String _lastName = '';
-  String _email = 'Loading...';
+  UserModel? _userProfile; // Store the fetched user profile
+  bool _isLoading = true; // To show loading indicator
 
   @override
   void initState() {
@@ -31,58 +30,103 @@ class _ProfileScreenState extends State<ProfileScreen> {
   }
 
   Future<void> _fetchUserData() async {
-    if (user != null) {
-      currentUserDocID = user!.uid;
-      _email = user!.email ?? 'No Email'; // Get email from FirebaseAuth
-
-      // Fetch additional user data from Firestore
+      setState(() {
+        _isLoading = true;
+      });
       try {
-        DocumentSnapshot userDoc = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user!.uid)
-            .get();
+        // Call the dedicated profile endpoint
+        final res = await CallApi().getData('profile'); 
+        final body = json.decode(res.body);
+        print("API Response Body for user profile: $body"); // Debugging line
 
-        if (userDoc.exists && userDoc.data() is Map<String, dynamic>) {
-          Map<String, dynamic> userData = userDoc.data() as Map<String, dynamic>;
-          setState(() {
-            _firstName = userData['first_name'] ?? 'N/A';
-            _lastName = userData['last_name'] ?? 'N/A';
-            // You can fetch other fields like phone, student ID, etc. here
-          });
+        if (res.statusCode == 200 && body['success'] == true) {
+          if (body.containsKey('user') && body['user'] is Map<String, dynamic>) {
+            setState(() {
+              _userProfile = UserModel.fromJson(body['user']);
+            });
+          } else {
+            String errorMessage = 'User data not found or invalid in response from /profile.';
+            if (mounted) {
+              ScaffoldMessenger.of(context).showSnackBar(
+                SnackBar(content: Text(errorMessage)),
+              );
+            }
+            print("Error: $errorMessage. Full body: $body");
+          }
         } else {
-          setState(() {
-            _firstName = 'User Data';
-            _lastName = 'Not Found';
-          });
+          String errorMessage = body['message'] ?? 'Failed to load user profile.';
+          if (mounted) {
+            ScaffoldMessenger.of(context).showSnackBar(
+              SnackBar(content: Text(errorMessage)),
+            );
+          }
+          if (res.statusCode == 401 || res.statusCode == 403) {
+            if (mounted) {
+              logout(); // Force logout if unauthorized or forbidden
+            }
+          }
         }
       } catch (e) {
         print("Error fetching user data: $e");
-        setState(() {
-          _firstName = 'Error';
-          _lastName = '';
-        });
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text('Failed to load profile: $e')),
+          );
+        }
+      } finally {
+        if (mounted) {
+          setState(() {
+            _isLoading = false;
+          });
+        }
       }
-    } else {
-      // Handle case where user is null (not logged in, though unlikely to reach here)
-      setState(() {
-        _firstName = 'Not Logged In';
-        _email = 'N/A';
-      });
     }
-  }
 
   void logout() async {
-    await FirebaseAuth.instance.signOut();
-    if (mounted) {
-      Navigator.of(context).popUntil((route) => route.isFirst);
-      // Navigate to your login/auth screen
-      // e.g., Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthPage()));
+    // Show a confirmation dialog
+    final bool confirmLogout = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // User cancels
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true), // User confirms
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
+                child: const Text('Logout', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false; 
+
+    if (confirmLogout) {
+   
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (mounted) {
+        // Navigate to your login/auth screen and remove all previous routes
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        ); // Assuming '/' is your initial login route
+       
+      }
     }
+
   }
 
   @override
   Widget build(BuildContext context) {
+    // ... (your existing build method)
+    // Pay attention to where _userProfile is used, ensure it's not null before accessing properties
     return Scaffold(
+      bottomNavigationBar: Bottombar(),
       appBar: MyAppBar(
         titleWidget: const Text(
           "Profile",
@@ -92,6 +136,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
             color: Colors.white,
           ),
         ),
+
       ),
       drawer: Drawer(
         child: ListView(
@@ -102,7 +147,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
                 color: Color.fromARGB(255, 20, 148, 24),
               ),
               child: Column(
-                mainAxisAlignment: MainAxisAlignment.center, // Center items
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset(
                     "assets/images/logo.png",
@@ -130,7 +175,7 @@ class _ProfileScreenState extends State<ProfileScreen> {
               title: const Text('Home'),
               leading: const Icon(Icons.home),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) =>  Home()));
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home()));
               },
             ),
             ListTile(
@@ -177,174 +222,177 @@ class _ProfileScreenState extends State<ProfileScreen> {
           ],
         ),
       ),
-      body: user == null || currentUserDocID == null
+      body: _isLoading
           ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-        child: Column(
-          children: [
-            Container(
-              width: double.infinity,
-              padding: const EdgeInsets.all(20.0),
-              decoration: const BoxDecoration(
-                color: Color.fromARGB(255, 220, 240, 220), // Light green background
-                borderRadius: BorderRadius.only(
-                  bottomLeft: Radius.circular(30),
-                  bottomRight: Radius.circular(30),
-                ),
-              ),
-              child: Column(
-                children: [
-                  CircleAvatar(
-                    radius: 50,
-                    backgroundColor: Colors.green.shade100,
-                    child: Icon(
-                      Icons.person,
-                      size: 60,
-                      color: Colors.green.shade700,
-                    ),
-                    // Future: Use NetworkImage(user?.photoURL ?? 'default_avatar.png')
-                  ),
-                  const SizedBox(height: 10),
-                  Text(
-                    '$_firstName $_lastName',
-                    style: const TextStyle(
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 5),
-                  Text(
-                    _email,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Colors.black54,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  ElevatedButton.icon(
-                    onPressed: () {
-                      // Navigate to the EditProfileScreen
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => EditProfileScreen(
-                            userDocId: currentUserDocID!,
-                          ),
-                        ),
-                      ).then((_) {
-                        // When returning from EditProfileScreen, refresh the data
-                        _fetchUserData();
-                      });
-                    },
-                    icon: const Icon(Icons.edit, color: Colors.white),
-                    label: const Text(
-                      'Edit Profile',
-                      style: TextStyle(fontSize: 16, color: Colors.white),
-                    ),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                      const Color.fromARGB(255, 20, 148, 24),
-                      padding: const EdgeInsets.symmetric(
-                          horizontal: 25, vertical: 10),
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(20),
+          : _userProfile == null
+                // Show a clear message if user data couldn't be loaded or isn't available
+                ? const Center(
+                      child: Text(
+                          "Failed to load user data. Please ensure you are logged in and try again.",
+                          textAlign: TextAlign.center,
+                          style: TextStyle(fontSize: 16, color: Colors.red),
                       ),
-                    ),
+                  )
+                : SingleChildScrollView(
+                      child: Column(
+                          children: [
+                            Container(
+                                width: double.infinity,
+                                padding: const EdgeInsets.all(20.0),
+                                decoration: const BoxDecoration(
+                                    color: Color.fromARGB(255, 220, 240, 220), // Light green background
+                                    borderRadius: BorderRadius.only(
+                                        bottomLeft: Radius.circular(30),
+                                        bottomRight: Radius.circular(30),
+                                    ),
+                                ),
+                                child: Column(
+                                    children: [
+                                        CircleAvatar(
+                                            radius: 50,
+                                            backgroundColor: Colors.green.shade100,
+                                            child: Icon(
+                                                Icons.person,
+                                                size: 60,
+                                                color: Colors.green.shade700,
+                                            ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Text(
+                                            '${_userProfile!.firstName} ${_userProfile!.lastName}',
+                                            style: const TextStyle(
+                                                fontSize: 24,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                            ),
+                                        ),
+                                        const SizedBox(height: 5),
+                                        Text(
+                                            _userProfile!.email,
+                                            style: const TextStyle(
+                                                fontSize: 16,
+                                                color: Colors.black54,
+                                            ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        ElevatedButton.icon(
+                                            onPressed: () {
+                                                // Navigate to the EditProfileScreen
+                                                Navigator.push(
+                                                    context,
+                                                    MaterialPageRoute(
+                                                        builder: (context) => EditProfileScreen(
+                                                            userProfile: _userProfile!, userId: _userProfile!.id,
+                                                        ),
+                                                    ),
+                                                ).then((_) {
+                                                    // When returning from EditProfileScreen, refresh the data
+                                                    _fetchUserData();
+                                                });
+                                            },
+                                            icon: const Icon(Icons.edit, color: Colors.white),
+                                            label: const Text(
+                                                'Edit Profile',
+                                                style: TextStyle(fontSize: 16, color: Colors.white),
+                                            ),
+                                            style: ElevatedButton.styleFrom(
+                                                backgroundColor: const Color.fromARGB(255, 20, 148, 24),
+                                                padding: const EdgeInsets.symmetric(horizontal: 25, vertical: 10),
+                                                shape: RoundedRectangleBorder(
+                                                    borderRadius: BorderRadius.circular(20),
+                                                ),
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ),
+                            const SizedBox(height: 20),
+                            Padding(
+                                padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                                child: Column(
+                                    crossAxisAlignment: CrossAxisAlignment.start,
+                                    children: [
+                                        const Text(
+                                            "Additional Details:",
+                                            style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                            ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Card(
+                                            elevation: 2,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Column(
+                                                children: [
+                                                    ListTile(
+                                                        leading: const Icon(Icons.person_outline, color: Colors.green),
+                                                        title: const Text('Full Name'),
+                                                        subtitle: Text('${_userProfile!.firstName} ${_userProfile!.lastName}'),
+                                                    ),
+                                                    const Divider(indent: 16, endIndent: 16),
+                                                    ListTile(
+                                                        leading: const Icon(Icons.email_outlined, color: Colors.green),
+                                                        title: const Text('Email'),
+                                                        subtitle: Text(_userProfile!.email),
+                                                    ),
+                                                    const Divider(indent: 16, endIndent: 16),
+                                                    if (_userProfile!.phoneNumber != null && _userProfile!.phoneNumber!.isNotEmpty)
+                                                        ListTile(
+                                                            leading: const Icon(Icons.phone, color: Colors.green),
+                                                            title: const Text('Phone Number'),
+                                                            subtitle: Text(_userProfile!.phoneNumber!),
+                                                        ),
+                                                    if (_userProfile!.phoneNumber != null && _userProfile!.phoneNumber!.isNotEmpty)
+                                                        const Divider(indent: 16, endIndent: 16),
+                                                    if (_userProfile!.studentId != null && _userProfile!.studentId!.isNotEmpty)
+                                                        ListTile(
+                                                            leading: const Icon(Icons.school, color: Colors.green),
+                                                            title: const Text('Student ID'),
+                                                            subtitle: Text(_userProfile!.studentId!),
+                                                        ),
+                                                    if (_userProfile!.studentId != null && _userProfile!.studentId!.isNotEmpty)
+                                                        const Divider(indent: 16, endIndent: 16),
+                                                ],
+                                            ),
+                                        ),
+                                        const SizedBox(height: 20),
+                                        const Text(
+                                            "Account Management:",
+                                            style: TextStyle(
+                                                fontSize: 20,
+                                                fontWeight: FontWeight.bold,
+                                                color: Colors.black87,
+                                            ),
+                                        ),
+                                        const SizedBox(height: 10),
+                                        Card(
+                                            elevation: 2,
+                                            shape: RoundedRectangleBorder(
+                                                borderRadius: BorderRadius.circular(10),
+                                            ),
+                                            child: Column(
+                                                children: [
+                                                    ListTile(
+                                                        leading: const Icon(Icons.lock_reset, color: Colors.orange),
+                                                        title: const Text('Change Password'),
+                                                        trailing: const Icon(Icons.arrow_forward_ios),
+                                                        onTap: () {
+                                                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SettingsScreen()));
+                                                        },
+                                                    ),
+                                                ],
+                                            ),
+                                        ),
+                                    ],
+                                ),
+                            ),
+                          ],
+                      ),
                   ),
-                ],
-              ),
-            ),
-            const SizedBox(height: 20),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Column(
-                crossAxisAlignment: CrossAxisAlignment.start,
-                children: [
-                  const Text(
-                    "Additional Details:",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.person_outline, color: Colors.green),
-                          title: const Text('Full Name'),
-                          subtitle: Text('$_firstName $_lastName'),
-                        ),
-                        const Divider(indent: 16, endIndent: 16),
-                        ListTile(
-                          leading: const Icon(Icons.email_outlined, color: Colors.green),
-                          title: const Text('Email'),
-                          subtitle: Text(_email),
-                        ),
-                        const Divider(indent: 16, endIndent: 16),
-                        // Example of another detail you might fetch from Firestore
-                        // ListTile(
-                        //   leading: const Icon(Icons.phone, color: Colors.green),
-                        //   title: const Text('Phone Number'),
-                        //   subtitle: Text(userPhoneNumber ?? 'N/A'),
-                        // ),
-                        // const Divider(indent: 16, endIndent: 16),
-                        // ListTile(
-                        //   leading: const Icon(Icons.school, color: Colors.green),
-                        //   title: const Text('Student ID'),
-                        //   subtitle: Text(userStudentId ?? 'N/A'),
-                        // ),
-                      ],
-                    ),
-                  ),
-                  const SizedBox(height: 20),
-
-                  // Section for Account Management
-                  const Text(
-                    "Account Management:",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Colors.black87,
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: Column(
-                      children: [
-                        ListTile(
-                          leading: const Icon(Icons.lock_reset, color: Colors.orange),
-                          title: const Text('Change Password'),
-                          trailing: const Icon(Icons.arrow_forward_ios),
-                          onTap: () {
-                            // Implement navigation to a Change Password screen
-                            //ScaffoldMessenger.of(context).showSnackBar(
-                             // const SnackBar(content: Text('Change Password functionality coming soon!')),
-                            //);
-                            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context)=> SettingsScreen()));
-                          },
-                        ),
-                        // You could add "Delete Account" here as well
-                      ],
-                    ),
-                  ),
-                ],
-              ),
-            ),
-          ],
-        ),
-      ),
     );
   }
 }

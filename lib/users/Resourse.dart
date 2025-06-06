@@ -1,39 +1,39 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
-import 'package:firebase_auth/firebase_auth.dart';
+import 'package:resource_booking_app/auth/Auth.dart';
+import 'package:resource_booking_app/components/BottomBar.dart';
+import 'dart:convert'; // For JSON encoding/decoding
+import 'package:shared_preferences/shared_preferences.dart'; // For managing session
+
+import 'package:resource_booking_app/auth/Api.dart'; // Your custom API service
 import 'package:resource_booking_app/components/AppBar.dart';
+import 'package:resource_booking_app/models/resource_model.dart'; // Your custom resource model
 import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/ResourceDetails.dart';
+import 'package:resource_booking_app/users/ResourceDetails.dart'; // Ensure this uses ResourceModel
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 
+
 class ResourcesScreen extends StatefulWidget {
   const ResourcesScreen({super.key});
 
   @override
-  _ResourseScreenState createState() => _ResourseScreenState();
+  _ResourcesScreenState createState() => _ResourcesScreenState();
 }
 
-class _ResourseScreenState extends State<ResourcesScreen> {
-  final user = FirebaseAuth.instance.currentUser!;
+class _ResourcesScreenState extends State<ResourcesScreen> {
   final TextEditingController _searchController = TextEditingController();
   String _searchQuery = '';
   bool _isSearching = false; // State to control search bar visibility
-
-  final CollectionReference items = FirebaseFirestore.instance.collection(
-    "products",
-  );
-
-  void logout() {
-    FirebaseAuth.instance.signOut();
-  }
+  List<ResourceModel> _allResources = []; // To store all fetched resources
+  Future<List<ResourceModel>>? _resourcesFuture; // Future for fetching resources
 
   @override
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
+    _resourcesFuture = _fetchResources(); // Initial fetch
   }
 
   @override
@@ -41,6 +41,31 @@ class _ResourseScreenState extends State<ResourcesScreen> {
     _searchController.removeListener(_onSearchChanged);
     _searchController.dispose();
     super.dispose();
+  }
+
+  // Fetches all resources from the API
+  Future<List<ResourceModel>> _fetchResources() async {
+    try {
+      final response = await CallApi().getData('resources'); // Adjust your API endpoint
+      final body = json.decode(response.body);
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        List<dynamic> resourceJson = body['resources']; // Assuming 'resources' is the key in your JSON response
+        _allResources = resourceJson.map((json) => ResourceModel.fromJson(json)).toList();
+        return _allResources;
+      } else {
+        // Handle error message from API
+        throw Exception(body['message'] ?? 'Failed to load resources');
+      }
+    } catch (e) {
+      print('Error fetching resources: $e');
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(content: Text('Failed to load resources: $e')),
+        );
+      }
+      return []; // Return empty list on error
+    }
   }
 
   void _onSearchChanged() {
@@ -59,34 +84,69 @@ class _ResourseScreenState extends State<ResourcesScreen> {
     });
   }
 
+  void logout() async {
+    // Show a confirmation dialog
+    final bool confirmLogout = await showDialog(
+          context: context,
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false), // User cancels
+                child: const Text('Cancel'),
+              ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true), // User confirms
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
+                child: const Text('Logout', style: TextStyle(color: Colors.white)),
+              ),
+            ],
+          ),
+        ) ??
+        false; 
+
+    if (confirmLogout) {
+   
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      await prefs.clear();
+
+      if (mounted) {
+        // Navigate to your login/auth screen and remove all previous routes
+        Navigator.of(context).pushNamedAndRemoveUntil(
+          '/',
+          (route) => false,
+        ); // Assuming '/' is your initial login route
+       
+      }
+    }
+
+  }
   @override
   Widget build(BuildContext context) {
     return Scaffold(
+      bottomNavigationBar: Bottombar(),
       appBar: MyAppBar(
-        titleWidget:
-            _isSearching
-                ? TextField(
-                  controller: _searchController,
-                  style: const TextStyle(color: Colors.white),
-                  decoration: InputDecoration(
-                    hintText: 'Search by name, location, or description...',
-                    hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                    border: InputBorder.none,
-                    // Removed prefixIcon from here, it's now handled by the AppBar's action icon
-                  ),
-                )
-                : const Text(
-                  "Resources",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.white,
-                  ),
+        titleWidget: _isSearching
+            ? TextField(
+                controller: _searchController,
+                style: const TextStyle(color: Colors.white),
+                decoration: InputDecoration(
+                  hintText: 'Search by name, location, or description...',
+                  hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
+                  border: InputBorder.none,
                 ),
+              )
+            : const Text(
+                "Resources",
+                style: TextStyle(
+                  fontSize: 20,
+                  fontWeight: FontWeight.bold,
+                  color: Colors.white,
+                ),
+              ),
         onSearchPressed: _toggleSearch, // Pass the toggle function
         isSearching: _isSearching, // Pass the current search state
-        // The bottom property is no longer needed here as the TextField replaces the title
-        // when _isSearching is true.
       ),
       drawer: Drawer(
         child: ListView(
@@ -97,6 +157,7 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                 color: Color.fromARGB(255, 20, 148, 24),
               ),
               child: Column(
+                mainAxisAlignment: MainAxisAlignment.center,
                 children: [
                   Image.asset("assets/images/logo.png", height: 50),
                   const Text(
@@ -114,7 +175,6 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                 ],
               ),
             ),
-
             ListTile(
               title: const Text('Home'),
               leading: const Icon(Icons.home),
@@ -139,7 +199,7 @@ class _ResourseScreenState extends State<ResourcesScreen> {
               title: const Text('Resources'),
               leading: const Icon(Icons.grid_view, color: Colors.blueAccent),
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Already on this screen, close drawer
               },
             ),
             ListTile(
@@ -152,14 +212,13 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                 );
               },
             ),
-             ListTile(
+            ListTile(
               title: const Text('Notifications'),
-              leading: const Icon(Icons.notifications), // Highlight current page
+              leading: const Icon(Icons.notifications),
               onTap: () {
-                // Already on notifications screen, close drawer
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => NotificationScreen()),
+                  MaterialPageRoute(builder: (context) => const NotificationScreen()),
                 );
               },
             ),
@@ -167,9 +226,10 @@ class _ResourseScreenState extends State<ResourcesScreen> {
               title: const Text('Settings'),
               leading: const Icon(Icons.settings),
               onTap: () {
-               
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => SettingsScreen()));
-            
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
               },
             ),
             const Divider(), // Separator
@@ -179,31 +239,34 @@ class _ResourseScreenState extends State<ResourcesScreen> {
               onTap: logout,
             ),
             const SizedBox(height: 30),
-
           ],
         ),
       ),
-      body: StreamBuilder(
-        stream: items.snapshots(), // We'll filter the results in the builder
-        builder: (context, AsyncSnapshot<QuerySnapshot> streamSnapshot) {
-          if (streamSnapshot.hasData) {
-            final filteredDocs =
-                streamSnapshot.data!.docs.where((document) {
-                  if (_searchQuery.isEmpty) {
-                    return true; // Show all if search query is empty
-                  }
-                  final name = document['name']?.toLowerCase() ?? '';
-                  final location = document['location']?.toLowerCase() ?? '';
-                  //final description =
-                  //  document['description']?.toLowerCase() ??
-                  // ''; // Assuming you have a 'description' field
+      body: FutureBuilder<List<ResourceModel>>(
+        future: _resourcesFuture, // Use the Future from initial fetch
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No resources available.'));
+          } else {
+            // Filter resources based on search query
+            final filteredResources = snapshot.data!.where((resource) {
+              if (_searchQuery.isEmpty) {
+                return true; // Show all if search query is empty
+              }
+              final name = resource.name.toLowerCase();
+              final location = resource.location.toLowerCase();
+              final description = resource.description?.toLowerCase() ?? ''; // Include description in search
 
-                  return name.contains(_searchQuery) ||
-                      location.contains(_searchQuery);
-                  //description.contains(_searchQuery);
-                }).toList();
+              return name.contains(_searchQuery) ||
+                     location.contains(_searchQuery) ||
+                     description.contains(_searchQuery);
+            }).toList();
 
-            if (filteredDocs.isEmpty && _searchQuery.isNotEmpty) {
+            if (filteredResources.isEmpty && _searchQuery.isNotEmpty) {
               return const Center(
                 child: Text(
                   'No matching resources found.',
@@ -213,85 +276,102 @@ class _ResourseScreenState extends State<ResourcesScreen> {
             }
 
             return ListView.builder(
-              itemCount: filteredDocs.length,
+              itemCount: filteredResources.length,
+              padding: const EdgeInsets.all(8.0),
               itemBuilder: (context, index) {
-                final DocumentSnapshot document = filteredDocs[index];
-                String? photoUrl = document['image'];
+                final resource = filteredResources[index];
+                String? imageUrl = resource.imageUrl;
 
                 return Padding(
-                  padding: const EdgeInsets.all(8.0),
+                  padding: const EdgeInsets.symmetric(vertical: 8.0),
                   child: Material(
                     borderRadius: BorderRadius.circular(20),
                     color: const Color.fromARGB(255, 255, 255, 255),
+                    elevation: 5, // Add a little shadow for better UI
                     child: InkWell(
                       onTap: () {
                         Navigator.push(
                           context,
                           MaterialPageRoute(
-                            builder:
-                                (context) =>
-                                    ResourceDetails(resourceDocument: document),
-                          ),
+                            builder: (context) => 
+                            ResourceDetails(resource: resource)
+                          )
                         );
                       },
                       child: Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        crossAxisAlignment: CrossAxisAlignment.center,
+                        crossAxisAlignment: CrossAxisAlignment.start, // Align text to start
                         children: [
-                          const SizedBox(height: 10),
-                          if (photoUrl != null && photoUrl.isNotEmpty)
-                            ClipRRect(
-                              borderRadius: BorderRadius.circular(20),
-                              child: Image.asset(
-                                photoUrl,
-                                height: 300,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder: (context, error, stackTrace) {
-                                  return const Icon(
-                                    Icons.broken_image,
-                                    size: 100,
-                                  );
-                                },
-                              ),
-                            )
-                          else
-                            const SizedBox(
-                              height: 200,
-                              child: Center(child: Text("No Image Available")),
-                            ),
                           Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              document['name'],
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.green,
-                              ),
+                            padding: const EdgeInsets.all(12.0),
+                            child: Column(
+                              crossAxisAlignment: CrossAxisAlignment.start,
+                              children: [
+                                Text(
+                                  resource.name,
+                                  style: const TextStyle(
+                                    fontSize: 22,
+                                    fontWeight: FontWeight.bold,
+                                    color: Colors.green,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                Text(
+                                  'Location: ${resource.location}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                 Text(
+                                  'Capacity: ${resource.capacity.toString()}',
+                                  style: const TextStyle(
+                                    fontSize: 18,
+                                    color: Colors.black87,
+                                  ),
+                                ),
+                                const SizedBox(height: 5),
+                                if (resource.status == "booked")
+                                  Text(
+                                    'Status: Booked',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.red,
+                                    ),
+                                  )
+                                else if (resource.status == "available")
+                                  Text(
+                                    'Status: Available',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.green,
+                                    ),
+                                  )
+                                else
+                                  Text(
+                                    'Status: ${resource.status}',
+                                    style: const TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.orange,
+                                    ),
+                                  ),
+                                 
+                                if (resource.description != null && resource.description!.isNotEmpty)
+                                  Padding(
+                                    padding: const EdgeInsets.only(top: 5.0),
+                                    child: Text(
+                                      resource.description!,
+                                      style: const TextStyle(
+                                        fontSize: 16,
+                                        color: Colors.black54,
+                                      ),
+                                      maxLines: 2,
+                                      overflow: TextOverflow.ellipsis,
+                                    ),
+                                  ),
+                              ],
                             ),
                           ),
-                          Padding(
-                            padding: const EdgeInsets.all(8.0),
-                            child: Text(
-                              document['location'],
-                              style: const TextStyle(
-                                fontSize: 20,
-                                fontWeight: FontWeight.bold,
-                                color: Colors.blue,
-                              ),
-                            ),
-                          ),
-                          /*if (document['description'] != null && document['description'].isNotEmpty)
-                            Padding(
-                              padding: const EdgeInsets.all(8.0),
-                              child: Text(
-                                document['description'],
-                                style: const TextStyle(
-                                    fontSize: 16,
-                                    color: Colors.black54),
-                              ),
-                            ),*/
                         ],
                       ),
                     ),
@@ -299,10 +379,6 @@ class _ResourseScreenState extends State<ResourcesScreen> {
                 );
               },
             );
-          } else if (streamSnapshot.hasError) {
-            return Center(child: Text('Error: ${streamSnapshot.error}'));
-          } else {
-            return const Center(child: CircularProgressIndicator());
           }
         },
       ),

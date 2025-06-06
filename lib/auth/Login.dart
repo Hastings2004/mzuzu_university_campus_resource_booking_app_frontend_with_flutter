@@ -1,102 +1,145 @@
 import 'package:flutter/material.dart';
+import 'package:resource_booking_app/admin/AdminHome.dart';
+import 'package:resource_booking_app/auth/Api.dart'; // Assuming this handles http requests
 import 'package:resource_booking_app/auth/ForgetPassword.dart';
 import 'package:resource_booking_app/components/Button.dart';
 import 'package:resource_booking_app/components/TextField.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:resource_booking_app/users/Home.dart';
+import 'dart:convert';
+import 'package:resource_booking_app/users/Home.dart'; // Assuming this is the default user home
+import 'package:shared_preferences/shared_preferences.dart';
 
 class LoginScreen extends StatefulWidget {
-
   final VoidCallback showRegisterScreen;
   const LoginScreen({super.key, required this.showRegisterScreen});
 
-
   @override
-  State<LoginScreen> createState() => __LoginScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class __LoginScreenState extends State<LoginScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final TextEditingController _emailController = TextEditingController();
   final TextEditingController _passwordController = TextEditingController();
+  String? _errorMessage;
 
-  Future loginUser() async {
-    // Implement login functionality here
-
-    if(_emailController.text.isEmpty || _passwordController.text.isEmpty){
-      showDialog(
-          context: context,
-          builder: (context) {
-            return AlertDialog(
-              content: const Text("Please fill in all fields"),
-              actions: [
-                TextButton(
-                    onPressed: () {
-                      Navigator.pop(context);
-                    },
-                    child: const Text("OK")
-                )
-              ],
-            );
-          }
-      );
+  Future<void> loginUser() async {
+    // 1. Validate input fields
+    if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
+      _showErrorDialog("Please fill in all fields.");
       return;
     }
 
-    try{
-      showDialog(
-          context: context,
-          barrierDismissible: false,
-          builder: (context) {
-            return const Center(
-              child: CircularProgressIndicator(),
-            );
-          }
-      );
+    setState(() {
+      _errorMessage = null; // Clear any previous error messages
+    });
 
-      await FirebaseAuth.instance.signInWithEmailAndPassword(
-          email: _emailController.text.trim(),
-          password: _passwordController.text.trim()
-      );
-
-      /*Navigator.pop(context);
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(
-            builder: (context) => Home()
-        ), // Replace HomeScreen() with your actual home screen widget
-      );*/
-
-      //Navigator.pop(context);
-      Navigator.pop(context);
-
-    } on FirebaseAuthException catch (e) {
-      Navigator.pop(context);
-
-      if (e.code == 'user-not-found') {
-        wrongEmailMessage();
-      } else if (e.code == 'wrong-password') {
-        wrongPasswordMessage();
-      } else {
-        showDialog(
-            context: context,
-            builder: (context) {
-              return AlertDialog(
-                content: const Text("An error occurred"),
-                actions: [
-                  TextButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      child: const Text("OK")
-                  )
-                ],
-              );
-            }
+    // 2. Show loading indicator
+    showDialog(
+      context: context,
+      barrierDismissible: false,
+      builder: (context) {
+        return const Center(
+          child: CircularProgressIndicator(),
         );
-      }
-    }
+      },
+    );
 
+    try {
+      // 3. Prepare data for the API request
+      var data = {
+        "email": _emailController.text.trim(),
+        "password": _passwordController.text.trim(),
+      };
+
+      // 4. Make the API call using your CallApi class
+      // Ensure your CallApi().postData handles headers like 'Content-Type': 'application/json'
+      var res = await CallApi().postData(data, 'login');
+      var body = json.decode(res.body);
+
+      // 5. Dismiss the loading indicator
+      Navigator.pop(context);
+
+      // 6. Handle API response
+      if (res.statusCode == 200 && body['success'] == true) {
+        // Assuming your Laravel API returns a 'token' and 'user' object upon successful login
+        final String token = body['token'];
+        final Map<String, dynamic> user = body['user']; // Get user data
+
+        // Store the token and user data using shared_preferences
+        SharedPreferences prefs = await SharedPreferences.getInstance();
+        await prefs.setString('token', token); // Store token with a clear key
+        await prefs.setInt('user_id', user['id']);
+        await prefs.setString('user_name', user['name']);
+        await prefs.setString('user_email', user['email']);
+        await prefs.setInt('user_role_id', user['role_id']);
+
+        // Navigate based on user role
+        if (user['role_id'] == 1) { // Assuming 1 is the role_id for Admin
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Adminhome()), // Navigate to AdminHome
+          );
+        } else {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => Home()), // Navigate to regular User Home
+          );
+        }
+      } else {
+        // Handle login errors from Laravel API based on response structure
+        String displayMessage = "Login failed. Please try again.";
+
+        if (body.containsKey('errors')) {
+          // Laravel validation errors (e.g., if you use validation rules)
+          Map<String, dynamic> errors = body['errors'];
+          List<String> errorMessages = [];
+          errors.forEach((key, value) {
+            if (value is List) {
+              errorMessages.addAll(value.map((e) => e.toString()));
+            } else {
+              errorMessages.add(value.toString());
+            }
+          });
+          displayMessage = errorMessages.join('\n');
+        } else if (body.containsKey('message')) {
+          // General error message from Laravel (e.g., 'Invalid credentials')
+          displayMessage = body['message'];
+        }
+
+        setState(() {
+          _errorMessage = displayMessage;
+        });
+        _showErrorDialog(_errorMessage!);
+      }
+    } catch (e) {
+      // Catch any network or parsing errors
+      Navigator.pop(context); // Pop the loading indicator in case of an exception
+      setState(() {
+        _errorMessage = "Could not connect to the server. Please check your internet connection or try again later.";
+      });
+      _showErrorDialog(_errorMessage!);
+      print("Login Error: $e"); // Log the error for debugging
+    }
+  }
+
+  // --- Helper for showing error dialogs ---
+  void _showErrorDialog(String message) {
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: const Text("Login Failed"),
+          content: Text(message),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.pop(context);
+              },
+              child: const Text("OK"),
+            )
+          ],
+        );
+      },
+    );
   }
 
   @override
@@ -105,80 +148,20 @@ class __LoginScreenState extends State<LoginScreen> {
     _passwordController.dispose();
     super.dispose();
   }
-  void emptyFieldMessage(){
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            content: const Text("Please fill in all fields"),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("OK")
-              )
-            ],
-          );
-        }
-    );
-  }
-
-  void wrongEmailMessage(){
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            content: const Text("Wrong Email"),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("OK")
-              )
-            ],
-          );
-        }
-    );
-  }
-
-  void wrongPasswordMessage(){
-    showDialog(
-        context: context,
-        builder: (context) {
-          return AlertDialog(
-            content: const Text("Password is incorrect"),
-            actions: [
-              TextButton(
-                  onPressed: () {
-                    Navigator.pop(context);
-                  },
-                  child: const Text("OK")
-              )
-            ],
-          );
-        }
-    );
-  }
-
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
+      body: SingleChildScrollView(
+        child: SafeArea(
           child: Center(
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               crossAxisAlignment: CrossAxisAlignment.center,
               children: [
-                const SizedBox(height: 70),
-                Image.asset(
-                    "assets/images/logo.png",
-                    height: 100
-                ),
+                const SizedBox(height: 50),
+                Image.asset("assets/images/logo.png", height: 100),
                 const SizedBox(height: 20),
                 const Text(
                   "Resource Booking App",
@@ -215,9 +198,7 @@ class __LoginScreenState extends State<LoginScreen> {
                 ),
                 const SizedBox(height: 10),
                 Padding(
-                  padding: const EdgeInsets.symmetric(
-                      horizontal: 25.0
-                  ),
+                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
                   child: Row(
                     mainAxisAlignment: MainAxisAlignment.end,
                     children: [
@@ -242,10 +223,7 @@ class __LoginScreenState extends State<LoginScreen> {
                   ),
                 ),
                 const SizedBox(height: 10),
-                MyButton(
-                    onTap: loginUser,
-                    text: "Login"
-                ),
+                MyButton(onTap: loginUser, text: "Login"),
                 const SizedBox(height: 10),
                 GestureDetector(
                   onTap: widget.showRegisterScreen, // Use showRegisterScreen
@@ -277,6 +255,4 @@ class __LoginScreenState extends State<LoginScreen> {
       ),
     );
   }
-
-
 }
