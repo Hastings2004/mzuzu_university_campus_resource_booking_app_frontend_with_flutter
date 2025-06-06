@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/auth/AuthPage.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/models/user_model.dart';

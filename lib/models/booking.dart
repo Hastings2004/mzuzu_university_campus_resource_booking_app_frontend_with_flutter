@@ -1,8 +1,3 @@
-// lib/models/booking.dart
-
-import 'package:flutter/foundation.dart';
-import 'package:intl/intl.dart';
-
 class Booking {
   final int id;
   final int userId;

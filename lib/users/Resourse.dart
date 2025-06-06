@@ -1,9 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'dart:convert'; // For JSON encoding/decoding
 import 'package:shared_preferences/shared_preferences.dart'; // For managing session
-
 import 'package:resource_booking_app/auth/Api.dart'; // Your custom API service
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/models/resource_model.dart'; // Your custom resource model

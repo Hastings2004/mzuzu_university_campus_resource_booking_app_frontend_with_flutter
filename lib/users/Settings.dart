@@ -21,7 +21,7 @@ class SettingsScreen extends StatefulWidget {
 
 class _SettingsScreenState extends State<SettingsScreen> {
   String? _userEmail; // To store the current user's email
-  int? _userId; // To store the current user's ID
+  // To store the current user's ID
 
   // Controllers for updating email and password
   final TextEditingController _newEmailController = TextEditingController();
@@ -54,7 +54,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SharedPreferences localStorage = await SharedPreferences.getInstance();
     setState(() {
       _userEmail = localStorage.getString('email');
-      _userId = localStorage.getInt('user_id'); // Assuming you store user_id
+// Assuming you store user_id
     });
   }
 
