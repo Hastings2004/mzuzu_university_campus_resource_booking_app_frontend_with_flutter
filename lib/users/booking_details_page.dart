@@ -98,8 +98,6 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
 
   // Function to navigate to the update booking screen
   void _navigateToUpdateBooking() async {
-    // You might want to pass the current booking details to the update screen
-    // and expect a result back (e.g., if the update was successful)
     final bool? updated = await Navigator.push(
       context,
       MaterialPageRoute(
@@ -109,13 +107,9 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
 
     // If the update screen indicates a change, you might want to refresh details
     if (updated == true) {
-      // In a real app, you'd re-fetch the booking details to ensure they are up-to-date
-      // For simplicity here, we'll just show a message.
+      
       print("Booking potentially updated, consider refreshing data.");
-      // If your UpdateBookingScreen passes back the updated booking object, you could do:
-      // setState(() {
-      //   _currentBooking = updatedBookingObject;
-      // });
+      
     }
   }
 
@@ -202,14 +196,28 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                   mainAxisSize: MainAxisSize.min,
                   children: [
                     Center(
-                      child: Text(
-                        _currentBooking.resourceName,
-                        style: const TextStyle(
-                          fontSize: 26,
-                          fontWeight: FontWeight.bold,
-                          color: Colors.blueAccent,
-                        ),
-                        textAlign: TextAlign.center,
+                      child: Column(
+                        children: [
+                          Text(
+                            _currentBooking.resourceName,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                          const SizedBox(height: 10),
+                          Text(
+                            _currentBooking.bookingReference,
+                            style: const TextStyle(
+                              fontSize: 26,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.blueAccent,
+                            ),
+                            textAlign: TextAlign.center,
+                          ),
+                        ],
                       ),
                     ),
                     const Divider(height: 30, thickness: 1.5),

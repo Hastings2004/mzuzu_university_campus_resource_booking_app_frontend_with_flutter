@@ -33,8 +33,6 @@ class _ApiRegisterState extends State<Register> {
     confirmPasswordController.dispose();
     firstNameController.dispose();
     lastNameController.dispose();
-    // Removed: phoneNumberController.dispose();
-    // Removed: regNumberController.dispose();
     super.dispose();
   }
 
@@ -180,176 +178,193 @@ class _ApiRegisterState extends State<Register> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SafeArea(
-        child: SingleChildScrollView(
-          child: Center(
-            child: Padding(
-              padding: const EdgeInsets.all(16.0),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  const SizedBox(height: 30),
-                  Image.asset(
-                    "assets/images/logo.png", // Ensure this path is correct
-                    height: 100,
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Resource Booking App",
-                    style: TextStyle(
-                      fontSize: 25,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 17, 105, 20),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  const Text(
-                    "Create Account",
-                    style: TextStyle(
-                      fontSize: 20,
-                      fontWeight: FontWeight.bold,
-                      color: Color.fromARGB(255, 17, 105, 20),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  MyTextField(
-                    controller: firstNameController,
-                    obscureText: false,
-                    hintText: "First name",
-                    keyboardType: TextInputType.name,
-                    prefixIcon: const Icon(Icons.person),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'First name is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  MyTextField(
-                    controller: lastNameController,
-                    obscureText: false,
-                    hintText: "Last name",
-                    keyboardType: TextInputType.name,
-                    prefixIcon: const Icon(Icons.person_outline),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Last name is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  // New Dropdown for User Type
-                  Padding(
-                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                    child: Container(
-                      decoration: BoxDecoration(
-                        border: Border.all(color: Colors.green, width: 1.5),
-                        borderRadius: BorderRadius.circular(15.0),
-                        color: Colors.grey.shade200,
-                      ),
-                      child: DropdownButtonHideUnderline(
-                        child: DropdownButton<String>(
-                          value: _userType,
-                          hint: const Text('Select User Type'),
-                          isExpanded: true,
-                          icon: const Icon(Icons.arrow_drop_down),
-                          style: TextStyle(color: Colors.grey[700], fontSize: 16),
-                          onChanged: (String? newValue) {
-                            setState(() {
-                              _userType = newValue;
-                            });
-                          },
-                          items: _userTypes.map<DropdownMenuItem<String>>((String value) {
-                            return DropdownMenuItem<String>(
-                              value: value,
-                              child: Text(value),
-                            );
-                          }).toList(),
-                        ),
-                      ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  MyTextField(
-                    controller: emailController,
-                    obscureText: false,
-                    hintText: "Email",
-                    keyboardType: TextInputType.emailAddress,
-                    prefixIcon: const Icon(Icons.email),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Email is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  MyTextField(
-                    controller: passwordController,
-                    obscureText: true,
-                    hintText: "Password",
-                    prefixIcon: const Icon(Icons.lock),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Password is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 10),
-                  MyTextField(
-                    controller: confirmPasswordController,
-                    obscureText: true,
-                    hintText: "Confirm password",
-                    prefixIcon: const Icon(Icons.lock_reset),
-                    validator: (value) {
-                      if (value == null || value.isEmpty) {
-                        return 'Confirm password is required.';
-                      }
-                      return null;
-                    },
-                  ),
-                  const SizedBox(height: 20),
-                  // Display error message if any
-                  if (_errorMessage != null)
-                    Padding(
-                      padding: const EdgeInsets.only(bottom: 15.0),
-                      child: Text(
-                        _errorMessage!,
-                        style: const TextStyle(color: Colors.red, fontSize: 14),
-                        textAlign: TextAlign.center,
-                      ),
-                    ),
-
-                  MyButton(onTap: signUpUser, text: "Sign Up"),
-                  const SizedBox(
-                    height: 20,
-                  ),
-                  GestureDetector(
-                    onTap: widget.showLoginScreen,
-                    child: Row(
-                      mainAxisAlignment: MainAxisAlignment.center,
+      // Use LayoutBuilder to get the available height
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            // Constrain the content to at least the height of the screen
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight, // Minimum height is screen height
+              ),
+              child: IntrinsicHeight( // Make column take only as much height as its children need, but not less than minHeight
+                child: SafeArea(
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0), // Keep your padding here
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center, // Vertically center the content
+                      crossAxisAlignment: CrossAxisAlignment.center, // Horizontally center children within the column
                       children: [
-                        Text(
-                          "Already have an account?",
-                          style: TextStyle(color: Colors.green[700], fontSize: 16),
+                        const SizedBox(height: 30), // Initial spacing or logo top margin
+                        Image.asset(
+                          "assets/images/logo.png", // Ensure this path is correct
+                          height: 100,
                         ),
-                        const SizedBox(width: 5),
-                        Text(
-                          "Login now",
-                          style: TextStyle(color: Colors.blue[700], fontSize: 16),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Resource Booking App",
+                          style: TextStyle(
+                            fontSize: 25,
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromARGB(255, 17, 105, 20),
+                          ),
                         ),
+                        const SizedBox(height: 10),
+                        const Text(
+                          "Create Account",
+                          style: TextStyle(
+                            fontSize: 20,
+                            fontWeight: FontWeight.bold,
+                            color: Color.fromARGB(255, 17, 105, 20),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: firstNameController,
+                          obscureText: false,
+                          hintText: "First name",
+                          keyboardType: TextInputType.name,
+                          prefixIcon: const Icon(Icons.person),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'First name is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: lastNameController,
+                          obscureText: false,
+                          hintText: "Last name",
+                          keyboardType: TextInputType.name,
+                          prefixIcon: const Icon(Icons.person_outline),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Last name is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        // New Dropdown for User Type
+                        Padding(
+                          padding: const EdgeInsets.symmetric(horizontal: 25.0), // Padding is applied to the Column's parent, so this can be 0.0 or adjusted as needed
+                          child: Container(
+                            decoration: BoxDecoration(
+                              border: Border.all(color: Colors.green, width: 1.5),
+                              borderRadius: BorderRadius.circular(15.0),
+                              color: Colors.grey.shade200,
+                            ),
+                            child: DropdownButtonHideUnderline(
+                              child: DropdownButton<String>(
+                                value: _userType,
+                                hint: const Padding(
+                                  padding: EdgeInsets.symmetric(horizontal: 12.0), // Adjust padding for hint
+                                  child: Text('Select User Type'),
+                                ),
+                                isExpanded: true,
+                                icon: const Icon(Icons.arrow_drop_down),
+                                style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                                onChanged: (String? newValue) {
+                                  setState(() {
+                                    _userType = newValue;
+                                  });
+                                },
+                                items: _userTypes.map<DropdownMenuItem<String>>((String value) {
+                                  return DropdownMenuItem<String>(
+                                    value: value,
+                                    child: Padding(
+                                      padding: const EdgeInsets.symmetric(horizontal: 12.0), // Adjust padding for items
+                                      child: Text(value),
+                                    ),
+                                  );
+                                }).toList(),
+                              ),
+                            ),
+                          ),
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: emailController,
+                          obscureText: false,
+                          hintText: "Email",
+                          keyboardType: TextInputType.emailAddress,
+                          prefixIcon: const Icon(Icons.email),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Email is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: passwordController,
+                          obscureText: true,
+                          hintText: "Password",
+                          prefixIcon: const Icon(Icons.lock),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Password is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 10),
+                        MyTextField(
+                          controller: confirmPasswordController,
+                          obscureText: true,
+                          hintText: "Confirm password",
+                          prefixIcon: const Icon(Icons.lock_reset),
+                          validator: (value) {
+                            if (value == null || value.isEmpty) {
+                              return 'Confirm password is required.';
+                            }
+                            return null;
+                          },
+                        ),
+                        const SizedBox(height: 20),
+                        // Display error message if any
+                        if (_errorMessage != null)
+                          Padding(
+                            padding: const EdgeInsets.only(bottom: 15.0),
+                            child: Text(
+                              _errorMessage!,
+                              style: const TextStyle(color: Colors.red, fontSize: 14),
+                              textAlign: TextAlign.center,
+                            ),
+                          ),
+
+                        MyButton(onTap: signUpUser, text: "Sign Up"),
+                        const SizedBox(
+                          height: 20,
+                        ),
+                        GestureDetector(
+                          onTap: widget.showLoginScreen,
+                          child: Row(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Text(
+                                "Already have an account?",
+                                style: TextStyle(color: Colors.green[700], fontSize: 16),
+                              ),
+                              const SizedBox(width: 5),
+                              Text(
+                                "Login now",
+                                style: TextStyle(color: Colors.blue[700], fontSize: 16),
+                              ),
+                            ],
+                          ),
+                        )
                       ],
                     ),
-                  )
-                ],
+                  ),
+                ),
               ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

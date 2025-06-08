@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
 
   Future<void> loginUser() async {
-  // 1. Validate input fields
+    // 1. Validate input fields
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       _showErrorDialog("Please fill in all fields.");
       return;
@@ -67,12 +67,12 @@ class _LoginScreenState extends State<LoginScreen> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setInt('user_id', user['id']);
-        
+
         // Handle potentially null values safely
         String firstName = user['first_name'] ?? '';
         String lastName = user['last_name'] ?? '';
         String fullName = '$firstName $lastName'.trim();
-        
+
         await prefs.setString('user_name', fullName.isEmpty ? 'Unknown User' : fullName);
         await prefs.setString('user_email', user['email'] ?? '');
         await prefs.setInt('user_role_id', user['role_id'] ?? 0);
@@ -156,117 +156,136 @@ class _LoginScreenState extends State<LoginScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       backgroundColor: Colors.white,
-      body: SingleChildScrollView(
-        child: SafeArea(
-          child: Center(
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              crossAxisAlignment: CrossAxisAlignment.center,
-              children: [
-                const SizedBox(height: 50),
-                Image.asset("assets/images/logo.png", height: 100),
-                const SizedBox(height: 20),
-                const Text(
-                  "Resource Booking App",
-                  style: TextStyle(
-                    fontSize: 25,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 17, 105, 20),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                const Text(
-                  'Login',
-                  style: TextStyle(
-                    fontSize: 30,
-                    fontWeight: FontWeight.bold,
-                    color: Color.fromARGB(255, 17, 105, 20),
-                  ),
-                ),
-                const SizedBox(height: 20),
-                // Replaced TextField with MyTextField
-                MyTextField(
-                  controller: _emailController,
-                  hintText: "Email",
-                  keyboardType: TextInputType.emailAddress,
-                  prefixIcon: const Icon(Icons.email),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Email is required to login.';
-                  }
-                  return null;
-                },
-                ),
-                const SizedBox(height: 10),
-                // Replaced TextField with MyTextField
-                MyTextField(
-                  controller: _passwordController,
-                  hintText: "Password",
-                  obscureText: true,
-                  prefixIcon: const Icon(Icons.lock),
-                  validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Password is required to login.';
-                  }
-                  return null;
-                },
-                ),
-                const SizedBox(height: 10),
-                Padding(
-                  padding: const EdgeInsets.symmetric(horizontal: 25.0),
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.end,
+      // Use LayoutBuilder to get the available height
+      body: LayoutBuilder(
+        builder: (context, constraints) {
+          return SingleChildScrollView(
+            // Constrain the content to at least the height of the screen
+            // This ensures the Column's mainAxisAlignment.center works even if content is small
+            // but also allows scrolling if the content overflows.
+            child: ConstrainedBox(
+              constraints: BoxConstraints(
+                minHeight: constraints.maxHeight, // Minimum height is screen height
+              ),
+              child: IntrinsicHeight( // Make column take only as much height as its children need, but not less than minHeight
+                child: SafeArea(
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center, // Vertically center the content
+                    crossAxisAlignment: CrossAxisAlignment.center, // Horizontally center children within the column
                     children: [
-                      GestureDetector(
-                        onTap: () {
-                          Navigator.push(
-                            context,
-                            MaterialPageRoute(
-                              builder: (context) => Forgetpassword(),
-                            ),
-                          );
+                      // Using Spacer to push content to the center if there's extra space,
+                      // but they won't interfere if content overflows and scrolling is needed.
+                      // const Spacer(), // Optional: adds flexible space above
+
+                      const SizedBox(height: 50), // Initial spacing or logo top margin
+                      Image.asset("assets/images/logo.png", height: 100),
+                      const SizedBox(height: 20),
+                      const Text(
+                        "Resource Booking App",
+                        style: TextStyle(
+                          fontSize: 25,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 17, 105, 20),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      const Text(
+                        'Login',
+                        style: TextStyle(
+                          fontSize: 30,
+                          fontWeight: FontWeight.bold,
+                          color: Color.fromARGB(255, 17, 105, 20),
+                        ),
+                      ),
+                      const SizedBox(height: 20),
+                      MyTextField(
+                        controller: _emailController,
+                        hintText: "Email",
+                        keyboardType: TextInputType.emailAddress,
+                        prefixIcon: const Icon(Icons.email),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Email is required to login.';
+                          }
+                          return null;
                         },
-                        child: Text(
-                          "Forget password?",
-                          style: TextStyle(
-                            color: Colors.blue[700],
-                            fontSize: 16,
-                          ),
+                      ),
+                      const SizedBox(height: 10),
+                      MyTextField(
+                        controller: _passwordController,
+                        hintText: "Password",
+                        obscureText: true,
+                        prefixIcon: const Icon(Icons.lock),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Password is required to login.';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.end,
+                          children: [
+                            GestureDetector(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder: (context) => Forgetpassword(),
+                                  ),
+                                );
+                              },
+                              child: Text(
+                                "Forget password?",
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontSize: 16,
+                                ),
+                              ),
+                            ),
+                          ],
                         ),
                       ),
+                      const SizedBox(height: 10),
+                      MyButton(onTap: loginUser, text: "Login"),
+                      const SizedBox(height: 10),
+                      GestureDetector(
+                        onTap: widget.showRegisterScreen, // Use showRegisterScreen
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              "Don't have an account?",
+                              style: TextStyle(
+                                color: Colors.green[700],
+                                fontSize: 16,
+                              ),
+                            ),
+                            const SizedBox(width: 5),
+                            Text(
+                              "Register now",
+                              style: TextStyle(
+                                color: Colors.blue[700],
+                                fontSize: 16,
+                              ),
+                            ),
+                          ],
+                        ),
+                      ),
+                      // const Spacer(), // Optional: adds flexible space below
+                      // This ensures that if the content is smaller than the screen,
+                      // the remaining space is filled, allowing the Column to center itself.
+                      // If the content is larger, this has no effect, and scrolling occurs.
                     ],
                   ),
                 ),
-                const SizedBox(height: 10),
-                MyButton(onTap: loginUser, text: "Login"),
-                const SizedBox(height: 10),
-                GestureDetector(
-                  onTap: widget.showRegisterScreen, // Use showRegisterScreen
-                  child: Row(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Text(
-                        "Don't have an account?",
-                        style: TextStyle(
-                          color: Colors.green[700],
-                          fontSize: 16,
-                        ),
-                      ),
-                      const SizedBox(width: 5),
-                      Text(
-                        "Register now",
-                        style: TextStyle(
-                          color: Colors.blue[700],
-                          fontSize: 16,
-                        ),
-                      ),
-                    ],
-                  ),
-                )
-              ],
+              ),
             ),
-          ),
-        ),
+          );
+        },
       ),
     );
   }

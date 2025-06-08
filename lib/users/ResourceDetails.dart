@@ -497,17 +497,19 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   Widget _buildBody() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: Form(
-        key: _formKey,
-        child: Column(
-          crossAxisAlignment: CrossAxisAlignment.start,
-          children: [
-            _buildResourceInfo(),
-            const SizedBox(height: 30),
-            _buildBookingForm(),
-            const SizedBox(height: 30),
-            _buildBookButton(),
-          ],
+      child: Center(
+        child: Form(
+          key: _formKey,
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.center,
+            children: [
+              _buildResourceInfo(),
+              const SizedBox(height: 30),
+              _buildBookingForm(),
+              const SizedBox(height: 30),
+              _buildBookButton(),
+            ],
+          ),
         ),
       ),
     );
@@ -515,7 +517,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
   Widget _buildResourceInfo() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
       children: [
         const SizedBox(height: 20),
         Text(
@@ -528,7 +530,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         ),
         const SizedBox(height: 10),
         Text(
-          'Location: ${widget.resource.location}',
+          'Location: ${widget.resource.description}',
           style: const TextStyle(fontSize: 20, color: Colors.black87),
         ),
       ],
@@ -537,11 +539,12 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
   Widget _buildBookingForm() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.start,
+      crossAxisAlignment: CrossAxisAlignment.center,
+      mainAxisAlignment: MainAxisAlignment.center,
       children: [
         const Text(
           'Booking Details:',
-          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold),
+          style: TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.blue),
         ),
         const SizedBox(height: 15),
         _buildDateTimeField(
