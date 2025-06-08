@@ -27,7 +27,7 @@ class Getuserdata extends StatelessWidget {
         
 
         Map<String, dynamic> data = snapshot.data!.data() as Map<String, dynamic>;
-        //String? photoUrl = data['photo']; // Assuming your field name is 'photoUrl'
+        String? photoUrl = data['photo']; // Assuming your field name is 'photoUrl'
 
         return SingleChildScrollView(
           child: Padding(

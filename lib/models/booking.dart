@@ -6,6 +6,7 @@ class Booking {
   final DateTime endTime;
   final String purpose;
   final String status;
+  final String bookingReference;
 
   // Make these fields nullable
   final String resourceName;
@@ -17,6 +18,7 @@ class Booking {
   Booking({
     required this.id,
     required this.userId,
+    required this.bookingReference,
     required this.resourceId,
     required this.startTime,
     required this.endTime,
@@ -32,6 +34,7 @@ class Booking {
   // Add a copyWith method to easily create a new Booking instance with updated values
   Booking copyWith({
     int? id,
+    String? bookingReference,
     int? userId,
     int? resourceId,
     DateTime? startTime,
@@ -46,6 +49,7 @@ class Booking {
   }) {
     return Booking(
       id: id ?? this.id,
+      bookingReference: this.bookingReference,
       userId: userId ?? this.userId,
       resourceId: resourceId ?? this.resourceId,
       startTime: startTime ?? this.startTime,
@@ -74,10 +78,7 @@ class Booking {
       endTime: DateTime.parse(json['end_time'] as String),
       purpose: json['purpose'] as String,
       status: json['status'] as String,
-
-      // Parse resource details from the nested 'resource' object
-      // Use null-aware operators (?.) and null-coalescing (??) for safety
-      // Ensure resourceName and resourceLocation are *always* non-null strings
+      bookingReference: json['booking_reference'] as String,    
       resourceName: resource?['name'] as String? ?? 'Unknown Resource',
       resourceLocation: resource?['location'] as String? ?? 'Unknown Location',
       resourceDescription: resource?['description'] as String?, // This will be null if not present in JSON

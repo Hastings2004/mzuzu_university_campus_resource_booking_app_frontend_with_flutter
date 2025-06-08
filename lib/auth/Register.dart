@@ -189,7 +189,7 @@ class _ApiRegisterState extends State<Register> {
                 mainAxisAlignment: MainAxisAlignment.center,
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  const SizedBox(height: 10),
+                  const SizedBox(height: 30),
                   Image.asset(
                     "assets/images/logo.png", // Ensure this path is correct
                     height: 100,
@@ -219,6 +219,12 @@ class _ApiRegisterState extends State<Register> {
                     hintText: "First name",
                     keyboardType: TextInputType.name,
                     prefixIcon: const Icon(Icons.person),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'First name is required.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 10),
                   MyTextField(
@@ -227,33 +233,42 @@ class _ApiRegisterState extends State<Register> {
                     hintText: "Last name",
                     keyboardType: TextInputType.name,
                     prefixIcon: const Icon(Icons.person_outline),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Last name is required.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 10),
                   // New Dropdown for User Type
-                  Container(
-                    padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 5),
-                    decoration: BoxDecoration(
-                      border: Border.all(color: Colors.grey.shade400),
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: DropdownButtonHideUnderline(
-                      child: DropdownButton<String>(
-                        value: _userType,
-                        hint: const Text('Select User Type'),
-                        isExpanded: true,
-                        icon: const Icon(Icons.arrow_drop_down),
-                        style: TextStyle(color: Colors.grey[700], fontSize: 16),
-                        onChanged: (String? newValue) {
-                          setState(() {
-                            _userType = newValue;
-                          });
-                        },
-                        items: _userTypes.map<DropdownMenuItem<String>>((String value) {
-                          return DropdownMenuItem<String>(
-                            value: value,
-                            child: Text(value),
-                          );
-                        }).toList(),
+                  Padding(
+                    padding: const EdgeInsets.symmetric(horizontal: 25.0),
+                    child: Container(
+                      decoration: BoxDecoration(
+                        border: Border.all(color: Colors.green, width: 1.5),
+                        borderRadius: BorderRadius.circular(15.0),
+                        color: Colors.grey.shade200,
+                      ),
+                      child: DropdownButtonHideUnderline(
+                        child: DropdownButton<String>(
+                          value: _userType,
+                          hint: const Text('Select User Type'),
+                          isExpanded: true,
+                          icon: const Icon(Icons.arrow_drop_down),
+                          style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                          onChanged: (String? newValue) {
+                            setState(() {
+                              _userType = newValue;
+                            });
+                          },
+                          items: _userTypes.map<DropdownMenuItem<String>>((String value) {
+                            return DropdownMenuItem<String>(
+                              value: value,
+                              child: Text(value),
+                            );
+                          }).toList(),
+                        ),
                       ),
                     ),
                   ),
@@ -264,6 +279,12 @@ class _ApiRegisterState extends State<Register> {
                     hintText: "Email",
                     keyboardType: TextInputType.emailAddress,
                     prefixIcon: const Icon(Icons.email),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Email is required.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 10),
                   MyTextField(
@@ -271,6 +292,12 @@ class _ApiRegisterState extends State<Register> {
                     obscureText: true,
                     hintText: "Password",
                     prefixIcon: const Icon(Icons.lock),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Password is required.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 10),
                   MyTextField(
@@ -278,6 +305,12 @@ class _ApiRegisterState extends State<Register> {
                     obscureText: true,
                     hintText: "Confirm password",
                     prefixIcon: const Icon(Icons.lock_reset),
+                    validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Confirm password is required.';
+                      }
+                      return null;
+                    },
                   ),
                   const SizedBox(height: 20),
                   // Display error message if any

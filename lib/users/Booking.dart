@@ -80,9 +80,7 @@ class _BookingScreenState extends State<BookingScreen> {
 
   Future<List<Booking>> fetchBookings() async {
     try {
-      // Assuming CallApi().getData includes the token in headers automatically
-      // And 'get_user_bookings' is the API endpoint for fetching current user's bookings.
-      // Your Laravel backend should filter bookings based on the authenticated user.
+      
       final res = await CallApi().getData('bookings'); // Or 'bookings/user/$_userId' if needed
       final body = json.decode(res.body);
 
@@ -292,12 +290,12 @@ class _BookingScreenState extends State<BookingScreen> {
                       final filteredBookings = allBookings.where((booking) {
                         final resourceName = booking.resourceName.toLowerCase();
                         final purpose = booking.purpose.toLowerCase();
-                        final location = booking.resourceLocation.toLowerCase();
+                        final location = booking.resourceLocation?.toLowerCase();
                         final status = booking.status.toLowerCase();
 
                         return resourceName.contains(_searchQuery) ||
                             purpose.contains(_searchQuery) ||
-                            location.contains(_searchQuery) ||
+                            location!.contains(_searchQuery) ||
                             status.contains(_searchQuery);
                       }).toList();
 
@@ -371,6 +369,11 @@ class _BookingScreenState extends State<BookingScreen> {
                                             fontWeight: FontWeight.bold,
                                             color: Colors.blueAccent,
                                           ),
+                                        ),
+                                        const SizedBox(height: 8),
+                                        Text(
+                                          'Reference Number: ${booking.bookingReference}',
+                                          style: const TextStyle(fontSize: 16, color: Colors.blue),
                                         ),
                                         const SizedBox(height: 8),
                                         Text(

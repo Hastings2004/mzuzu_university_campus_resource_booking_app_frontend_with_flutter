@@ -22,6 +22,7 @@ class _HomeState extends State<Home> {
   // Use SharedPreferences to get user data instead of FirebaseAuth
   int? _userId;
   String _firstName = 'User'; // Default value for welcome message
+  String _lastName = '';
   String _userEmail = '';
 
   // Store upcoming booking details
@@ -37,18 +38,19 @@ class _HomeState extends State<Home> {
   Future<void> _fetchCurrentUserAndBookingData() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     _userId = prefs.getInt('user_id');
-    _firstName = prefs.getString('user_name') ?? 'User';
+    _firstName = prefs.getString('first_name') ?? "";
+    _lastName = prefs.getString('last_name') ?? '';
     _userEmail = prefs.getString('user_email') ?? 'No Email';
 
-    print("User ID: $_userId, Name: $_firstName, Email: $_userEmail");
+    print(
+      "User ID: $_userId, First_Name: $_firstName, Last_Name: $_lastName Email: $_userEmail",
+    );
     setState(() {}); // Update the UI with initial user data
 
     if (_userId == null) {
       // If user ID is not found, means not logged in, navigate to login
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
-        // Replace with your actual login screen route
-        // Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const AuthScreen()));
       }
       return;
     }
@@ -94,28 +96,36 @@ class _HomeState extends State<Home> {
 
   void logout() async {
     // Show a confirmation dialog
-    final bool confirmLogout = await showDialog(
+    final bool confirmLogout =
+        await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Confirm Logout'),
-            content: const Text('Are you sure you want to log out?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // User cancels
-                child: const Text('Cancel'),
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Confirm Logout'),
+                content: const Text('Are you sure you want to log out?'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed:
+                        () => Navigator.of(context).pop(false), // User cancels
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed:
+                        () => Navigator.of(context).pop(true), // User confirms
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ), // Optional: make logout button red
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true), // User confirms
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
-                child: const Text('Logout', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
         ) ??
-        false; 
+        false;
 
     if (confirmLogout) {
-   
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
@@ -125,11 +135,10 @@ class _HomeState extends State<Home> {
           '/',
           (route) => false,
         ); // Assuming '/' is your initial login route
-       
       }
     }
-
   }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -258,7 +267,7 @@ class _HomeState extends State<Home> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Welcome, $_firstName!",
+                  "Welcome, $_userEmail",
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,
@@ -345,6 +354,7 @@ class _HomeState extends State<Home> {
                                     'Unknown Resource', // Adjust key as per API
                                 style: const TextStyle(
                                   fontSize: 18,
+                                  color: Colors.blue,
                                   fontWeight: FontWeight.w600,
                                 ),
                               ),

@@ -22,7 +22,7 @@ class _LoginScreenState extends State<LoginScreen> {
   String? _errorMessage;
 
   Future<void> loginUser() async {
-    // 1. Validate input fields
+  // 1. Validate input fields
     if (_emailController.text.isEmpty || _passwordController.text.isEmpty) {
       _showErrorDialog("Please fill in all fields.");
       return;
@@ -51,7 +51,6 @@ class _LoginScreenState extends State<LoginScreen> {
       };
 
       // 4. Make the API call using your CallApi class
-      // Ensure your CallApi().postData handles headers like 'Content-Type': 'application/json'
       var res = await CallApi().postData(data, 'login');
       var body = json.decode(res.body);
 
@@ -66,22 +65,28 @@ class _LoginScreenState extends State<LoginScreen> {
 
         // Store the token and user data using shared_preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.setString('token', token); // Store token with a clear key
+        await prefs.setString('token', token);
         await prefs.setInt('user_id', user['id']);
-        await prefs.setString('user_name', user['name']);
-        await prefs.setString('user_email', user['email']);
-        await prefs.setInt('user_role_id', user['role_id']);
+        
+        // Handle potentially null values safely
+        String firstName = user['first_name'] ?? '';
+        String lastName = user['last_name'] ?? '';
+        String fullName = '$firstName $lastName'.trim();
+        
+        await prefs.setString('user_name', fullName.isEmpty ? 'Unknown User' : fullName);
+        await prefs.setString('user_email', user['email'] ?? '');
+        await prefs.setInt('user_role_id', user['role_id'] ?? 0);
 
         // Navigate based on user role
         if (user['role_id'] == 1) { // Assuming 1 is the role_id for Admin
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Adminhome()), // Navigate to AdminHome
+            MaterialPageRoute(builder: (context) => Adminhome()),
           );
         } else {
           Navigator.pushReplacement(
             context,
-            MaterialPageRoute(builder: (context) => Home()), // Navigate to regular User Home
+            MaterialPageRoute(builder: (context) => Home()),
           );
         }
       } else {
@@ -89,7 +94,6 @@ class _LoginScreenState extends State<LoginScreen> {
         String displayMessage = "Login failed. Please try again.";
 
         if (body.containsKey('errors')) {
-          // Laravel validation errors (e.g., if you use validation rules)
           Map<String, dynamic> errors = body['errors'];
           List<String> errorMessages = [];
           errors.forEach((key, value) {
@@ -101,7 +105,6 @@ class _LoginScreenState extends State<LoginScreen> {
           });
           displayMessage = errorMessages.join('\n');
         } else if (body.containsKey('message')) {
-          // General error message from Laravel (e.g., 'Invalid credentials')
           displayMessage = body['message'];
         }
 
@@ -187,6 +190,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: "Email",
                   keyboardType: TextInputType.emailAddress,
                   prefixIcon: const Icon(Icons.email),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Email is required to login.';
+                  }
+                  return null;
+                },
                 ),
                 const SizedBox(height: 10),
                 // Replaced TextField with MyTextField
@@ -195,6 +204,12 @@ class _LoginScreenState extends State<LoginScreen> {
                   hintText: "Password",
                   obscureText: true,
                   prefixIcon: const Icon(Icons.lock),
+                  validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password is required to login.';
+                  }
+                  return null;
+                },
                 ),
                 const SizedBox(height: 10),
                 Padding(

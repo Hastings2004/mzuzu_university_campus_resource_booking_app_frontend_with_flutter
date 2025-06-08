@@ -23,6 +23,24 @@ class CallApi {
     );
   }
 
+  // Method for patch requests
+  patchData(data, apiUrl) async {
+    var fullUrl = _url + apiUrl;
+    return await http.patch(
+      Uri.parse(fullUrl),
+      body: jsonEncode(data),
+      headers: await _setHeaders(), // Await headers as they now fetch token
+    );
+  }
+  // Method for PUT requests
+  putData(data, apiUrl) async {
+    var fullUrl = _url + apiUrl;
+    return await http.put(
+      Uri.parse(fullUrl),
+      body: jsonEncode(data),
+      headers: await _setHeaders(), // Await headers as they now fetch token
+    );
+  }
   // Method for GET requests
   getData(apiUrl) async {
     var fullUrl = _url + apiUrl;

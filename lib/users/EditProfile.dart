@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/auth/AuthPage.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/models/user_model.dart';
@@ -126,6 +127,8 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         _isLoading = true; // Show loading when updating
       });
 
+       print('Updating user with ID: ${widget.userId}');
+
       final data = {
         'first_name': _firstNameController.text.trim(),
         'last_name': _lastNameController.text.trim(),
@@ -134,7 +137,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       };
 
       try {
-        final res = await CallApi().postData(data, 'users/{}'); 
+        final res = await CallApi().putData(data, 'users/${widget.userId}/update'); // Use the correct endpoint for updating user profile
         final body = json.decode(res.body);
 
         if (res.statusCode == 200 && body['success'] == true) {

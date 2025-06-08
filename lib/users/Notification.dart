@@ -1,9 +1,12 @@
 import 'package:flutter/material.dart';
+import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/models/notification.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For json.decode
+
 import 'package:resource_booking_app/auth/Api.dart'; // Your API service
+import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';

@@ -145,6 +145,12 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                 obscureText: false,
                 prefixIcon: const Icon(Icons.email),
                 keyboardType: TextInputType.emailAddress, // Added keyboard type
+                validator: (value) {
+                      if (value == null || value.isEmpty) {
+                        return 'Email is required.';
+                      }
+                      return null;
+                    },
               ),
               const SizedBox(height: 20),
               _isLoading

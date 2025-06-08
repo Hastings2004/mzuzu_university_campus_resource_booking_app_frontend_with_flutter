@@ -1,70 +1,112 @@
+import 'dart:convert';
 import 'package:flutter/material.dart';
+import 'package:resource_booking_app/auth/Api.dart';
+import 'package:resource_booking_app/models/user_model.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:shared_preferences/shared_preferences.dart';
+
 
 class MyAppBar extends StatefulWidget implements PreferredSizeWidget {
   final Widget titleWidget;
   final PreferredSizeWidget? bottomWidget;
   final VoidCallback? onSearchPressed;
   final bool isSearching;
- 
+
   const MyAppBar({
     super.key,
     required this.titleWidget,
     this.bottomWidget,
     this.onSearchPressed,
     this.isSearching = false,
-    
   });
 
   @override
   State<MyAppBar> createState() => _MyAppBarState();
 
   @override
-  Size get preferredSize => Size.fromHeight(bottomWidget == null ? 60 : 60 + bottomWidget!.preferredSize.height);
+  Size get preferredSize => Size.fromHeight(
+        bottomWidget == null ? 60 : 60 + bottomWidget!.preferredSize.height,
+      );
 }
 
 class _MyAppBarState extends State<MyAppBar> {
   String _userFirstName = '';
   String _userLastName = '';
-  
+
+  UserModel? _userProfile; // Store the fetched user profile
+  bool _isLoading = true; // To show loading indicator
+
   @override
   void initState() {
     super.initState();
-    _loadUserData();
+    _fetchUserData();
+  }
+
+  Future<void> _fetchUserData() async {
+    setState(() {
+      _isLoading = true;
+    });
+    try {
+      // Call the dedicated profile endpoint
+      final res = await CallApi().getData('profile');
+      final body = json.decode(res.body);
+      print("API Response Body for user profile: $body"); // Debugging line
+
+      if (res.statusCode == 200 && body['success'] == true) {
+        if (body.containsKey('user') && body['user'] is Map<String, dynamic>) {
+          setState(() {
+            _userProfile = UserModel.fromJson(body['user']);
+            // Update _userFirstName and _userLastName here
+            _userFirstName = _userProfile?.firstName ?? '';
+            _userLastName = _userProfile?.lastName ?? '';
+          });
+        } else {
+          String errorMessage =
+              'User data not found or invalid in response from /profile.';
+          if (mounted) {
+            ScaffoldMessenger.of(
+              context,
+            ).showSnackBar(SnackBar(content: Text(errorMessage)));
+          }
+          print("Error: $errorMessage. Full body: $body");
+        }
+      }
+    } catch (e) {
+      print("Error fetching user data: $e");
+      if (mounted) {
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load profile: $e')));
+      }
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
   }
 
   // ---
-  // Function to load user data from SharedPreferences
+  // Function to generate user initials from first name and surname
   // ---
-  Future<void> _loadUserData() async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    
-    setState(() {
-      _userFirstName = prefs.getString('first_name') ?? '';
-      _userLastName = prefs.getString('last_name') ?? '';
-    });
+  String _getUserInitials() {
+    String initials = '';
+
+    // Use the state variables which are updated after _userProfile is set
+    if (_userFirstName.isNotEmpty) {
+      initials += _userFirstName.trim()[0].toUpperCase();
+    }
+
+    if (_userLastName.isNotEmpty) {
+      initials += _userLastName.trim()[0].toUpperCase();
+    }
+
+    return initials.isEmpty ? 'U' : initials;
   }
 
   @override
   Widget build(BuildContext context) {
-    // ---
-    // Generate initials based on the loaded first and last names
-    // ---
-    String initials = '';
-    if (_userFirstName.isNotEmpty) {
-      initials += _userFirstName[0].toUpperCase();
-    }
-    if (_userLastName.isNotEmpty) {
-      initials += _userLastName[0].toUpperCase();
-    }
-
-    // Fallback if no initials can be generated (e.g., if names are empty or not loaded yet)
-    if (initials.isEmpty) {
-      initials = 'HC'; // 'User Buddy' or 'Unknown' default initials
-    }
-
     return AppBar(
       backgroundColor: const Color.fromARGB(255, 20, 148, 24),
       centerTitle: true,
@@ -73,14 +115,11 @@ class _MyAppBarState extends State<MyAppBar> {
         onPressed: () {
           Scaffold.of(context).openDrawer();
         },
-        icon: const Icon(
-          Icons.menu,
-          color: Colors.white,
-        ),
+        icon: const Icon(Icons.menu, color: Colors.white),
       ),
       actions: <Widget>[
         // ---
-        // Search Icon (remains unchanged)
+        // Search Icon
         // ---
         if (widget.onSearchPressed != null)
           IconButton(
@@ -91,7 +130,7 @@ class _MyAppBarState extends State<MyAppBar> {
             onPressed: widget.onSearchPressed,
           ),
         // ---
-        // Notification Icon (remains unchanged)
+        // Notification Icon
         // ---
         IconButton(
           icon: const Icon(Icons.notifications, color: Colors.white),
@@ -105,30 +144,33 @@ class _MyAppBarState extends State<MyAppBar> {
           },
         ),
         // ---
-        // Modified Profile Icon to show Initials
+        // Profile Avatar with User Initials (First name + Surname)
         // ---
         Padding(
-          padding: const EdgeInsets.only(right: 8.0), // Add some padding on the right
+          padding: const EdgeInsets.only(right: 8.0),
           child: InkWell(
             onTap: () {
               Navigator.push(
                 context,
-                MaterialPageRoute(
-                  builder: (context) => const ProfileScreen(),
-                ),
+                MaterialPageRoute(builder: (context) => const ProfileScreen()),
               );
             },
+            borderRadius: BorderRadius.circular(20), // Add ripple effect
             child: CircleAvatar(
-              backgroundColor: Colors.white, // White circle background
-              radius: 16, // Adjust size as needed
-              child: Text(
-                initials,
-                style: TextStyle(
-                  color: Theme.of(context).primaryColor, // Use app's primary color for text
-                  fontSize: 12, // Adjust font size
-                  fontWeight: FontWeight.bold,
-                ),
-              ),
+              backgroundColor: Colors.white,
+              radius: 18, // Slightly larger for better visibility
+              child: _isLoading
+                  ? const CircularProgressIndicator(
+                      valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+                    ) // Show loading indicator
+                  : Text(
+                      _getUserInitials(),
+                      style: TextStyle(
+                        color: Theme.of(context).primaryColor,
+                        fontSize: 14, // Slightly larger font
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
             ),
           ),
         ),

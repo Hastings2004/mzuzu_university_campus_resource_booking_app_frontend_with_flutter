@@ -14,7 +14,7 @@ class MyTextField extends StatelessWidget {
     required this.hintText,
     this.obscureText = false, // Default to false if not provided
     this.keyboardType = TextInputType.text, // Default to text if not provided
-    this.prefixIcon, // Optional icon
+    this.prefixIcon, required String? Function(dynamic value) validator, // Optional icon
   });
 
   @override
