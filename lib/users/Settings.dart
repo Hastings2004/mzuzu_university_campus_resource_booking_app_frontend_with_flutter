@@ -1,17 +1,16 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Auth.dart'; 
 import 'dart:convert'; // For JSON encoding/decoding
-import 'package:shared_preferences/shared_preferences.dart'; // For managing session
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'package:resource_booking_app/auth/Api.dart'; // Your custom API service
 import 'package:resource_booking_app/components/AppBar.dart';
-import 'package:resource_booking_app/components/BottomBar.dart'; // Assuming you have this
-import 'package:resource_booking_app/components/TextField.dart'; // Assuming you have this for input
+import 'package:resource_booking_app/components/BottomBar.dart'; 
+import 'package:resource_booking_app/components/TextField.dart'; 
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart'; // Corrected to ResourcesScreen - make sure the file name is 'Resources.dart'
-import 'package:resource_booking_app/auth/AuthPage.dart'; // Import your AuthPage for logout navigation
+import 'package:resource_booking_app/users/Resourse.dart'; 
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -409,7 +408,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: const Bottombar(), // Use your Bottombar widget
+      bottomNavigationBar: const Bottombar(), 
       appBar: MyAppBar(
         titleWidget: const Text(
           "Settings",
@@ -419,8 +418,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
             color: Colors.white,
           ),
         ),
-        onSearchPressed: () {}, // Provide an empty function if search is not needed
-        isSearching: false, // Indicate if search is active
+        onSearchPressed: () {},
+        isSearching: false, 
       ),
       drawer: Drawer(
         child: ListView(
