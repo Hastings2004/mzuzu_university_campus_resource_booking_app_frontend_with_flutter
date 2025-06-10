@@ -290,12 +290,12 @@ class _BookingScreenState extends State<BookingScreen> {
                       final filteredBookings = allBookings.where((booking) {
                         final resourceName = booking.resourceName.toLowerCase();
                         final purpose = booking.purpose.toLowerCase();
-                        final location = booking.resourceLocation?.toLowerCase();
+                        final location = booking.resourceLocation.toLowerCase();
                         final status = booking.status.toLowerCase();
 
                         return resourceName.contains(_searchQuery) ||
                             purpose.contains(_searchQuery) ||
-                            location!.contains(_searchQuery) ||
+                            location.contains(_searchQuery) ||
                             status.contains(_searchQuery);
                       }).toList();
 

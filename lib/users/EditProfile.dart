@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/auth/AuthPage.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/models/user_model.dart';
@@ -13,7 +12,7 @@ import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/models/user_profile.dart'; // Import your new UserProfile model
+import 'package:resource_booking_app/models/user_profile.dart'; 
 
 
 class EditProfileScreen extends StatefulWidget {
