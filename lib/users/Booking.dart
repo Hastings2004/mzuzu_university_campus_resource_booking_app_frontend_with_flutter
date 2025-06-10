@@ -5,7 +5,7 @@ import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/users/booking_details_page.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For json.decode
-import 'package:resource_booking_app/auth/Api.dart'; // Your API service
+import 'package:resource_booking_app/auth/Api.dart'; // API service
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
@@ -13,7 +13,7 @@ import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/models/booking.dart'; // Import your new Booking model
-// Assuming this is where you handle initial auth redirection
+
 
 class BookingScreen extends StatefulWidget {
   BookingScreen({super.key});

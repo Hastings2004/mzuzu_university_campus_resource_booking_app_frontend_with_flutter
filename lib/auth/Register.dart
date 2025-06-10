@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Api.dart'; // Assuming this handles http requests
 import 'package:resource_booking_app/components/Button.dart';
-import 'package:resource_booking_app/components/TextField.dart'; // Assuming this is your custom text field widget
+import 'package:resource_booking_app/components/TextField.dart'; 
 import 'dart:convert';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import for storing the token
@@ -22,8 +22,7 @@ class _ApiRegisterState extends State<Register> {
   final lastNameController = TextEditingController();
 
   String? _userType; // New variable for user type (student/staff)
-  final List<String> _userTypes = ['Student', 'Staff']; // Options for the dropdown
-
+  final List<String> _userTypes = ['Student', 'Staff']; 
   String? _errorMessage; // To display error messages below the form
 
   @override
@@ -116,7 +115,8 @@ class _ApiRegisterState extends State<Register> {
         // Assuming your Laravel API returns a 'token', 'user_id', 'user_name', and 'user_email' upon successful registration
         final String token = body['token'];
         final int userId = body['user']['id']; // Assuming your user object has an 'id'
-        final String userName = body['user']['first_name'] + ' ' + body['user']['last_name']; // Combine for display
+        final String firstName = body['user']['first_name']; // Combine for display
+        final String lastName = body['user']['last_name'];
         final String userEmail = body['user']['email'];
 
 
@@ -124,7 +124,8 @@ class _ApiRegisterState extends State<Register> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setInt('user_id', userId);
-        await prefs.setString('user_name', userName);
+        await prefs.setString('first_name', firstName);
+        await prefs.setString('last_name', lastName);
         await prefs.setString('user_email', userEmail);
         await prefs.setString('user_type', _userType!.toLowerCase()); // Store user type
 
@@ -247,7 +248,7 @@ class _ApiRegisterState extends State<Register> {
                           },
                         ),
                         const SizedBox(height: 10),
-                        // New Dropdown for User Type
+                        //Dropdown for User Type
                         Padding(
                           padding: const EdgeInsets.symmetric(horizontal: 25.0), // Padding is applied to the Column's parent, so this can be 0.0 or adjusted as needed
                           child: Container(

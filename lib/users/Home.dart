@@ -267,7 +267,7 @@ class _HomeState extends State<Home> {
               child: Align(
                 alignment: Alignment.centerLeft,
                 child: Text(
-                  "Welcome, $_userEmail",
+                  "Welcome, $_firstName $_lastName!",
                   style: const TextStyle(
                     fontSize: 18,
                     fontWeight: FontWeight.bold,

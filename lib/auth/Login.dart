@@ -37,9 +37,7 @@ class _LoginScreenState extends State<LoginScreen> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
+        return const Center(child: CircularProgressIndicator());
       },
     );
 
@@ -69,16 +67,18 @@ class _LoginScreenState extends State<LoginScreen> {
         await prefs.setInt('user_id', user['id']);
 
         // Handle potentially null values safely
-        String firstName = user['first_name'] ?? '';
-        String lastName = user['last_name'] ?? '';
-        String fullName = '$firstName $lastName'.trim();
+        // String firstName = user['first_name'] ?? '';
+        // String lastName = user['last_name'] ?? '';
+        // String fullName = '$firstName $lastName'.trim();
 
-        await prefs.setString('user_name', fullName.isEmpty ? 'Unknown User' : fullName);
+        await prefs.setString('first_name', user['first_name']);
+        await prefs.setString('last_name', user['last_name']);
         await prefs.setString('user_email', user['email'] ?? '');
         await prefs.setInt('user_role_id', user['role_id'] ?? 0);
 
         // Navigate based on user role
-        if (user['role_id'] == 1) { // Assuming 1 is the role_id for Admin
+        if (user['role_id'] == 1) {
+          // Assuming 1 is the role_id for Admin
           Navigator.pushReplacement(
             context,
             MaterialPageRoute(builder: (context) => Adminhome()),
@@ -115,9 +115,12 @@ class _LoginScreenState extends State<LoginScreen> {
       }
     } catch (e) {
       // Catch any network or parsing errors
-      Navigator.pop(context); // Pop the loading indicator in case of an exception
+      Navigator.pop(
+        context,
+      ); // Pop the loading indicator in case of an exception
       setState(() {
-        _errorMessage = "Could not connect to the server. Please check your internet connection or try again later.";
+        _errorMessage =
+            "Could not connect to the server. Please check your internet connection or try again later.";
       });
       _showErrorDialog(_errorMessage!);
       print("Login Error: $e"); // Log the error for debugging
@@ -138,7 +141,7 @@ class _LoginScreenState extends State<LoginScreen> {
                 Navigator.pop(context);
               },
               child: const Text("OK"),
-            )
+            ),
           ],
         );
       },
@@ -165,19 +168,26 @@ class _LoginScreenState extends State<LoginScreen> {
             // but also allows scrolling if the content overflows.
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: constraints.maxHeight, // Minimum height is screen height
+                minHeight:
+                    constraints.maxHeight, // Minimum height is screen height
               ),
-              child: IntrinsicHeight( // Make column take only as much height as its children need, but not less than minHeight
+              child: IntrinsicHeight(
+                // Make column take only as much height as its children need, but not less than minHeight
                 child: SafeArea(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center, // Vertically center the content
-                    crossAxisAlignment: CrossAxisAlignment.center, // Horizontally center children within the column
+                    mainAxisAlignment:
+                        MainAxisAlignment
+                            .center, // Vertically center the content
+                    crossAxisAlignment:
+                        CrossAxisAlignment
+                            .center, // Horizontally center children within the column
                     children: [
                       // Using Spacer to push content to the center if there's extra space,
                       // but they won't interfere if content overflows and scrolling is needed.
                       // const Spacer(), // Optional: adds flexible space above
-
-                      const SizedBox(height: 50), // Initial spacing or logo top margin
+                      const SizedBox(
+                        height: 50,
+                      ), // Initial spacing or logo top margin
                       Image.asset("assets/images/logo.png", height: 100),
                       const SizedBox(height: 20),
                       const Text(
@@ -253,7 +263,8 @@ class _LoginScreenState extends State<LoginScreen> {
                       MyButton(onTap: loginUser, text: "Login"),
                       const SizedBox(height: 10),
                       GestureDetector(
-                        onTap: widget.showRegisterScreen, // Use showRegisterScreen
+                        onTap:
+                            widget.showRegisterScreen, // Use showRegisterScreen
                         child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           children: [
