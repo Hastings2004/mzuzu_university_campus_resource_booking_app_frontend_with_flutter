@@ -65,12 +65,6 @@ class _LoginScreenState extends State<LoginScreen> {
         SharedPreferences prefs = await SharedPreferences.getInstance();
         await prefs.setString('token', token);
         await prefs.setInt('user_id', user['id']);
-
-        // Handle potentially null values safely
-        // String firstName = user['first_name'] ?? '';
-        // String lastName = user['last_name'] ?? '';
-        // String fullName = '$firstName $lastName'.trim();
-
         await prefs.setString('first_name', user['first_name']);
         await prefs.setString('last_name', user['last_name']);
         await prefs.setString('user_email', user['email'] ?? '');
@@ -163,9 +157,6 @@ class _LoginScreenState extends State<LoginScreen> {
       body: LayoutBuilder(
         builder: (context, constraints) {
           return SingleChildScrollView(
-            // Constrain the content to at least the height of the screen
-            // This ensures the Column's mainAxisAlignment.center works even if content is small
-            // but also allows scrolling if the content overflows.
             child: ConstrainedBox(
               constraints: BoxConstraints(
                 minHeight:
@@ -182,11 +173,33 @@ class _LoginScreenState extends State<LoginScreen> {
                         CrossAxisAlignment
                             .center, // Horizontally center children within the column
                     children: [
-                      // Using Spacer to push content to the center if there's extra space,
-                      // but they won't interfere if content overflows and scrolling is needed.
-                      // const Spacer(), // Optional: adds flexible space above
+                      Center(
+                        child: Column(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            Card(
+                              margin: const EdgeInsets.all(20),
+                              shape: RoundedRectangleBorder(
+                                borderRadius: BorderRadius.circular(10),
+                              ),
+                              elevation: 5,
+                              color: const Color.fromARGB(255, 27, 218, 33),
+                            child: Text(
+                              "Welcome to Mzuzu University Resource Booking App \n Your Gateway to Effortless Booking!",
+                              style: TextStyle(
+                                fontSize: 15,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.white,  
+                              )
+                              ),
+                            
+                            ),
+                          ],
+                        ),
+                      ),
                       const SizedBox(
-                        height: 50,
+                        height: 20,
                       ), // Initial spacing or logo top margin
                       Image.asset("assets/images/logo.png", height: 100),
                       const SizedBox(height: 20),
