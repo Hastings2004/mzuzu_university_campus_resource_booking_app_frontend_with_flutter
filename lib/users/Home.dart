@@ -3,6 +3,7 @@ import 'package:resource_booking_app/auth/Api.dart'; // Import your API helper
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/users/Booking.dart';
+import 'package:resource_booking_app/users/History.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart'; // Corrected spelling for ResourcesScreen
@@ -245,6 +246,13 @@ class _HomeState extends State<Home> {
                     builder: (context) => const SettingsScreen(),
                   ),
                 );
+              },
+            ),
+            ListTile(
+              title: const Text('History'),
+              leading: const Icon(Icons.history, color: Colors.green), // Highlight current page
+              onTap: () {
+                Navigator.push(context, MaterialPageRoute(builder: (context)=> HistoryScreen())); // Close the drawer as we are on the History screen
               },
             ),
             const Divider(),

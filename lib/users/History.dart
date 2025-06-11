@@ -1,22 +1,33 @@
 import 'package:flutter/material.dart';
+import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
+import 'package:resource_booking_app/users/Resourse.dart'; 
 import 'package:resource_booking_app/users/Settings.dart';
+import 'package:shared_preferences/shared_preferences.dart'; // Required for logout logic
 
 class HistoryScreen extends StatelessWidget {
   const HistoryScreen({super.key});
-  
-  get logout => null;
+
+  // You would typically handle token clearing and navigation to the login page here.
+  Future<void> _handleLogout(BuildContext context) async {
+    SharedPreferences prefs = await SharedPreferences.getInstance();
+    await prefs.clear(); 
+    Navigator.pushAndRemoveUntil(
+      context,
+      MaterialPageRoute(builder: (context) => const Auth()), 
+      (Route<dynamic> route) => false, // Remove all previous routes
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      appBar: MyAppBar(titleWidget: Text("History")),
-      bottomNavigationBar: Bottombar(),
+      appBar: MyAppBar(titleWidget: const Text("History", style: TextStyle(color: Colors.white),)), // Ensure MyAppBar accepts a Text widget
+      bottomNavigationBar: const Bottombar(), // Ensure Bottombar is a const widget
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -61,7 +72,8 @@ class HistoryScreen extends StatelessWidget {
               title: const Text('Profile'),
               leading: const Icon(Icons.person, color: Colors.blueAccent),
               onTap: () {
-                Navigator.pop(context); // Already on profile screen, close drawer
+                // If this is the current screen, pop the drawer. Otherwise, navigate.
+                Navigator.pop(context); // Close the drawer
               },
             ),
             ListTile(
@@ -92,11 +104,18 @@ class HistoryScreen extends StatelessWidget {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
               },
             ),
+            ListTile(
+              title: const Text('History'),
+              leading: const Icon(Icons.history, color: Colors.green), // Highlight current page
+              onTap: () {
+                Navigator.pop(context); // Close the drawer as we are on the History screen
+              },
+            ),
             const Divider(),
             ListTile(
               title: const Text('Logout'),
               leading: const Icon(Icons.logout, color: Colors.red),
-              onTap: logout,
+              onTap: () => _handleLogout(context), // Call the logout function
             ),
           ],
         ),
@@ -111,14 +130,52 @@ class HistoryScreen extends StatelessWidget {
             ),
             const SizedBox(height: 20),
             // Placeholder for booking history items
+            // You would replace this with actual data fetched from your API
             ListView.builder(
-              shrinkWrap: true,
-              physics: NeverScrollableScrollPhysics(),
-              itemCount: 10, // Example count
+              shrinkWrap: true, // Important for ListView.builder inside SingleChildScrollView
+              physics: const NeverScrollableScrollPhysics(), // Prevents nested scrolling
+              itemCount: 10, // Example count. Replace with your actual history list length
               itemBuilder: (context, index) {
-                return ListTile(
-                  title: Text('Booking #${index + 1}'),
-                  subtitle: Text('Details of booking #${index + 1}'),
+                return Card(
+                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+                  elevation: 2,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(16.0),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text(
+                          'Resource: Meeting Room A', // Replace with actual resource name
+                          style: TextStyle(
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold,
+                            color: Colors.green[800],
+                          ),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Date: 2024-06-11', // Replace with actual date
+                          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                        ),
+                        Text(
+                          'Time: 10:00 AM - 12:00 PM', // Replace with actual time
+                          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'Status: Completed', // Replace with actual status (e.g., Pending, Approved, Cancelled)
+                          style: TextStyle(
+                            fontSize: 16,
+                            fontWeight: FontWeight.w500,
+                            color: (index % 2 == 0) ? Colors.blue : Colors.red, // Example status coloring
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
                 );
               },
             ),
