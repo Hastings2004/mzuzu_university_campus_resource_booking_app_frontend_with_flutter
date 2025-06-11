@@ -173,31 +173,7 @@ class _LoginScreenState extends State<LoginScreen> {
                         CrossAxisAlignment
                             .center, // Horizontally center children within the column
                     children: [
-                      // Center(
-                      //   child: Column(
-                      //     mainAxisAlignment: MainAxisAlignment.center,
-                      //     crossAxisAlignment: CrossAxisAlignment.center,
-                      //     children: [
-                      //       Card(
-                      //         margin: const EdgeInsets.all(20),
-                      //         shape: RoundedRectangleBorder(
-                      //           borderRadius: BorderRadius.circular(10),
-                      //         ),
-                      //         elevation: 5,
-                      //         color: const Color.fromARGB(255, 27, 218, 33),
-                      //       child: Text(
-                      //         "Welcome to Mzuzu University Resource Booking App \n Your Gateway to Effortless Booking!",
-                      //         style: TextStyle(
-                      //           fontSize: 15,
-                      //           fontWeight: FontWeight.bold,
-                      //           color: Colors.white,  
-                      //         )
-                      //         ),
-                            
-                      //       ),
-                      //     ],
-                      //   ),
-                      // ),
+                      
                       const SizedBox(
                         height: 20,
                       ), // Initial spacing or logo top margin
