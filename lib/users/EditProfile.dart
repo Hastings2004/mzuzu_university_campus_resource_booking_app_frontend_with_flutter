@@ -132,11 +132,11 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
         'first_name': _firstNameController.text.trim(),
         'last_name': _lastNameController.text.trim(),
         
-        // Do not send email or role for update unless your API explicitly allows it
+        
       };
 
       try {
-        final res = await CallApi().putData(data, 'users/${widget.userId}/update'); // Use the correct endpoint for updating user profile
+        final res = await CallApi().putData(data, 'users/${widget.userId}/update'); 
         final body = json.decode(res.body);
 
         if (res.statusCode == 200 && body['success'] == true) {
