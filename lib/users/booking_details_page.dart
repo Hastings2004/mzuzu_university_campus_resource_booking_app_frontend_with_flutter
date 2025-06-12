@@ -268,6 +268,15 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
               ),
             ),
             const SizedBox(height: 20),
+            if(_currentBooking.status == 'cancelled' || _currentBooking.status == 'rejected' || _currentBooking.status == 'expired') 
+              // Show a message if the booking is cancelled or rejected
+              ...[
+                Text(
+                  'This booking cannot be modified.',
+                  style: const TextStyle(fontSize: 16, color: Colors.red),
+                  textAlign: TextAlign.center,
+                ),
+              ],
             if (canModify) // Only show buttons if the booking can be modified
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceEvenly,
