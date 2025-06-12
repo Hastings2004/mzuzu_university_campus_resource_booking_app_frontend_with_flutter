@@ -13,6 +13,16 @@ class CallApi {
     return _token;
   }
 
+  // Method for search requests
+  searchData(apiUrl, data, {required Map<String, String> body}) async {
+    var fullUrl = _url + apiUrl;
+    return await http.post(
+      Uri.parse(fullUrl),
+      body: jsonEncode(data),
+      headers: await _setHeaders(), // Await headers as they now fetch token
+    );
+  }
+
   // Method for POST requests
   postData(data, apiUrl) async {
     var fullUrl = _url + apiUrl;
