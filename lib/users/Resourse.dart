@@ -689,7 +689,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                         ),
                       ),
                     const SizedBox(height: 5),
-                    if (resource.location != null && resource.location!.isNotEmpty)
+                    if (resource.location.isNotEmpty)
                       Text(
                         'Location: ${resource.location}',
                         style: TextStyle(

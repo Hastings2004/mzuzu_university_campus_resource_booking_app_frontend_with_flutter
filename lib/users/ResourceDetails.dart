@@ -474,17 +474,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     }
   }
 
-  void _showWarningSnackBar(String message) {
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text(message),
-          backgroundColor: Colors.orange,
-          behavior: SnackBarBehavior.floating,
-        ),
-      );
-    }
-  }
 
   @override
   Widget build(BuildContext context) {
