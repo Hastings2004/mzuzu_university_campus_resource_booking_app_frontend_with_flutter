@@ -384,15 +384,14 @@
 //     );
 //   }
 // }
-/** import 'dart:async';
+import 'dart:async';
 import 'package:flutter/material.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:intl/intl.dart'; // For date/time formatting
-
+import 'package:intl/intl.dart'; 
 import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
-import 'package:resource_booking_app/components/BottomBar.dart'; // Assuming BottomBar is theme-aware
+import 'package:resource_booking_app/components/BottomBar.dart'; 
 import 'package:resource_booking_app/models/resource_model.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/ResourceDetails.dart';
@@ -414,17 +413,17 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
   bool _isSearching = false;
   bool _isSearchLoading = false;
   List<ResourceModel> _allResources = [];
-  List<ResourceModel> _searchResults = []; // Now holds only resources from global search
+  List<ResourceModel> _searchResults = []; 
   Future<List<ResourceModel>>? _resourcesFuture;
   Timer? _debounceTimer;
 
   // Global Search Parameters
-  String _selectedSearchType = 'resources'; // 'resources', 'bookings', 'users'
-  String _resourceTypeFilter = ''; // For resources search
-  DateTime? _startTimeFilter; // For bookings search
-  DateTime? _endTimeFilter; // For bookings search
-  String _userIdFilter = ''; // For admin searching bookings/users
-  bool _isAdmin = false; // Placeholder, set this based on user role
+  String _selectedSearchType = 'resources'; 
+  String _resourceTypeFilter = ''; 
+  DateTime? _startTimeFilter; 
+  DateTime? _endTimeFilter; 
+  String _userIdFilter = ''; 
+  bool _isAdmin = false; 
 
   // Define resource types for the dropdown (from previous context)
   final List<String> _resourceTypes = [
@@ -486,32 +485,41 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
 
   // Consolidated Global Search API call
   Future<void> _performGlobalSearch(String query) async {
-  // Add a check here for the 'query' parameter
-  if (query.isEmpty) { // Also consider if other filters are applied without a query
-    setState(() {
-      _searchResults = [];
-      _isSearchLoading = false;
-    });
-    // Optionally show a message to the user
-    if (mounted) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Please enter a search term.'),
-          backgroundColor: Theme.of(context).colorScheme.tertiary, // Use a neutral color
-        ),
-      );
+    // Determine if any filters are applied (including an empty main query)
+    final bool hasFiltersApplied = _resourceTypeFilter.isNotEmpty || 
+                                  _startTimeFilter != null || 
+                                  _endTimeFilter != null || 
+                                  _userIdFilter.isNotEmpty;
+
+    // If query is empty AND no other filters are applied, don't send the request.
+    if (query.isEmpty && !hasFiltersApplied) {
+      setState(() {
+        _searchResults = [];
+        _isSearchLoading = false;
+      });
+      if (mounted) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text('Please enter a search term or apply filters.'),
+            backgroundColor: Theme.of(context).colorScheme.tertiary, 
+          ),
+        );
+      }
+      return; // Exit the function if no search criteria
     }
-    return; // Exit the function if query is empty
-  }
 
-  setState(() {
-    _isSearchLoading = true;
-  });
+    setState(() {
+      _isSearchLoading = true;
+    });
 
-  try {
-    final Map<String, String> queryParams = {
-      'query': query, // Ensure 'query' is always present when making the call
-    };
+    try {
+      // Use dynamic for values in queryParams as they can be String or DateTime objects (converted to String)
+      final Map<String, dynamic> queryParams = {}; 
+
+      // ONLY add 'query' if it's not empty
+      if (query.isNotEmpty) {
+        queryParams['query'] = query;
+      }
 
       // Add type-specific filters based on _selectedSearchType
       if (_selectedSearchType == 'resources') {
@@ -537,7 +545,12 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
         }
       }
 
-      final response = await CallApi().searchData('search/global', 'POST', body: queryParams);
+      // Debugging: Print what you're sending
+      print('Sending search request with params: $queryParams');
+
+      // Convert all values in queryParams to String for the API call
+      final Map<String, String> stringParams = queryParams.map((key, value) => MapEntry(key, value.toString()));
+      final response = await CallApi().searchData('search/global?${Uri(queryParameters: stringParams).query}', 'GET');
       final body = json.decode(response.body);
 
       if (response.statusCode == 200) {
@@ -546,7 +559,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
           // Only process resource results for this screen
           List<dynamic> resourceResultsJson = body['results_by_type']['resources'];
           newSearchResults = resourceResultsJson
-              .map((item) => ResourceModel.fromSearchData(item)) // Use fromSearchData if structure differs slightly
+              .map((item) => ResourceModel.fromSearchData(item)) 
               .toList();
         }
 
@@ -555,7 +568,24 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
           _isSearchLoading = false;
         });
       } else {
-        throw Exception(body['message'] ?? 'Search failed');
+        // If the backend returns a 422, it will have validation errors in the body
+        String errorMessage = body['message'] ?? 'Search failed.';
+        if (body['errors'] != null) {
+          // You can parse specific validation errors here if needed
+          // Assuming 'errors' is a Map<String, dynamic> where values are lists of strings
+          List<String> errorMessages = [];
+          (body['errors'] as Map<String, dynamic>).forEach((key, value) {
+            if (value is List) {
+              errorMessages.addAll(value.map((e) => e.toString()));
+            } else if (value is String) {
+              errorMessages.add(value);
+            }
+          });
+          if (errorMessages.isNotEmpty) {
+            errorMessage += "\n" + errorMessages.join(', ');
+          }
+        }
+        throw Exception(errorMessage);
       }
     } catch (e) {
       print('Error performing global search: $e');
@@ -582,7 +612,9 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
 
     if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      _performGlobalSearch(query);
+      // Always call _performGlobalSearch with the current _searchQuery.
+      // The _performGlobalSearch method now handles the empty query/no filters logic.
+      _performGlobalSearch(query); 
     });
   }
 
@@ -593,22 +625,35 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
         _searchController.clear();
         _searchQuery = '';
         _searchResults = [];
-        _isSearchLoading = false;
-        // Reset search filters when closing search bar
-        _selectedSearchType = 'resources';
+        _isSearchLoading = false;        
+        _selectedSearchType = 'resources'; // Reset filter values to initial state
         _resourceTypeFilter = '';
         _startTimeFilter = null;
         _endTimeFilter = null;
         _userIdFilter = '';
+      } else {
+        // If search is toggled ON, and there's no initial query or filters,
+        // you might want to immediately show results based on current filters or an empty search.
+        // For now, it will wait for user input or filter application.
+        // If you want to show all resources immediately when search is enabled,
+        // you could call _fetchResources() here or _performGlobalSearch('')
       }
     });
   }
 
   void _showSearchOptions() {
+    // Store current filter states before opening dialog
+    // This allows cancelling the dialog without applying changes immediately
+    String tempSelectedSearchType = _selectedSearchType;
+    String tempResourceTypeFilter = _resourceTypeFilter;
+    DateTime? tempStartTimeFilter = _startTimeFilter;
+    DateTime? tempEndTimeFilter = _endTimeFilter;
+    String tempUserIdFilter = _userIdFilter;
+
     showDialog(
       context: context,
-      builder: (BuildContext dialogContext) { // Use dialogContext to avoid conflicts
-        return StatefulBuilder( // Use StatefulBuilder to update dialog content dynamically
+      builder: (BuildContext dialogContext) { 
+        return StatefulBuilder( 
           builder: (context, setStateInDialog) {
             return AlertDialog(
               title: Text(
@@ -622,7 +667,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   children: [
                     // Search Type Selector
                     DropdownButtonFormField<String>(
-                      value: _selectedSearchType,
+                      value: tempSelectedSearchType, // Use temp state
                       decoration: InputDecoration(
                         labelText: 'Search For',
                         labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface),
@@ -636,12 +681,12 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                       ],
                       onChanged: (String? newValue) {
                         setStateInDialog(() {
-                          _selectedSearchType = newValue!;
-                          // Clear type-specific filters when changing search type
-                          _resourceTypeFilter = '';
-                          _startTimeFilter = null;
-                          _endTimeFilter = null;
-                          _userIdFilter = '';
+                          tempSelectedSearchType = newValue!;
+                          // Clear type-specific filters when changing search type in dialog
+                          tempResourceTypeFilter = '';
+                          tempStartTimeFilter = null;
+                          tempEndTimeFilter = null;
+                          tempUserIdFilter = '';
                         });
                       },
                       dropdownColor: Theme.of(context).colorScheme.surfaceVariant, // For dark mode
@@ -650,9 +695,9 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                     const SizedBox(height: 16),
 
                     // Resource Type Filter (conditional for resources)
-                    if (_selectedSearchType == 'resources')
+                    if (tempSelectedSearchType == 'resources')
                       DropdownButtonFormField<String>(
-                        value: _resourceTypeFilter.isEmpty ? null : _resourceTypeFilter,
+                        value: tempResourceTypeFilter.isEmpty ? null : tempResourceTypeFilter,
                         decoration: InputDecoration(
                           labelText: 'Resource Type',
                           labelStyle: TextStyle(color: Theme.of(context).colorScheme.onSurface),
@@ -665,7 +710,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                         ],
                         onChanged: (String? newValue) {
                           setStateInDialog(() {
-                            _resourceTypeFilter = newValue!;
+                            tempResourceTypeFilter = newValue!;
                           });
                         },
                         dropdownColor: Theme.of(context).colorScheme.surfaceVariant,
@@ -674,31 +719,31 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                     const SizedBox(height: 16),
 
                     // Start/End Time Pickers (conditional for bookings)
-                    if (_selectedSearchType == 'bookings') ...[
+                    if (tempSelectedSearchType == 'bookings') ...[
                       ListTile(
                         title: Text(
-                          _startTimeFilter == null
+                          tempStartTimeFilter == null
                               ? 'Select Start Time'
-                              : 'Start: ${DateFormat('yyyy-MM-dd HH:mm').format(_startTimeFilter!)}',
+                              : 'Start: ${DateFormat('yyyy-MM-dd HH:mm').format(tempStartTimeFilter!)}',
                           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         ),
                         trailing: Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
                         onTap: () async {
-                          final DateTime? picked = await showDatePicker(
+                          final DateTime? pickedDate = await showDatePicker(
                             context: context,
-                            initialDate: _startTimeFilter ?? DateTime.now(),
+                            initialDate: tempStartTimeFilter ?? DateTime.now(),
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          if (picked != null) {
+                          if (pickedDate != null) {
                             final TimeOfDay? timePicked = await showTimePicker(
                               context: context,
-                              initialTime: TimeOfDay.fromDateTime(_startTimeFilter ?? DateTime.now()),
+                              initialTime: TimeOfDay.fromDateTime(tempStartTimeFilter ?? DateTime.now()),
                             );
                             if (timePicked != null) {
                               setStateInDialog(() {
-                                _startTimeFilter = DateTime(
-                                  picked.year, picked.month, picked.day,
+                                tempStartTimeFilter = DateTime(
+                                  pickedDate.year, pickedDate.month, pickedDate.day,
                                   timePicked.hour, timePicked.minute,
                                 );
                               });
@@ -708,28 +753,28 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                       ),
                       ListTile(
                         title: Text(
-                          _endTimeFilter == null
+                          tempEndTimeFilter == null
                               ? 'Select End Time'
-                              : 'End: ${DateFormat('yyyy-MM-dd HH:mm').format(_endTimeFilter!)}',
+                              : 'End: ${DateFormat('yyyy-MM-dd HH:mm').format(tempEndTimeFilter!)}',
                           style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         ),
                         trailing: Icon(Icons.calendar_today, color: Theme.of(context).colorScheme.primary),
                         onTap: () async {
-                          final DateTime? picked = await showDatePicker(
+                          final DateTime? pickedDate = await showDatePicker(
                             context: context,
-                            initialDate: _endTimeFilter ?? DateTime.now(),
+                            initialDate: tempEndTimeFilter ?? DateTime.now(),
                             firstDate: DateTime(2000),
                             lastDate: DateTime(2100),
                           );
-                          if (picked != null) {
+                          if (pickedDate != null) {
                             final TimeOfDay? timePicked = await showTimePicker(
                               context: context,
-                              initialTime: TimeOfDay.fromDateTime(_endTimeFilter ?? DateTime.now()),
+                              initialTime: TimeOfDay.fromDateTime(tempEndTimeFilter ?? DateTime.now()),
                             );
                             if (timePicked != null) {
                               setStateInDialog(() {
-                                _endTimeFilter = DateTime(
-                                  picked.year, picked.month, picked.day,
+                                tempEndTimeFilter = DateTime(
+                                  pickedDate.year, pickedDate.month, pickedDate.day,
                                   timePicked.hour, timePicked.minute,
                                 );
                               });
@@ -740,9 +785,9 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                     ],
 
                     // User ID Filter (conditional for admin on bookings/users)
-                    if (_isAdmin && (_selectedSearchType == 'bookings' || _selectedSearchType == 'users'))
+                    if (_isAdmin && (tempSelectedSearchType == 'bookings' || tempSelectedSearchType == 'users'))
                       TextFormField(
-                        initialValue: _userIdFilter,
+                        initialValue: tempUserIdFilter,
                         decoration: InputDecoration(
                           labelText: 'User ID (Admin)',
                           hintText: 'Optional: Enter User ID',
@@ -760,7 +805,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                         style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                         onChanged: (value) {
                           setStateInDialog(() {
-                            _userIdFilter = value;
+                            tempUserIdFilter = value;
                           });
                         },
                       ),
@@ -770,26 +815,46 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
               actions: [
                 TextButton(
                   onPressed: () {
-                    // Apply filters and re-run search if query exists
-                    if (_searchQuery.isNotEmpty || _resourceTypeFilter.isNotEmpty || _startTimeFilter != null || _endTimeFilter != null || _userIdFilter.isNotEmpty) {
-                      _performGlobalSearch(_searchQuery);
-                    }
-                    Navigator.pop(dialogContext); // Use dialogContext to dismiss the dialog
+                    // Apply filters to main state and trigger search
+                    setState(() {
+                      _selectedSearchType = tempSelectedSearchType;
+                      _resourceTypeFilter = tempResourceTypeFilter;
+                      _startTimeFilter = tempStartTimeFilter;
+                      _endTimeFilter = tempEndTimeFilter;
+                      _userIdFilter = tempUserIdFilter;
+                    });
+                    // Re-run search with potentially updated filters (and current _searchQuery)
+                    _performGlobalSearch(_searchQuery);
+                    Navigator.pop(dialogContext); // Dismiss the dialog
                   },
                   child: Text('Apply', style: TextStyle(color: Theme.of(context).colorScheme.primary)),
                 ),
                 TextButton(
                   onPressed: () {
                     setStateInDialog(() {
-                      // Reset filters in dialog state
-                      _selectedSearchType = 'resources';
-                      _resourceTypeFilter = '';
-                      _startTimeFilter = null;
-                      _endTimeFilter = null;
-                      _userIdFilter = '';
+                      // Reset filters in dialog's temporary state
+                      tempSelectedSearchType = 'resources';
+                      tempResourceTypeFilter = '';
+                      tempStartTimeFilter = null;
+                      tempEndTimeFilter = null;
+                      tempUserIdFilter = '';
                     });
-                    // You might want to also clear main screen search results or re-fetch all
-                    // For now, it just resets the dialog filters. The next search will use new filters.
+                    // Option to also clear main screen search results or re-fetch all
+                    // if the user hits "Reset Filters" and expects the main view to clear.
+                    // If you want the main screen to reset immediately:
+                    // setState(() {
+                    //   _searchController.clear();
+                    //   _searchQuery = '';
+                    //   _searchResults = [];
+                    //   _isSearchLoading = false;
+                    //   _selectedSearchType = 'resources';
+                    //   _resourceTypeFilter = '';
+                    //   _startTimeFilter = null;
+                    //   _endTimeFilter = null;
+                    //   _userIdFilter = '';
+                    // });
+                    // _resourcesFuture = _fetchResources(); // Re-fetch all original resources
+                    // Navigator.pop(dialogContext); // Or close dialog if you want to apply reset immediately
                   },
                   child: Text('Reset Filters', style: TextStyle(color: Theme.of(context).colorScheme.secondary)),
                 ),
@@ -861,7 +926,10 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
       );
     }
 
-    if (_searchResults.isEmpty && _searchQuery.isNotEmpty) {
+    // If search is active (search bar is shown) and no results, and either query or filters are present
+    if (_isSearching && _searchResults.isEmpty && 
+        (_searchQuery.isNotEmpty || _resourceTypeFilter.isNotEmpty || 
+         _startTimeFilter != null || _endTimeFilter != null || _userIdFilter.isNotEmpty)) {
       return Center(
         child: Column(
           mainAxisAlignment: MainAxisAlignment.center,
@@ -869,13 +937,9 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             Icon(Icons.search_off, size: 64, color: colorScheme.onSurfaceVariant),
             const SizedBox(height: 16),
             Text(
-              'No matching resources found.',
+              'No matching results found for your search criteria.',
               style: TextStyle(fontSize: 18, color: colorScheme.onBackground),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Searched for: "$_searchQuery"',
-              style: TextStyle(fontSize: 14, color: colorScheme.onBackground),
+              textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
             ElevatedButton(
@@ -889,21 +953,24 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   _startTimeFilter = null;
                   _endTimeFilter = null;
                   _userIdFilter = '';
+                  _isSearching = false; // Close search bar as well
                 });
+                _resourcesFuture = _fetchResources(); // Re-fetch all original resources
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.secondary,
                 foregroundColor: colorScheme.onSecondary,
               ),
-              child: const Text('Clear Search'),
+              child: const Text('Clear Search & Filters'),
             ),
           ],
         ),
       );
     }
 
-    if (_searchResults.isEmpty && _searchQuery.isEmpty) {
-        // If search bar is active but no query and no results, show a hint
+    // If search bar is active but no query and no filters, show a hint
+    if (_isSearching && _searchResults.isEmpty && _searchQuery.isEmpty && 
+        _resourceTypeFilter.isEmpty && _startTimeFilter == null && _endTimeFilter == null && _userIdFilter.isEmpty) {
         return Center(
             child: Text(
                 'Enter keywords or apply filters to search.',
@@ -913,15 +980,55 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
         );
     }
 
-    return ListView.builder(
-      itemCount: _searchResults.length,
-      padding: const EdgeInsets.all(8.0),
-      itemBuilder: (context, index) {
-        final resource = _searchResults[index];
-        return _buildResourceCard(resource);
-      },
-    );
+    // If search is not active, or search is active and has results, display results
+    if (_isSearching && _searchResults.isNotEmpty) {
+      return ListView.builder(
+        itemCount: _searchResults.length,
+        padding: const EdgeInsets.all(8.0),
+        itemBuilder: (context, index) {
+          final resource = _searchResults[index];
+          return _buildResourceCard(resource);
+        },
+      );
+    } 
+    // If not searching, display all resources
+    else if (!_isSearching) {
+      return FutureBuilder<List<ResourceModel>>(
+        future: _resourcesFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return Center(
+              child: CircularProgressIndicator(color: colorScheme.primary),
+            );
+          } else if (snapshot.hasError) {
+            return Center(
+              child: Text('Error: ${snapshot.error}', style: TextStyle(color: colorScheme.error)),
+            );
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return Center(
+              child: Text(
+                'No resources available.',
+                style: TextStyle(fontSize: 18, color: colorScheme.onBackground),
+              ),
+            );
+          } else {
+            return ListView.builder(
+              itemCount: snapshot.data!.length,
+              padding: const EdgeInsets.all(8.0),
+              itemBuilder: (context, index) {
+                final resource = snapshot.data![index];
+                return _buildResourceCard(resource);
+              },
+            );
+          }
+        },
+      );
+    }
+
+    // Fallback if none of the above conditions are met (shouldn't happen often)
+    return const SizedBox.shrink();
   }
+
 
   Widget _buildResourceCard(ResourceModel resource) {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -946,7 +1053,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
               // Search result highlight indicator
-              if (_isSearching && _searchQuery.isNotEmpty)
+              if (_isSearching && (_searchQuery.isNotEmpty || _resourceTypeFilter.isNotEmpty || _startTimeFilter != null || _endTimeFilter != null || _userIdFilter.isNotEmpty))
                 Container(
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
@@ -1188,704 +1295,10 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                 );
               },
             ),
-            Divider(color: colorScheme.outline), // Divider color
-            ListTile(
-              title: Text('Logout', style: TextStyle(color: colorScheme.error)),
-              leading: Icon(Icons.logout, color: colorScheme.error),
-              onTap: logout,
-            ),
-            const SizedBox(height: 30),
           ],
         ),
       ),
-      body: _isSearching
-          ? _buildSearchResults() // Show search results or instructions when search is active
-          : FutureBuilder<List<ResourceModel>>(
-              future: _resourcesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return Center(child: CircularProgressIndicator(color: colorScheme.primary));
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}', style: TextStyle(color: colorScheme.error)));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return Center(child: Text('No resources available.', style: TextStyle(color: colorScheme.onBackground)));
-                } else {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    padding: const EdgeInsets.all(8.0),
-                    itemBuilder: (context, index) {
-                      final resource = snapshot.data![index];
-                      return _buildResourceCard(resource);
-                    },
-                  );
-                }
-              },
-            ),
-    );
-  }
-} */
-
-import 'dart:async';
-
-import 'package:flutter/material.dart';
-import 'package:resource_booking_app/components/BottomBar.dart';
-import 'dart:convert'; // For JSON encoding/decoding
-import 'package:shared_preferences/shared_preferences.dart'; // For managing session
-
-import 'package:resource_booking_app/auth/Api.dart'; // Your custom API service
-import 'package:resource_booking_app/components/AppBar.dart';
-import 'package:resource_booking_app/models/resource_model.dart'; // Your custom resource model
-import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/ResourceDetails.dart'; // Ensure this uses ResourceModel
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Settings.dart';
-
-class ResourcesScreen extends StatefulWidget {
-  const ResourcesScreen({super.key});
-
-  @override
-  _ResourcesScreenState createState() => _ResourcesScreenState();
-}
-
-class _ResourcesScreenState extends State<ResourcesScreen> {
-  final TextEditingController _searchController = TextEditingController();
-  String _searchQuery = '';
-  bool _isSearching = false; // State to control search bar visibility
-  bool _isSearchLoading = false; // Loading state for search
-  List<ResourceModel> _allResources = []; // To store all fetched resources
-  List<ResourceModel> _searchResults = []; // To store search results
-  Future<List<ResourceModel>>? _resourcesFuture; // Future for fetching resources
-  String _selectedSearchField = 'name'; // Default search field
-  Timer? _debounceTimer; // For debouncing search requests
-
-  @override
-  void initState() {
-    super.initState();
-    _searchController.addListener(_onSearchChanged);
-    _resourcesFuture = _fetchResources(); // Initial fetch
-  }
-
-  @override
-  void dispose() {
-    _searchController.removeListener(_onSearchChanged);
-    _searchController.dispose();
-    _debounceTimer?.cancel();
-    super.dispose();
-  }
-
-  // Fetches all resources from the API
-  Future<List<ResourceModel>> _fetchResources() async {
-    try {
-      final response = await CallApi().getData('resources'); // Adjust your API endpoint
-      final body = json.decode(response.body);
-
-      if (response.statusCode == 200 && body['success'] == true) {
-        List<dynamic> resourceJson = body['resources']; // Assuming 'resources' is the key in your JSON response
-        _allResources = resourceJson.map((json) => ResourceModel.fromJson(json)).toList();
-        return _allResources;
-      } else {
-        // Handle error message from API
-        throw Exception(body['message'] ?? 'Failed to load resources');
-      }
-    } catch (e) {
-      print('Error fetching resources: $e');
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load resources: $e')),
-        );
-      }
-      return []; // Return empty list on error
-    }
-  }
-
-  // Binary search API call
-  Future<void> _performBinarySearch(String query) async {
-    if (query.isEmpty || query.length < 1) {
-      setState(() {
-        _searchResults = [];
-        _isSearchLoading = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _isSearchLoading = true;
-    });
-
-    try {
-      final requestBody = {
-        'type': 'resources',
-        'query': query,
-        'field': _selectedSearchField,
-      };
-
-      final response = await CallApi().postData(requestBody, 'search');
-      final body = json.decode(response.body);
-
-      if (response.statusCode == 200) {
-        List<dynamic> resultsJson = body['results'] ?? [];
-        List<ResourceModel> searchResults = [];
-        
-        for (var result in resultsJson) {
-          // Extract the actual resource data from the search result
-          var resourceData = result['data'];
-          // Convert back to ResourceModel (you may need to adjust this based on your model structure)
-          ResourceModel resource = ResourceModel(
-            id: result['id'],
-            name: resourceData['name'] ?? '',
-            description: resourceData['description'] ?? '',
-            status: resourceData['status'] ?? 'available',
-            capacity: 0, // You may need to add capacity to your search result format
-            location: '', // You may need to add location to your search result format
-            imageUrl: null, // You may need to add imageUrl to your search result format
-            // Add other fields as needed
-          );
-          searchResults.add(resource);
-        }
-
-        setState(() {
-          _searchResults = searchResults;
-          _isSearchLoading = false;
-        });
-      } else {
-        throw Exception(body['message'] ?? 'Search failed');
-      }
-    } catch (e) {
-      print('Error performing search: $e');
-      setState(() {
-        _searchResults = [];
-        _isSearchLoading = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Search failed: $e')),
-        );
-      }
-    }
-  }
-
-  // Multi-field search API call
-  Future<void> _performMultiFieldSearch(String query) async {
-    if (query.isEmpty || query.length < 1) {
-      setState(() {
-        _searchResults = [];
-        _isSearchLoading = false;
-      });
-      return;
-    }
-
-    setState(() {
-      _isSearchLoading = true;
-    });
-
-    try {
-      final requestBody = {
-        'type': 'resources',
-        'query': query,
-        'fields': ['name', 'type', 'description'], // Search across multiple fields
-      };
-
-      final response = await CallApi().postData(requestBody, 'search/multi-field');
-      final body = json.decode(response.body);
-
-      if (response.statusCode == 200) {
-        List<dynamic> resultsJson = body['results'] ?? [];
-        List<ResourceModel> searchResults = [];
-        
-        for (var result in resultsJson) {
-          var resourceData = result['data'];
-          ResourceModel resource = ResourceModel(
-            id: result['id'],
-            name: resourceData['name'] ?? '',            
-            description: resourceData['description'] ?? '',
-            status: resourceData['status'] ?? 'available',
-            capacity: 0, // Add to your backend response if needed
-            location: '', // Add to your backend response if needed
-            imageUrl: null, // Add to your backend response if needed
-          );
-          searchResults.add(resource);
-        }
-
-        setState(() {
-          _searchResults = searchResults;
-          _isSearchLoading = false;
-        });
-      } else {
-        throw Exception(body['message'] ?? 'Multi-field search failed');
-      }
-    } catch (e) {
-      print('Error performing multi-field search: $e');
-      setState(() {
-        _searchResults = [];
-        _isSearchLoading = false;
-      });
-      
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Multi-field search failed: $e')),
-        );
-      }
-    }
-  }
-
-  void _onSearchChanged() {
-    final query = _searchController.text.trim();
-    setState(() {
-      _searchQuery = query.toLowerCase();
-    });
-
-    // Debounce the search to avoid too many API calls
-    if (_debounceTimer?.isActive ?? false) _debounceTimer!.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
-      if (query.isNotEmpty) {
-        // Use multi-field search for better results
-        _performMultiFieldSearch(query);
-      } else {
-        setState(() {
-          _searchResults = [];
-          _isSearchLoading = false;
-        });
-      }
-    });
-  }
-
-  void _toggleSearch() {
-    setState(() {
-      _isSearching = !_isSearching;
-      if (!_isSearching) {
-        _searchController.clear();
-        _searchQuery = '';
-        _searchResults = [];
-        _isSearchLoading = false;
-      }
-    });
-  }
-
-  // Show search options dialog
-  void _showSearchOptions() {
-    showDialog(
-      context: context,
-      builder: (BuildContext context) {
-        return AlertDialog(
-          title: const Text('Search Options'),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const Text('Search by:'),
-              const SizedBox(height: 10),
-              DropdownButton<String>(
-                value: _selectedSearchField,
-                isExpanded: true,
-                items: const [
-                  DropdownMenuItem(value: 'name', child: Text('Resource Name')),
-                  DropdownMenuItem(value: 'type', child: Text('Resource Type')),
-                  DropdownMenuItem(value: 'description', child: Text('Description')),
-                ],
-                onChanged: (String? newValue) {
-                  if (newValue != null) {
-                    setState(() {
-                      _selectedSearchField = newValue;
-                    });
-                    Navigator.pop(context);
-                    // Re-perform search with new field if there's a query
-                    if (_searchQuery.isNotEmpty) {
-                      _performBinarySearch(_searchQuery);
-                    }
-                  }
-                },
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text('Close'),
-            ),
-          ],
-        );
-      },
-    );
-  }
-
-  void logout() async {
-    // Show a confirmation dialog
-    final bool confirmLogout = await showDialog(
-          context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Confirm Logout'),
-            content: const Text('Are you sure you want to log out?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // User cancels
-                child: const Text('Cancel'),
-              ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true), // User confirms
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
-                child: const Text('Logout', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
-        ) ??
-        false; 
-
-    if (confirmLogout) {
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-
-      if (mounted) {
-        // Navigate to your login/auth screen and remove all previous routes
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/',
-          (route) => false,
-        ); // Assuming '/' is your initial login route
-      }
-    }
-  }
-
-  Widget _buildSearchResults() {
-    if (_isSearchLoading) {
-      return const Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            CircularProgressIndicator(),
-            SizedBox(height: 16),
-            Text('Searching...', style: TextStyle(fontSize: 16)),
-          ],
-        ),
-      );
-    }
-
-    if (_searchResults.isEmpty && _searchQuery.isNotEmpty) {
-      return Center(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.center,
-          children: [
-            const Icon(Icons.search_off, size: 64, color: Colors.grey),
-            const SizedBox(height: 16),
-            const Text(
-              'No matching resources found.',
-              style: TextStyle(fontSize: 18, color: Colors.grey),
-            ),
-            const SizedBox(height: 8),
-            Text(
-              'Searched for: "$_searchQuery"',
-              style: const TextStyle(fontSize: 14, color: Colors.grey),
-            ),
-            const SizedBox(height: 16),
-            ElevatedButton(
-              onPressed: () {
-                _searchController.clear();
-                setState(() {
-                  _searchQuery = '';
-                  _searchResults = [];
-                });
-              },
-              child: const Text('Clear Search'),
-            ),
-          ],
-        ),
-      );
-    }
-
-    return ListView.builder(
-      itemCount: _searchResults.length,
-      padding: const EdgeInsets.all(8.0),
-      itemBuilder: (context, index) {
-        final resource = _searchResults[index];
-        return _buildResourceCard(resource);
-      },
-    );
-  }
-
-  Widget _buildResourceCard(ResourceModel resource) {
-    return Padding(
-      padding: const EdgeInsets.symmetric(vertical: 8.0),
-      child: Material(
-        borderRadius: BorderRadius.circular(20),
-        color: const Color.fromARGB(255, 255, 255, 255),
-        elevation: 5,
-        child: InkWell(
-          onTap: () {
-            Navigator.push(
-              context,
-              MaterialPageRoute(
-                builder: (context) => ResourceDetails(resource: resource)
-              )
-            );
-          },
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              // Search result highlight indicator
-              if (_isSearching && _searchQuery.isNotEmpty)
-                Container(
-                  width: double.infinity,
-                  padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
-                  decoration: const BoxDecoration(
-                    color: Colors.blue,
-                    borderRadius: BorderRadius.only(
-                      topLeft: Radius.circular(20),
-                      topRight: Radius.circular(20),
-                    ),
-                  ),
-                  child: const Text(
-                    'Search Result',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 12,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ),
-              Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      resource.name,
-                      style: const TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: Colors.green,
-                      ),
-                    ),
-                    const SizedBox(height: 5),
-                    if (resource.location!.isNotEmpty)
-                      Text(
-                        'Location: ${resource.location}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.black87,
-                        ),
-                      ),
-                   
-                    const SizedBox(height: 5),
-                    if (resource.capacity! > 0)
-                      Text(
-                        'Capacity: ${resource.capacity.toString()}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.black87,
-                        ),
-                      ),
-                    const SizedBox(height: 5),
-                    if (resource.status == "booked")
-                      const Text(
-                        'Status: Booked',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.red,
-                        ),
-                      )
-                    else if (resource.status == "available")
-                      const Text(
-                        'Status: Available',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: Colors.green,
-                        ),
-                      )
-                    else
-                      Text(
-                        'Status: ${resource.status}',
-                        style: const TextStyle(
-                          fontSize: 18,
-                          color: Colors.orange,
-                        ),
-                      ),
-                    if (resource.description != null && resource.description!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5.0),
-                        child: Text(
-                          resource.description!,
-                          style: const TextStyle(
-                            fontSize: 16,
-                            color: Colors.black54,
-                          ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
-    );
-  }
-
-  @override
-  Widget build(BuildContext context) {
-    return Scaffold(
-      bottomNavigationBar: Bottombar(),
-      appBar: MyAppBar(
-        titleWidget: _isSearching
-            ? Row(
-                children: [
-                  Expanded(
-                    child: TextField(
-                      controller: _searchController,
-                      style: const TextStyle(color: Colors.white),
-                      decoration: InputDecoration(
-                        hintText: 'Search resources...',
-                        hintStyle: TextStyle(color: Colors.white.withOpacity(0.7)),
-                        border: InputBorder.none,
-                        suffixIcon: _isSearchLoading
-                            ? const SizedBox(
-                                width: 20,
-                                height: 20,
-                                child: CircularProgressIndicator(
-                                  strokeWidth: 2,
-                                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                                ),
-                              )
-                            : null,
-                      ),
-                    ),
-                  ),
-                  IconButton(
-                    icon: const Icon(Icons.tune, color: Colors.white),
-                    onPressed: _showSearchOptions,
-                    tooltip: 'Search Options',
-                  ),
-                ],
-              )
-            : const Text(
-                "Resources",
-                style: TextStyle(
-                  fontSize: 20,
-                  fontWeight: FontWeight.bold,
-                  color: Colors.white,
-                ),
-              ),
-        onSearchPressed: _toggleSearch,
-        isSearching: _isSearching,
-      ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(
-                color: Color.fromARGB(255, 20, 148, 24),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset("assets/images/logo.png", height: 50),
-                  const Text(
-                    'Mzuzu University',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    'Campus Resource Booking',
-                    style: TextStyle(color: Colors.white, fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              title: const Text('Home'),
-              leading: const Icon(Icons.home),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => Home()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Profile'),
-              leading: const Icon(Icons.person),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => ProfileScreen()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Resources'),
-              leading: const Icon(Icons.grid_view, color: Colors.blueAccent),
-              onTap: () {
-                Navigator.pop(context); // Already on this screen, close drawer
-              },
-            ),
-            ListTile(
-              title: const Text('Bookings'),
-              leading: const Icon(Icons.book_online),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => BookingScreen()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Notifications'),
-              leading: const Icon(Icons.notifications),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const NotificationScreen()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Settings'),
-              leading: const Icon(Icons.settings),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              title: const Text('Logout'),
-              leading: const Icon(Icons.logout, color: Colors.red),
-              onTap: logout,
-            ),
-            const SizedBox(height: 30),
-          ],
-        ),
-      ),
-      body: _isSearching && _searchQuery.isNotEmpty
-          ? _buildSearchResults() // Show search results when searching
-          : FutureBuilder<List<ResourceModel>>(
-              future: _resourcesFuture,
-              builder: (context, snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(child: CircularProgressIndicator());
-                } else if (snapshot.hasError) {
-                  return Center(child: Text('Error: ${snapshot.error}'));
-                } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-                  return const Center(child: Text('No resources available.'));
-                } else {
-                  return ListView.builder(
-                    itemCount: snapshot.data!.length,
-                    padding: const EdgeInsets.all(8.0),
-                    itemBuilder: (context, index) {
-                      final resource = snapshot.data![index];
-                      return _buildResourceCard(resource);
-                    },
-                  );
-                }
-              },
-            ),
+      body: _buildSearchResults(),
     );
   }
 }

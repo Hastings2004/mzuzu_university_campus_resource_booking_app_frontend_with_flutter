@@ -14,7 +14,7 @@ class CallApi {
   }
 
   // Method for search requests
-  searchData(apiUrl, data, {required Map<String, String> body}) async {
+  searchData(apiUrl, data) async {
     var fullUrl = _url + apiUrl;
     return await http.post(
       Uri.parse(fullUrl),
