@@ -271,10 +271,25 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       final hasConflict = response.statusCode == 409;
 
       _conflictCache[cacheKey] = hasConflict;
-
+      
       if (hasConflict && mounted) {
-        _showWarningSnackBar(
-          'Time slot may not be available: ${body['message']}',
+        await showDialog(
+          context: context,
+          barrierDismissible: false,
+          builder: (context) => AlertDialog(
+            title: const Text('Booking Conflict'),
+            content: Text(
+              'Time slot is not available: ${body['message']}',
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.of(context).pop();
+                },
+                child: const Text('OK'),
+              ),
+            ],
+          ),
         );
       }
     } catch (e) {
