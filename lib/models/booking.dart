@@ -26,9 +26,9 @@ class Booking {
     required this.status,
     required this.resourceName,
     required this.resourceLocation,
-    this.resourceDescription, // No 'required' keyword for nullable fields
-    this.resourceCapacity,    // No 'required' keyword for nullable fields
-    this.resourceType,        // No 'required' keyword for nullable fields
+    this.resourceDescription, 
+    this.resourceCapacity,    
+    this.resourceType,        
   });
 
   // Add a copyWith method to easily create a new Booking instance with updated values
@@ -66,14 +66,12 @@ class Booking {
 
 
   factory Booking.fromJson(Map<String, dynamic> json) {
-    // Access the nested 'resource' object
     final Map<String, dynamic>? resource = json['resource'];
 
     return Booking(
       id: json['id'] as int,
       userId: json['user_id'] as int,
       resourceId: json['resource_id'] as int,
-      // Ensure date strings are parsed correctly, handling potential nulls from backend if dates are optional
       startTime: DateTime.parse(json['start_time'] as String),
       endTime: DateTime.parse(json['end_time'] as String),
       purpose: json['purpose'] as String,
@@ -81,12 +79,12 @@ class Booking {
       bookingReference: json['booking_reference'] as String,    
       resourceName: resource?['name'] as String? ?? 'Unknown Resource',
       resourceLocation: resource?['location'] as String? ?? 'Unknown Location',
-      resourceDescription: resource?['description'] as String?, // This will be null if not present in JSON
-      resourceCapacity: resource?['capacity'] is int // Check if it's an int
+      resourceDescription: resource?['description'] as String?, 
+      resourceCapacity: resource?['capacity'] is int 
           ? resource!['capacity'] as int
-          : (resource?['capacity'] is String // Or if it's a string that can be parsed to an int
+          : (resource?['capacity'] is String 
               ? int.tryParse(resource!['capacity'] as String)
-              : null), // Otherwise, null
+              : null), 
       resourceType: resource?['type'] as String?,
     );
   }

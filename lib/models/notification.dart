@@ -1,17 +1,16 @@
-// lib/models/notification_model.dart
 class NotificationModel {
   final int id;
   final String title;
   final String message;
-  final DateTime timestamp; // Changed from String to DateTime for easier handling
-  final bool read; // Assuming you might have a 'read' status
+  final DateTime timestamp; 
+  final bool read; 
 
   NotificationModel({
     required this.id,
     required this.title,
     required this.message,
     required this.timestamp,
-    this.read = false, // Default to false if not provided
+    this.read = false, 
   });
 
   factory NotificationModel.fromJson(Map<String, dynamic> json) {
@@ -19,7 +18,7 @@ class NotificationModel {
       id: json['id'],
       title: json['title'] ?? 'No Title',
       message: json['message'] ?? 'No Message',
-      timestamp: DateTime.parse(json['timestamp']), // Parse the timestamp string
+      timestamp: DateTime.parse(json['timestamp']), 
       read: json['read'] ?? false,
     );
   }
@@ -29,7 +28,7 @@ class NotificationModel {
       'id': id,
       'title': title,
       'message': message,
-      'timestamp': timestamp.toIso8601String(), // Convert to ISO 8601 string for API
+      'timestamp': timestamp.toIso8601String(), 
       'read': read,
     };
   }

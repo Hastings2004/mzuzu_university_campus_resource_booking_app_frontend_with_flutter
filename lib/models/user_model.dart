@@ -1,11 +1,10 @@
-// lib/models/user_model.dart
 class UserModel {
   final int id;
   final String firstName;
   final String lastName;
   final String email;
-  final String? phoneNumber; // Optional field
-  final String? studentId;   // Optional field
+  final String? phoneNumber; 
+  final String? studentId;  
 
   UserModel({
     required this.id,
@@ -22,8 +21,8 @@ class UserModel {
       firstName: json['first_name'] ?? '',
       lastName: json['last_name'] ?? '',
       email: json['email'] ?? '',
-      phoneNumber: json['phone_number'], // Match your API's key
-      studentId: json['student_id'],     // Match your API's key
+      phoneNumber: json['phone_number'], 
+      studentId: json['student_id'],   
     );
   }
 

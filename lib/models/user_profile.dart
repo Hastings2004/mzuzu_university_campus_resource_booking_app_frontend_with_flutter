@@ -1,4 +1,3 @@
-// lib/models/user_profile.dart
 class UserProfile {
   final int id;
   final String firstName;
@@ -36,7 +35,7 @@ class UserProfile {
       'last_name': lastName,
       'phone_number': phoneNumber,
       'user_id': staffId,
-      // 'email' and 'role' are typically not updated via this endpoint
+     
     };
   }
 }

@@ -319,21 +319,21 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
     try {
       final data = {'current_password': password};
-      final response = await CallApi().postData(data, 'user/delete-account'); // Adjust endpoint
+      final response = await CallApi().postData(data, 'user/delete-account'); 
       final body = json.decode(response.body);
 
-      if (mounted) Navigator.pop(context); // Dismiss loading indicator
+      if (mounted) Navigator.pop(context); 
 
       if (response.statusCode == 200 && body['success'] == true) {
         if (mounted) {
           _showSuccessDialog(body['message'] ?? "Account deleted successfully!");
         }
         SharedPreferences localStorage = await SharedPreferences.getInstance();
-        await localStorage.clear(); // Clear local storage completely
+        await localStorage.clear(); 
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => Auth()), // Navigate to AuthPage
+            MaterialPageRoute(builder: (context) => Auth()), 
             (Route<dynamic> route) => false,
           );
         }
@@ -573,7 +573,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                       builder: (context) => AlertDialog(
                         title: const Text("Change Password"),
                         content: Form(
-                          key: _passwordFormKey, // Attach form key
+                          key: _passwordFormKey, 
                           child: Column(
                             mainAxisSize: MainAxisSize.min,
                             children: [
@@ -676,7 +676,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
               ],
             ),
 
-            // Legal & About Section
             _buildSettingsSection(
               title: "Legal & About",
               children: [
@@ -772,7 +771,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
         // Execute the navigation logic
         if (onTapCallback is Function()) {
           onTapCallback();
-        } else if (onTapCallback is Widget Function()) { // For cases where a new route is returned
+        } else if (onTapCallback is Widget Function()) { 
            Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => onTapCallback()));
         }
       },
