@@ -618,7 +618,6 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
       );
     }
 
-    // Fallback if none of the above conditions are met (shouldn't happen often)
     return const SizedBox.shrink();
   }
 
@@ -630,7 +629,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Material(
         borderRadius: BorderRadius.circular(20),
-        color: colorScheme.surfaceVariant, // Card background for dark mode
+        color: colorScheme.surfaceVariant, 
         elevation: 5,
         shadowColor: colorScheme.shadow,
         child: InkWell(
@@ -651,7 +650,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   width: double.infinity,
                   padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 4),
                   decoration: BoxDecoration(
-                    color: colorScheme.primary, // Primary color for highlight
+                    color: colorScheme.primary, 
                     borderRadius: const BorderRadius.only(
                       topLeft: Radius.circular(20),
                       topRight: Radius.circular(20),
@@ -660,7 +659,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   child: Text(
                     'Search Result',
                     style: TextStyle(
-                      color: colorScheme.onPrimary, // Text color on primary background
+                      color: colorScheme.onPrimary, 
                       fontSize: 12,
                       fontWeight: FontWeight.bold,
                     ),
@@ -676,7 +675,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                       style: TextStyle(
                         fontSize: 22,
                         fontWeight: FontWeight.bold,
-                        color: colorScheme.primary, // Green for resource name
+                        color: colorScheme.primary, 
                       ),
                     ),
                     const SizedBox(height: 5),
@@ -728,7 +727,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                         'Status: ${resource.status}',
                         style: TextStyle(
                           fontSize: 18,
-                          color: colorScheme.onSurfaceVariant, // A neutral color for other status
+                          color: colorScheme.onSurfaceVariant,
                         ),
                       ),
                     if (resource.description != null && resource.description!.isNotEmpty)

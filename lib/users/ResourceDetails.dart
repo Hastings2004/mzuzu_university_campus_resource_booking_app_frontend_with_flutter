@@ -25,7 +25,6 @@ class ResourceDetails extends StatefulWidget {
 }
 
 class _ResourceDetailsState extends State<ResourceDetails> {
-  // User data - cached to avoid repeated SharedPreferences calls
   UserData? _userData;
 
   String? _selectedBookingType;
@@ -152,7 +151,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
           (route) => false,
-        ); // Assuming '/' is your initial login route
+        ); 
       }
     }
   }
