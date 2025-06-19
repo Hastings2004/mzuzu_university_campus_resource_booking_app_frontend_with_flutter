@@ -9,7 +9,7 @@ class CallApi {
   // Private method to get the token from SharedPreferences
   Future<String?> _getToken() async {
     SharedPreferences localStorage = await SharedPreferences.getInstance();
-    _token = localStorage.getString('token'); // Assuming 'token' is the key you used to store it
+    _token = localStorage.getString('token'); 
     return _token;
   }
 

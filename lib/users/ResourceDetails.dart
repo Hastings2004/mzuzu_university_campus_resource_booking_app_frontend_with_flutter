@@ -28,6 +28,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   UserData? _userData;
 
   String? _selectedBookingType;
+  String? _selectedPriority; // New state for priority
+  String _bookingOption = "single_day"; // New state for booking option (single_day, multi_day)
 
   final List<String> _bookingType = [
     'class',
@@ -35,6 +37,13 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     'university_activity',
     'student_meeting',
     'Other',
+  ];
+
+  final List<String> _priority = [
+    'low',
+    'medium',
+    'high',
+    'urgent',
   ];
 
   // Form controllers
@@ -52,6 +61,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // State management
   bool _isLoading = false;
   bool _isInitialized = false;
+  bool? _isResourceAvailable; // New state for availability check result
 
   // Debouncer for API calls
   Timer? _debounceTimer;
@@ -113,32 +123,30 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // Optimized logout with better error handling
   void logout() async {
     // Show a confirmation dialog
-    final bool confirmLogout =
-        await showDialog(
+    final bool confirmLogout = await showDialog(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Confirm Logout'),
-                content: const Text('Are you sure you want to log out?'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(false), // User cancels
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(true), // User confirms
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ), // Optional: make logout button red
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () =>
+                    Navigator.of(context).pop(false), // User cancels
+                child: const Text('Cancel'),
               ),
+              ElevatedButton(
+                onPressed: () =>
+                    Navigator.of(context).pop(true), // User confirms
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ), // Optional: make logout button red
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ) ??
         false;
 
@@ -151,17 +159,16 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
           (route) => false,
-        ); 
+        );
       }
     }
   }
 
   // Optimized date selection with validation
   Future<void> _selectDate(BuildContext context, bool isStart) async {
-    final initialDate =
-        isStart
-            ? (_selectedStartDate ?? DateTime.now())
-            : (_selectedEndDate ?? _selectedStartDate ?? DateTime.now());
+    final initialDate = isStart
+        ? (_selectedStartDate ?? DateTime.now())
+        : (_selectedEndDate ?? _selectedStartDate ?? DateTime.now());
 
     final firstDate =
         isStart ? DateTime.now() : (_selectedStartDate ?? DateTime.now());
@@ -191,15 +198,15 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
       // Clear conflict cache when dates change
       _conflictCache.clear();
+      _isResourceAvailable = null; // Reset availability check
     }
   }
 
   // Optimized time selection
   Future<void> _selectTime(BuildContext context, bool isStart) async {
-    final initialTime =
-        isStart
-            ? (_selectedStartTime ?? TimeOfDay.now())
-            : (_selectedEndTime ?? TimeOfDay.now());
+    final initialTime = isStart
+        ? (_selectedStartTime ?? TimeOfDay.now())
+        : (_selectedEndTime ?? TimeOfDay.now());
 
     final pickedTime = await showTimePicker(
       context: context,
@@ -231,29 +238,92 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // Debounced conflict checking
   void _debounceConflictCheck() {
     _debounceTimer?.cancel();
-    _debounceTimer = Timer(const Duration(milliseconds: 500), () {
+    _debounceTimer = Timer(const Duration(milliseconds: 700), () {
       if (_selectedStartDate != null &&
           _selectedStartTime != null &&
           _selectedEndDate != null &&
           _selectedEndTime != null) {
         _checkForConflicts();
+      } else {
+        setState(() {
+          _isResourceAvailable = null; // Clear availability if dates/times are incomplete
+        });
       }
     });
   }
 
-  // Background conflict checking
+  // Background conflict checking (similar to handleAvailabilityCheck in React)
   Future<void> _checkForConflicts() async {
-    final startDateTime = _combineDateTime(
-      _selectedStartDate!,
-      _selectedStartTime!,
-    );
-    final endDateTime = _combineDateTime(_selectedEndDate!, _selectedEndTime!);
+    setState(() {
+      _isResourceAvailable = null; // Set to checking state
+    });
+
+    DateTime fullStartTime, fullEndTime;
+
+    if (_bookingOption == "single_day") {
+      final now = DateTime.now();
+      final dateString = DateFormat('yyyy-MM-dd').format(now);
+      if (_selectedStartTime == null || _selectedEndTime == null) {
+        return; // Wait for full time selection
+      }
+      fullStartTime =
+          DateTime.parse('${dateString}T${_formatTime(_selectedStartTime!)}:00');
+      fullEndTime =
+          DateTime.parse('${dateString}T${_formatTime(_selectedEndTime!)}:00');
+
+      // Client-side validation for single day
+      if (fullStartTime.day != fullEndTime.day || fullStartTime.month != fullEndTime.month || fullStartTime.year != fullEndTime.year) {
+        if (mounted) {
+          setState(() {
+            _isResourceAvailable = false;
+          });
+          _showErrorSnackBar("For 'Single Day' booking, start and end times must be on the same day.");
+        }
+        return;
+      }
+
+    } else {
+      if (_selectedStartDate == null ||
+          _selectedStartTime == null ||
+          _selectedEndDate == null ||
+          _selectedEndTime == null) {
+        return; // Wait for full date/time selection
+      }
+      fullStartTime = _combineDateTime(_selectedStartDate!, _selectedStartTime!);
+      fullEndTime = _combineDateTime(_selectedEndDate!, _selectedEndTime!);
+    }
+
+    if (fullStartTime.isAfter(fullEndTime) ||
+        fullStartTime.isAtSameMomentAs(fullEndTime)) {
+      if (mounted) {
+        setState(() {
+          _isResourceAvailable = false;
+        });
+        _showErrorSnackBar("End time must be after start time for availability check.");
+      }
+      return;
+    }
+
+    if (fullEndTime.isBefore(DateTime.now())) {
+      if (mounted) {
+        setState(() {
+          _isResourceAvailable = false;
+        });
+        _showErrorSnackBar("Cannot check availability for a time that has already passed.");
+      }
+      return;
+    }
 
     final cacheKey =
-        '${widget.resource.id}_${startDateTime.toIso8601String()}_${endDateTime.toIso8601String()}';
+        '${widget.resource.id}_${fullStartTime.toIso8601String()}_${fullEndTime.toIso8601String()}';
 
     // Check cache first
     if (_conflictCache.containsKey(cacheKey)) {
+      if (mounted) {
+        setState(() {
+          _isResourceAvailable = !_conflictCache[cacheKey]!;
+        });
+      }
       return;
     }
 
@@ -261,8 +331,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       final response = await CallApi()
           .postData({
             'resource_id': widget.resource.id,
-            'start_time': startDateTime.toIso8601String(),
-            'end_time': endDateTime.toIso8601String(),
+            'start_time': fullStartTime.toIso8601String(),
+            'end_time': fullEndTime.toIso8601String(),
           }, 'bookings/check-availability')
           .timeout(const Duration(seconds: 5));
 
@@ -270,7 +340,13 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       final hasConflict = response.statusCode == 409;
 
       _conflictCache[cacheKey] = hasConflict;
-      
+
+      if (mounted) {
+        setState(() {
+          _isResourceAvailable = !hasConflict;
+        });
+      }
+
       if (hasConflict && mounted) {
         await showDialog(
           context: context,
@@ -278,7 +354,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           builder: (context) => AlertDialog(
             title: const Text('Booking Conflict'),
             content: Text(
-              'Time slot is not available: ${body['message']}',
+              'Time slot is not available: ${body['message'] ?? 'Unknown conflict'}',
             ),
             actions: [
               TextButton(
@@ -291,8 +367,21 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           ),
         );
       }
+    } on TimeoutException {
+      if (mounted) {
+        setState(() {
+          _isResourceAvailable = false;
+        });
+        _showErrorSnackBar('Availability check timed out. Please try again.');
+      }
     } catch (e) {
       debugPrint("Conflict check failed: $e");
+      if (mounted) {
+        setState(() {
+          _isResourceAvailable = false;
+        });
+        _showErrorSnackBar('Failed to check availability. Please try again.');
+      }
     }
   }
 
@@ -308,23 +397,36 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     return DateFormat('yyyy-MM-dd HH:mm').format(dt);
   }
 
+  String _formatTime(TimeOfDay time) {
+    return '${time.hour.toString().padLeft(2, '0')}:${time.minute.toString().padLeft(2, '0')}';
+  }
+
   DateTime _combineDateTime(DateTime date, TimeOfDay time) {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
-  // Optimized notification sending
+  // Optimized notification sending (similar to sendNotification in React)
   Future<void> _sendNotification(String title, String message) async {
     if (_userData == null) return;
 
     try {
-      await CallApi()
+      final response = await CallApi()
           .postData({
             'user_id': _userData!.id,
             'title': title,
             'message': message,
-            'type': 'booking_status',
+            'type': 'booking_status', // Or a more specific type
           }, 'notifications')
           .timeout(const Duration(seconds: 5));
+
+      final body = json.decode(response.body);
+      if (response.statusCode == 201) {
+        debugPrint("Notification sent successfully: ${body['message']}");
+      } else {
+        debugPrint("Failed to send notification: ${body['message']}");
+      }
+    } on TimeoutException {
+      debugPrint("Notification send timed out.");
     } catch (e) {
       debugPrint("Notification failed: $e");
       // Don't show error to user for notification failures
@@ -339,17 +441,25 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
     if (!_validateBookingTime()) return;
 
+    // Check availability one last time before booking
+    if (_isResourceAvailable == false) {
+      _showErrorSnackBar('The selected time slot is not available. Please choose another.');
+      return;
+    }
+
     setState(() => _isLoading = true);
 
     try {
-      final startDateTime = _combineDateTime(
-        _selectedStartDate!,
-        _selectedStartTime!,
-      );
-      final endDateTime = _combineDateTime(
-        _selectedEndDate!,
-        _selectedEndTime!,
-      );
+      DateTime startDateTime, endDateTime;
+      if (_bookingOption == "single_day") {
+        // Use the same date for start and end, but different times
+        startDateTime = _combineDateTime(_selectedStartDate!, _selectedStartTime!);
+        endDateTime = _combineDateTime(_selectedStartDate!, _selectedEndTime!);
+      } else {
+        // Multi day: use selected start and end dates and times
+        startDateTime = _combineDateTime(_selectedStartDate!, _selectedStartTime!);
+        endDateTime = _combineDateTime(_selectedEndDate!, _selectedEndTime!);
+      }
 
       final bookingData = {
         'user_id': _userData!.id,
@@ -357,7 +467,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         'start_time': startDateTime.toIso8601String(),
         'end_time': endDateTime.toIso8601String(),
         'purpose': _purposeController.text.trim(),
-        'booking_type': _selectedBookingType?.toLowerCase(), // Default to 'Other' if empty
+        'booking_type': _selectedBookingType?.toLowerCase(),
+        'priority': _selectedPriority?.toLowerCase(), // Include priority
       };
 
       final response = await CallApi()
@@ -369,7 +480,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       if (response.statusCode == 201 && responseBody['success'] == true) {
         await _handleBookingSuccess();
       } else {
-        _handleBookingError(responseBody['message'] ?? 'Booking failed');
+        _handleBookingError(
+            responseBody['message'] ?? 'Booking failed. Unknown error.');
       }
     } on TimeoutException {
       _showErrorSnackBar('Request timeout. Please try again.');
@@ -382,39 +494,45 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   }
 
   bool _validateBookingTime() {
-    if (_selectedStartDate == null ||
-        _selectedStartTime == null ||
-        _selectedEndDate == null ||
-        _selectedEndTime == null) {
-      _showErrorSnackBar('Please select both start and end date/time.');
-      return false;
+    if (_bookingOption == "single_day") {
+      if (_selectedStartDate == null || _selectedStartTime == null || _selectedEndTime == null) {
+        _showErrorSnackBar('Please select date and both start and end time.');
+        return false;
+      }
+      final startDateTime = _combineDateTime(_selectedStartDate!, _selectedStartTime!);
+      final endDateTime = _combineDateTime(_selectedStartDate!, _selectedEndTime!);
+      if (startDateTime.isAfter(endDateTime) || startDateTime.isAtSameMomentAs(endDateTime)) {
+        _showErrorSnackBar('End time must be after start time.');
+        return false;
+      }
+      if (endDateTime.isBefore(DateTime.now())) {
+        _showErrorSnackBar('Cannot book resources for a time that has already passed.');
+        return false;
+      }
+      if (endDateTime.difference(startDateTime).inMinutes < 30) {
+        _showErrorSnackBar('Minimum booking duration is 30 minutes.');
+        return false;
+      }
+    } else {
+      if (_selectedStartDate == null || _selectedEndDate == null || _selectedStartTime == null || _selectedEndTime == null) {
+        _showErrorSnackBar('Please select start/end date and time.');
+        return false;
+      }
+      final startDateTime = _combineDateTime(_selectedStartDate!, _selectedStartTime!);
+      final endDateTime = _combineDateTime(_selectedEndDate!, _selectedEndTime!);
+      if (startDateTime.isAfter(endDateTime) || startDateTime.isAtSameMomentAs(endDateTime)) {
+        _showErrorSnackBar('End time must be after start time.');
+        return false;
+      }
+      if (endDateTime.isBefore(DateTime.now())) {
+        _showErrorSnackBar('Cannot book resources for a time that has already passed.');
+        return false;
+      }
+      if (endDateTime.difference(startDateTime).inMinutes < 30) {
+        _showErrorSnackBar('Minimum booking duration is 30 minutes.');
+        return false;
+      }
     }
-
-    final startDateTime = _combineDateTime(
-      _selectedStartDate!,
-      _selectedStartTime!,
-    );
-    final endDateTime = _combineDateTime(_selectedEndDate!, _selectedEndTime!);
-
-    if (startDateTime.isAfter(endDateTime) ||
-        startDateTime.isAtSameMomentAs(endDateTime)) {
-      _showErrorSnackBar('End time must be after start time.');
-      return false;
-    }
-
-    if (endDateTime.isBefore(DateTime.now())) {
-      _showErrorSnackBar(
-        'Cannot book resources for a time that has already passed.',
-      );
-      return false;
-    }
-
-    // Check minimum booking duration (e.g., 30 minutes)
-    if (endDateTime.difference(startDateTime).inMinutes < 30) {
-      _showErrorSnackBar('Minimum booking duration is 30 minutes.');
-      return false;
-    }
-
     return true;
   }
 
@@ -422,9 +540,9 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     // Send notification in background
     unawaited(
       _sendNotification(
-        'Booking Confirmed!',
-        'Your booking for ${widget.resource.name} at ${widget.resource.location} '
-            'from ${_startTimeController.text} to ${_endTimeController.text} has been confirmed.',
+        'BOOKING CONFIRMED',
+        'Your booking for ${widget.resource.name} at ${widget.resource.description} '
+        'from ${_startTimeController.text} to ${_endTimeController.text} has been confirmed.',
       ),
     );
 
@@ -432,27 +550,26 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       await showDialog(
         context: context,
         barrierDismissible: false,
-        builder:
-            (context) => AlertDialog(
-              title: const Text('Booking Successful'),
-              content: const Text(
-                'Your resource has been booked successfully!',
-              ),
-              actions: [
-                TextButton(
-                  onPressed: () {
-                    Navigator.of(context).pop();
-                    Navigator.pushReplacement(
-                      context,
-                      MaterialPageRoute(
-                        builder: (context) => const ResourcesScreen(),
-                      ),
-                    );
-                  },
-                  child: const Text('OK'),
-                ),
-              ],
+        builder: (context) => AlertDialog(
+          title: const Text('Booking Successful'),
+          content: const Text(
+            'Your resource has been booked successfully!',
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                Navigator.of(context).pop();
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ResourcesScreen(),
+                  ),
+                );
+              },
+              child: const Text('OK'),
             ),
+          ],
+        ),
       );
     }
   }
@@ -472,7 +589,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       );
     }
   }
-
 
   @override
   Widget build(BuildContext context) {
@@ -611,6 +727,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
               const SizedBox(height: 30),
               _buildBookingForm(),
               const SizedBox(height: 30),
+              _buildAvailabilityStatus(), // New availability status display
+              const SizedBox(height: 30),
               _buildBookButton(),
             ],
           ),
@@ -655,69 +773,173 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           ),
         ),
         const SizedBox(height: 15),
-        _buildDateTimeField(
-          controller: _startTimeController,
-          label: 'Start Date & Time',
-          onTap: () async {
-            await _selectDate(context, true);
-            if (_selectedStartDate != null) {
-              await _selectTime(context, true);
-            }
-          },
-          validator:
-              (_) =>
-                  _selectedStartDate == null || _selectedStartTime == null
-                      ? 'Please select a start date and time'
-                      : null,
-        ),
-        const SizedBox(height: 15),
-        _buildDateTimeField(
-          controller: _endTimeController,
-          label: 'End Date & Time',
-          onTap: () async {
-            await _selectDate(context, false);
-            if (_selectedEndDate != null) {
-              await _selectTime(context, false);
-            }
-          },
-          validator:
-              (_) =>
-                  _selectedEndDate == null || _selectedEndTime == null
-                      ? 'Please select an end date and time'
-                      : null,
-        ),
-        const SizedBox(height: 15),
+        // Booking Option (Single Day / Multi Day)
         Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 20.0),
-          child: Container( // Consider if this Container is truly necessary here, often it's not
-            child: DropdownButtonFormField<String>(
-              value: _selectedBookingType, // Set the current value
-              decoration: const InputDecoration(
-                labelText: 'Booking Type',
-                border: OutlineInputBorder(),
-                prefixIcon: Icon(Icons.category),
-              ),
-              items: _bookingType.map((String type) { // Iterate over the list of types
-                return DropdownMenuItem<String>(
-                  value: type,
-                  child: Text(type.replaceAll('_', ' ').toTitleCase()), // Optional: format for display
-                );
-              }).toList(),
-              onChanged: (String? newValue) {
-                setState(() {
-                  _selectedBookingType = newValue; // Update the selected value
-                });
-              },
-              validator: (value) {
-                if (value == null || value.isEmpty) {
-                  return 'Please select a booking type';
-                }
-                return null;
-              },
+          padding: const EdgeInsets.symmetric(horizontal: 0.0),
+          child: DropdownButtonFormField<String>(
+            value: _bookingOption,
+            decoration: const InputDecoration(
+              labelText: 'Booking Duration',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.calendar_month),
             ),
+            items: const [
+              DropdownMenuItem(value: "single_day", child: Text("Single Day")),
+              DropdownMenuItem(value: "multi_day", child: Text("Multi Day")),
+            ],
+            onChanged: (String? newValue) {
+              setState(() {
+                _bookingOption = newValue!;
+                _selectedStartDate = null;
+                _selectedEndDate = null;
+                _selectedStartTime = null;
+                _selectedEndTime = null;
+                _startTimeController.clear();
+                _endTimeController.clear();
+                _isResourceAvailable = null; // Reset availability on option change
+                _conflictCache.clear();
+              });
+            },
           ),
         ),
-        const SizedBox(height: 10),
+        const SizedBox(height: 15),
+        // Date and Time fields
+        if (_bookingOption == "single_day") ...[
+          // Single date picker
+          _buildDateField(
+            label: 'Date',
+            selectedDate: _selectedStartDate,
+            onTap: () async {
+              await _selectDate(context, true);
+            },
+            validator: (_) => _selectedStartDate == null ? 'Please select a date' : null,
+          ),
+          const SizedBox(height: 15),
+          // Start time
+          _buildTimeField(
+            controller: _startTimeController,
+            label: 'Start Time',
+            selectedTime: _selectedStartTime,
+            onTap: () async {
+              await _selectTime(context, true);
+            },
+            validator: (_) => _selectedStartTime == null ? 'Please select a start time' : null,
+          ),
+          const SizedBox(height: 15),
+          // End time
+          _buildTimeField(
+            controller: _endTimeController,
+            label: 'End Time',
+            selectedTime: _selectedEndTime,
+            onTap: () async {
+              await _selectTime(context, false);
+            },
+            validator: (_) => _selectedEndTime == null ? 'Please select an end time' : null,
+          ),
+        ] else ...[
+          // Multi day: start date
+          _buildDateField(
+            label: 'Start Date',
+            selectedDate: _selectedStartDate,
+            onTap: () async {
+              await _selectDate(context, true);
+            },
+            validator: (_) => _selectedStartDate == null ? 'Please select a start date' : null,
+          ),
+          const SizedBox(height: 15),
+          // End date
+          _buildDateField(
+            label: 'End Date',
+            selectedDate: _selectedEndDate,
+            onTap: () async {
+              await _selectDate(context, false);
+            },
+            validator: (_) => _selectedEndDate == null ? 'Please select an end date' : null,
+          ),
+          const SizedBox(height: 15),
+          // Start time
+          _buildTimeField(
+            controller: _startTimeController,
+            label: 'Start Time',
+            selectedTime: _selectedStartTime,
+            onTap: () async {
+              await _selectTime(context, true);
+            },
+            validator: (_) => _selectedStartTime == null ? 'Please select a start time' : null,
+          ),
+          const SizedBox(height: 15),
+          // End time
+          _buildTimeField(
+            controller: _endTimeController,
+            label: 'End Time',
+            selectedTime: _selectedEndTime,
+            onTap: () async {
+              await _selectTime(context, false);
+            },
+            validator: (_) => _selectedEndTime == null ? 'Please select an end time' : null,
+          ),
+        ],
+        const SizedBox(height: 15),
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 0.0),
+          child: DropdownButtonFormField<String>(
+            value: _selectedBookingType, // Set the current value
+            decoration: const InputDecoration(
+              labelText: 'Booking Type',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.category),
+            ),
+            items: _bookingType.map((String type) {
+              // Iterate over the list of types
+              return DropdownMenuItem<String>(
+                value: type,
+                child: Text(type.replaceAll('_', ' ').toTitleCase()), // Optional: format for display
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedBookingType = newValue; // Update the selected value
+              });
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select a booking type';
+              }
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(height: 15),
+        // Priority Dropdown
+        Padding(
+          padding: const EdgeInsets.symmetric(horizontal: 0.0),
+          child: DropdownButtonFormField<String>(
+            value: _selectedPriority,
+            decoration: const InputDecoration(
+              labelText: 'Priority',
+              border: OutlineInputBorder(),
+              prefixIcon: Icon(Icons.priority_high),
+            ),
+            items: _priority.map((String priority) {
+              return DropdownMenuItem<String>(
+                value: priority,
+                child: Text(priority.toTitleCase()),
+              );
+            }).toList(),
+            onChanged: (String? newValue) {
+              setState(() {
+                _selectedPriority = newValue;
+              });
+            },
+            validator: (value) {
+              if (value == null || value.isEmpty) {
+                return 'Please select a priority level';
+              }
+              return null;
+            },
+          ),
+        ),
+        const SizedBox(height: 15),
         TextFormField(
           controller: _purposeController,
           decoration: const InputDecoration(
@@ -742,14 +964,15 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     );
   }
 
-  Widget _buildDateTimeField({
-    required TextEditingController controller,
+  // New helper for date field
+  Widget _buildDateField({
     required String label,
+    required DateTime? selectedDate,
     required VoidCallback onTap,
     required String? Function(String?) validator,
   }) {
     return TextFormField(
-      controller: controller,
+      controller: TextEditingController(text: selectedDate == null ? '' : DateFormat('yyyy-MM-dd').format(selectedDate)),
       decoration: InputDecoration(
         labelText: label,
         border: const OutlineInputBorder(),
@@ -759,14 +982,82 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         ),
       ),
       readOnly: true,
+      onTap: onTap,
       validator: validator,
     );
+  }
+
+  // New helper for time field
+  Widget _buildTimeField({
+    required TextEditingController controller,
+    required String label,
+    required TimeOfDay? selectedTime,
+    required VoidCallback onTap,
+    required String? Function(String?) validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      decoration: InputDecoration(
+        labelText: label,
+        border: const OutlineInputBorder(),
+        suffixIcon: IconButton(
+          icon: const Icon(Icons.access_time),
+          onPressed: onTap,
+        ),
+      ),
+      readOnly: true,
+      onTap: onTap,
+      validator: validator,
+    );
+  }
+
+  Widget _buildAvailabilityStatus() {
+    if (_isResourceAvailable == null) {
+      return const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          CircularProgressIndicator(strokeWidth: 2),
+          SizedBox(width: 10),
+          Text(
+            'Checking Availability...',
+            style: TextStyle(
+                color: Colors.blue, fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+        ],
+      );
+    } else if (_isResourceAvailable!) {
+      return const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.check_circle, color: Colors.green),
+          SizedBox(width: 10),
+          Text(
+            'Resource Available!',
+            style: TextStyle(
+                color: Colors.green, fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+        ],
+      );
+    } else {
+      return const Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.error, color: Colors.red),
+          SizedBox(width: 10),
+          Text(
+            'Resource Not Available',
+            style: TextStyle(
+                color: Colors.red, fontWeight: FontWeight.bold, fontSize: 16),
+          ),
+        ],
+      );
+    }
   }
 
   Widget _buildBookButton() {
     return Center(
       child: ElevatedButton(
-        onPressed: _isLoading ? null : _bookResource,
+        onPressed: _isLoading || _isResourceAvailable == false ? null : _bookResource,
         style: ElevatedButton.styleFrom(
           backgroundColor: const Color.fromARGB(255, 20, 148, 24),
           padding: const EdgeInsets.symmetric(horizontal: 40, vertical: 15),
@@ -775,26 +1066,25 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           ),
           disabledBackgroundColor: Colors.grey,
         ),
-        child:
-            _isLoading
-                ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                    strokeWidth: 2,
-                  ),
-                )
-                : const Text(
-                  'Book This Resource',
-                  style: TextStyle(fontSize: 18, color: Colors.white),
+        child: _isLoading
+            ? const SizedBox(
+                width: 20,
+                height: 20,
+                child: CircularProgressIndicator(
+                  color: Colors.white,
+                  strokeWidth: 2,
                 ),
+              )
+            : const Text(
+                'Book This Resource',
+                style: TextStyle(fontSize: 18, color: Colors.white),
+              ),
       ),
     );
   }
 }
 
-// Helper classes
+// Helper classes (unchanged)
 class UserData {
   final int id;
   final String name;
@@ -811,7 +1101,7 @@ class DrawerItem {
   DrawerItem(this.title, this.icon, this.onTap);
 }
 
-// String extension for toTitleCase
+// String extension for toTitleCase (unchanged)
 extension StringCasingExtension on String {
   String toTitleCase() {
     if (isEmpty) return this;

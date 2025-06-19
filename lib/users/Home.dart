@@ -60,12 +60,12 @@ class _HomeState extends State<Home> {
     try {
       var res = await CallApi().getData(
         'user/upcoming-booking',
-      ); // Assuming an API endpoint like this
+      ); 
       var body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
         if (body['bookings'] != null && body['bookings'].isNotEmpty) {
-          // Assuming your API returns a list of bookings, take the first one
+        
           setState(() {
             _upcomingBooking = body['bookings'][0];
             print(_upcomingBooking);

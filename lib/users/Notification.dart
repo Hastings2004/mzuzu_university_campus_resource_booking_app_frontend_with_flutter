@@ -1,15 +1,14 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
-import 'package:resource_booking_app/models/notification.dart';
+import 'package:resource_booking_app/models/notification.dart'; // Ensure this path is correct
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For json.decode
 import 'package:resource_booking_app/auth/Api.dart'; //API service
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart'; 
+import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
-
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -19,21 +18,18 @@ class NotificationScreen extends StatefulWidget {
 }
 
 class _NotificationScreenState extends State<NotificationScreen> {
-  // We no longer directly use FirebaseAuth.instance.currentUser
-  // The user's ID would be passed or fetched via SharedPreferences if needed for API calls.
-  // For notifications, the API usually determines the user based on the authenticated token.
-
   List<NotificationModel> _notifications = [];
   bool _isLoading = false;
+  int _unreadNotificationCount = 0; // New state for unread count
 
   @override
   void initState() {
     super.initState();
-    _fetchNotifications(); // Fetch notifications on screen load
+    _fetchNotificationsAndUnreadCount(); // Fetch both on screen load
   }
 
+  // --- Utility & Logout ---
   void logout() async {
-    // Show a confirmation dialog
     final bool confirmLogout = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -41,63 +37,122 @@ class _NotificationScreenState extends State<NotificationScreen> {
             content: const Text('Are you sure you want to log out?'),
             actions: <Widget>[
               TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // User cancels
+                onPressed: () => Navigator.of(context).pop(false),
                 child: const Text('Cancel'),
               ),
               ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true), // User confirms
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red), // Optional: make logout button red
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
                 child: const Text('Logout', style: TextStyle(color: Colors.white)),
               ),
             ],
           ),
         ) ??
-        false; 
+        false;
 
     if (confirmLogout) {
-   
       SharedPreferences prefs = await SharedPreferences.getInstance();
       await prefs.clear();
 
       if (mounted) {
-        // Navigate to your login/auth screen and remove all previous routes
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
           (route) => false,
-        ); // Assuming '/' is your initial login route
-       
+        );
       }
     }
-
   }
-  
-  Future<void> _fetchNotifications() async {
+
+  String _getTimeAgo(DateTime date) {
+    final Duration diff = DateTime.now().difference(date);
+    if (diff.inDays > 30) {
+      return '${(diff.inDays / 30).round()} months ago';
+    } else if (diff.inDays > 7) {
+      return '${(diff.inDays / 7).round()} weeks ago';
+    } else if (diff.inDays > 0) {
+      return '${diff.inDays} days ago';
+    } else if (diff.inHours > 0) {
+      return '${diff.inHours} hours ago';
+    } else if (diff.inMinutes > 0) {
+      return '${diff.inMinutes} minutes ago';
+    } else {
+      return 'just now';
+    }
+  }
+
+  void _showNotificationDetailDialog(BuildContext context, String title, String message, String timeAgo, int notificationId) {
+    // Mark as read when the dialog is shown
+    _markNotificationAsRead(notificationId);
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          content: Column(
+            mainAxisSize: MainAxisSize.min,
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Text(message),
+              const SizedBox(height: 10),
+              Text(
+                'Received: $timeAgo',
+                style: const TextStyle(color: Colors.grey, fontSize: 13),
+              ),
+            ],
+          ),
+          actions: [
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: const Text("OK"),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // --- API Calls ---
+
+  Future<void> _fetchNotificationsAndUnreadCount() async {
     setState(() {
       _isLoading = true;
     });
     try {
-      final res = await CallApi().getData('notifications'); // Your API endpoint for notifications
-      final body = json.decode(res.body);
+      // Fetch all notifications
+      final notificationsRes = await CallApi().getData('notifications');
+      final notificationsBody = json.decode(notificationsRes.body);
 
-      if (res.statusCode == 200 && body['success'] == true) {
-        List<dynamic> notificationsJson = body['notifications'];
+      // Fetch unread count
+      final unreadRes = await CallApi().getData('notifications/unread');
+      final unreadBody = json.decode(unreadRes.body);
+
+      if (notificationsRes.statusCode == 200 && notificationsBody['success'] == true) {
+        List<dynamic> notificationsJson = notificationsBody['notifications'];
         setState(() {
           _notifications = notificationsJson
               .map((json) => NotificationModel.fromJson(json))
               .toList();
-          // Sort by timestamp in descending order, if not already sorted by API
           _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
         });
       } else {
-        String errorMessage = body['message'] ?? 'Failed to load notifications.';
+        String errorMessage = notificationsBody['message'] ?? 'Failed to load notifications.';
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             SnackBar(content: Text(errorMessage)),
           );
         }
       }
+
+      if (unreadRes.statusCode == 200 && unreadBody['success'] == true) {
+        setState(() {
+          _unreadNotificationCount = unreadBody['notifications'] ?? 0;
+        });
+      } else {
+        debugPrint("Failed to fetch unread notification count: ${unreadBody['message']}");
+      }
     } catch (e) {
-      print("Error fetching notifications: $e");
+      debugPrint("Error fetching notifications or unread count: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to load notifications: $e')),
@@ -112,41 +167,35 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
-  // Function to dismiss a single notification
-  Future<void> _dismissNotification(int notificationId) async {
+  Future<void> _markNotificationAsRead(int notificationId) async {
     try {
-      /* Assuming a DELETE request for dismissing a notification
-      final res = await CallApi().deleteData('notifications/$notificationId'); // e.g., DELETE /api/notifications/1
-      final body = json.decode(res.body);
+      final response = await CallApi().postData({}, 'notifications/$notificationId/mark-as-read');
+      final body = json.decode(response.body);
 
-      if (res.statusCode == 200 && body['success'] == true) {
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            const SnackBar(content: Text('Notification dismissed!')),
-          );
-        }
-        // Refresh the list after dismissal
-        _fetchNotifications();
+      if (response.statusCode == 200 && body['success'] == true) {
+        debugPrint("Notification $notificationId marked as read.");
+        // Optimistically update the local list and unread count
+        setState(() {
+          final index = _notifications.indexWhere((n) => n.id == notificationId);
+          if (index != -1 && _notifications[index].status == 'unread') {
+            _notifications[index].status = 'read'; // Correctly assign 'read'
+            if (_unreadNotificationCount > 0) {
+              _unreadNotificationCount--;
+            }
+          }
+        });
+        // You might want to re-fetch the entire list to ensure consistency,
+        // especially if there are other changes, but optimistic update is faster.
+        // _fetchNotificationsAndUnreadCount();
       } else {
-        String errorMessage = body['message'] ?? 'Failed to dismiss notification.';
-        if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
-          );
-        }
-      }*/
-    } catch (e) {
-      print("Error dismissing notification: $e");
-      if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to dismiss notification: $e')),
-        );
+        debugPrint("Failed to mark notification as read: ${body['message']}");
       }
+    } catch (e) {
+      debugPrint("Error marking notification as read: $e");
     }
   }
 
-  // Function to dismiss all notifications
-  Future<void> _dismissAllNotifications() async {
+  Future<void> _markAllNotificationsAsRead() async {
     bool confirm = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -169,8 +218,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
     if (!confirm) return;
 
     try {
-      // Assuming a POST or DELETE request for clearing all notifications
-      final res = await CallApi().postData({}, 'notifications/clear-all'); // e.g., POST /api/notifications/clear-all
+      final res = await CallApi().postData({}, 'notifications/mark-all-as-read'); // Use the new endpoint
       final body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
@@ -180,7 +228,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           );
         }
         // Refresh the list after clearing all
-        _fetchNotifications();
+        _fetchNotificationsAndUnreadCount(); // Re-fetch to get updated statuses and count
       } else {
         String errorMessage = body['message'] ?? 'Failed to clear all notifications.';
         if (mounted) {
@@ -190,7 +238,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
         }
       }
     } catch (e) {
-      print("Error clearing all notifications: $e");
+      debugPrint("Error clearing all notifications: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
           SnackBar(content: Text('Failed to clear all notifications: $e')),
@@ -199,10 +247,11 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
+  // --- UI Building ---
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Bottombar(),
+      bottomNavigationBar: const Bottombar(),
       appBar: AppBar(
         backgroundColor: const Color.fromARGB(255, 20, 148, 24),
         title: const Text(
@@ -217,7 +266,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           IconButton(
             icon: const Icon(Icons.clear_all, color: Colors.white),
             tooltip: "Clear All Notifications",
-            onPressed: _dismissAllNotifications,
+            onPressed: _markAllNotificationsAsRead,
           ),
         ],
       ),
@@ -258,14 +307,14 @@ class _NotificationScreenState extends State<NotificationScreen> {
               title: const Text('Home'),
               leading: const Icon(Icons.home),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home()));
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
               },
             ),
             ListTile(
               title: const Text('Profile'),
               leading: const Icon(Icons.person),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => ProfileScreen()));
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
               },
             ),
             ListTile(
@@ -285,8 +334,24 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ListTile(
               title: const Text('Notifications'),
               leading: const Icon(Icons.notifications, color: Colors.blueAccent),
+              trailing: _unreadNotificationCount > 0
+                  ? Container(
+                      padding: const EdgeInsets.all(6),
+                      decoration: const BoxDecoration(
+                        color: Colors.red,
+                        shape: BoxShape.circle,
+                      ),
+                      child: Text(
+                        '$_unreadNotificationCount',
+                        style: const TextStyle(color: Colors.white, fontSize: 12),
+                      ),
+                    )
+                  : null,
               onTap: () {
-                Navigator.pop(context);
+                Navigator.pop(context); // Close drawer
+                // Consider refreshing the count here if the user might have interacted
+                // with notifications outside this screen or if the count is stale.
+                // _fetchUnreadNotificationCount();
               },
             ),
             ListTile(
@@ -325,17 +390,25 @@ class _NotificationScreenState extends State<NotificationScreen> {
                   itemCount: _notifications.length,
                   itemBuilder: (context, index) {
                     final notification = _notifications[index];
-
                     String timeAgo = _getTimeAgo(notification.timestamp);
 
                     return Card(
                       margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
                       elevation: 3,
+                      // Apply background color based on status
+                      color: notification.status == 'unread' ? Colors.blue.shade50 : null,
                       child: ListTile(
-                        leading: const Icon(Icons.notification_important, color: Colors.blueAccent),
+                        leading: Icon(
+                          // Corrected icon for read/unread state
+                          notification.status == 'unread' ? Icons.mail : Icons.mark_email_read,
+                          color: notification.status == 'unread' ? Colors.blueAccent : Colors.grey,
+                        ),
                         title: Text(
                           notification.title,
-                          style: const TextStyle(fontWeight: FontWeight.bold),
+                          style: TextStyle(
+                            // Apply fontWeight based on status
+                            fontWeight: notification.status == 'unread' ? FontWeight.bold : FontWeight.normal,
+                          ),
                         ),
                         subtitle: Column(
                           crossAxisAlignment: CrossAxisAlignment.start,
@@ -348,65 +421,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
                             ),
                           ],
                         ),
-                        trailing: IconButton(
-                          icon: const Icon(Icons.close, color: Colors.grey),
-                          onPressed: () => _dismissNotification(notification.id),
-                          tooltip: "Dismiss",
-                        ),
                         onTap: () {
                           _showNotificationDetailDialog(
-                              context, notification.title, notification.message, timeAgo);
+                            context,
+                            notification.title,
+                            notification.message,
+                            timeAgo,
+                            notification.id, // Pass notification ID to mark as read
+                          );
                         },
                       ),
                     );
                   },
                 ),
-    );
-  }
-
-  String _getTimeAgo(DateTime date) {
-    final Duration diff = DateTime.now().difference(date);
-    if (diff.inDays > 30) {
-      return '${(diff.inDays / 30).round()} months ago';
-    } else if (diff.inDays > 7) {
-      return '${(diff.inDays / 7).round()} weeks ago';
-    } else if (diff.inDays > 0) {
-      return '${diff.inDays} days ago';
-    } else if (diff.inHours > 0) {
-      return '${diff.inHours} hours ago';
-    } else if (diff.inMinutes > 0) {
-      return '${diff.inMinutes} minutes ago';
-    } else {
-      return 'just now';
-    }
-  }
-
-  void _showNotificationDetailDialog(BuildContext context, String title, String message, String timeAgo) {
-    showDialog(
-      context: context,
-      builder: (context) {
-        return AlertDialog(
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
-          content: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              Text(message),
-              const SizedBox(height: 10),
-              Text(
-                'Received: $timeAgo',
-                style: const TextStyle(color: Colors.grey, fontSize: 13),
-              ),
-            ],
-          ),
-          actions: [
-            TextButton(
-              onPressed: () => Navigator.pop(context),
-              child: const Text("OK"),
-            ),
-          ],
-        );
-      },
     );
   }
 }
