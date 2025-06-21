@@ -11,7 +11,6 @@ import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/users/History.dart';
-import 'package:resource_booking_app/auth/Auth.dart';
 
 class ReportIssuePage extends StatefulWidget {
   final int resourceId;
