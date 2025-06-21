@@ -5,7 +5,7 @@ class Getuserdata extends StatelessWidget {
   
   final String documentId;
 
-  const Getuserdata({required this.documentId});
+  const Getuserdata({super.key, required this.documentId});
 
   @override
   Widget build(BuildContext context) {

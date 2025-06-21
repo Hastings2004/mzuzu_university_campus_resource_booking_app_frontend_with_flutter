@@ -19,7 +19,7 @@ class UpdateBookingScreen extends StatefulWidget {
   // We now pass a Booking object instead of a ResourceModel
   final Booking booking;
 
-  const UpdateBookingScreen({Key? key, required this.booking}) : super(key: key);
+  const UpdateBookingScreen({super.key, required this.booking});
 
   @override
   _UpdateBookingScreenState createState() => _UpdateBookingScreenState();

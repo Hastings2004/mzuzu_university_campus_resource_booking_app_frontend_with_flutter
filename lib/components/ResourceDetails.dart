@@ -13,7 +13,7 @@ import 'package:resource_booking_app/users/Settings.dart'; // Make sure this imp
 class ResourceDetails extends StatefulWidget {
   final DocumentSnapshot resourceDocument;
 
-  ResourceDetails({Key? key, required this.resourceDocument}) : super(key: key);
+  const ResourceDetails({super.key, required this.resourceDocument});
 
   @override
   _ResourceDetailsState createState() => _ResourceDetailsState();

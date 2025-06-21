@@ -1,16 +1,16 @@
 import 'package:flutter/material.dart';
-import 'package:resource_booking_app/auth/Auth.dart'; 
-import 'dart:convert'; 
-import 'package:shared_preferences/shared_preferences.dart'; 
-import 'package:resource_booking_app/auth/Api.dart'; 
+import 'package:resource_booking_app/auth/Auth.dart';
+import 'dart:convert';
+import 'package:shared_preferences/shared_preferences.dart';
+import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
-import 'package:resource_booking_app/components/BottomBar.dart'; 
-import 'package:resource_booking_app/components/TextField.dart'; 
+import 'package:resource_booking_app/components/BottomBar.dart';
+import 'package:resource_booking_app/components/TextField.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart'; 
+import 'package:resource_booking_app/users/Resourse.dart';
 import 'History.dart';
 
 class SettingsScreen extends StatefulWidget {
@@ -25,14 +25,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Controllers for updating email and password
   final TextEditingController _newEmailController = TextEditingController();
-  final TextEditingController _currentPasswordController = TextEditingController();
+  final TextEditingController _currentPasswordController =
+      TextEditingController();
   final TextEditingController _newPasswordController = TextEditingController();
-  final TextEditingController _confirmNewPasswordController = TextEditingController();
+  final TextEditingController _confirmNewPasswordController =
+      TextEditingController();
 
   // Form Keys for dialogs to enable validation
   final GlobalKey<FormState> _emailFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> _deleteAccountFormKey = GlobalKey<FormState>(); // For password confirmation during delete
+  final GlobalKey<FormState> _deleteAccountFormKey =
+      GlobalKey<FormState>(); // For password confirmation during delete
 
   // Notification toggles
   bool _emailNotificationsEnabled = true;
@@ -66,13 +69,17 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Load notification settings from API
   Future<void> _loadNotificationSettings() async {
     try {
-      final response = await CallApi().getData('user/settings'); // Adjust endpoint as needed
+      final response = await CallApi().getData(
+        'user/settings',
+      ); // Adjust endpoint as needed
       final body = json.decode(response.body);
 
       if (response.statusCode == 200 && body['success'] == true) {
         setState(() {
-          _emailNotificationsEnabled = body['settings']['email_notifications'] ?? true;
-          _smsNotificationsEnabled = body['settings']['sms_notifications'] ?? false;
+          _emailNotificationsEnabled =
+              body['settings']['email_notifications'] ?? true;
+          _smsNotificationsEnabled =
+              body['settings']['sms_notifications'] ?? false;
         });
       } else {
         debugPrint("Failed to load notification settings: ${body['message']}");
@@ -83,25 +90,49 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // Update notification settings via API
-  Future<void> _updateNotificationSettings(bool emailEnabled, bool smsEnabled) async {
+  Future<void> _updateNotificationSettings(
+    bool emailEnabled,
+    bool smsEnabled,
+  ) async {
     try {
       final data = {
         'email_notifications': emailEnabled,
         'sms_notifications': smsEnabled,
       };
-      final response = await CallApi().postData(data, 'user/update-notification-settings'); // Adjust endpoint
+      final response = await CallApi().postData(
+        data,
+        'user/update-notification-settings',
+      ); // Adjust endpoint
       final body = json.decode(response.body);
 
       if (response.statusCode == 200 && body['success'] == true) {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(body['message'] ?? 'Notification settings updated.')),
+            SnackBar(
+              content: Text(
+                body['message'] ?? 'Notification settings updated.',
+              ),
+              backgroundColor: Colors.green,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           );
         }
       } else {
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(body['message'] ?? 'Failed to update notification settings.')),
+            SnackBar(
+              content: Text(
+                body['message'] ?? 'Failed to update notification settings.',
+              ),
+              backgroundColor: Colors.red,
+              behavior: SnackBarBehavior.floating,
+              shape: RoundedRectangleBorder(
+                borderRadius: BorderRadius.circular(10),
+              ),
+            ),
           );
         }
       }
@@ -109,30 +140,57 @@ class _SettingsScreenState extends State<SettingsScreen> {
       debugPrint("Error updating notification settings: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error updating notification settings. Please try again.')),
+          SnackBar(
+            content: const Text(
+              'Error updating notification settings. Please try again.',
+            ),
+            backgroundColor: Colors.red,
+            behavior: SnackBarBehavior.floating,
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(10),
+            ),
+          ),
         );
       }
     }
   }
 
   Future<void> _logout() async {
-    final bool confirmLogout = await showDialog(
+    final bool confirmLogout =
+        await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Confirm Logout'),
-            content: const Text('Are you sure you want to log out?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false), // User cancels
-                child: const Text('Cancel'),
+          builder:
+              (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: const Text(
+                  'Confirm Logout',
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                content: const Text('Are you sure you want to log out?'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed:
+                        () => Navigator.of(context).pop(false), // User cancels
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed:
+                        () => Navigator.of(context).pop(true), // User confirms
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                    ),
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true), // User confirms
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Logout', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
         ) ??
         false;
 
@@ -144,7 +202,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (mounted) {
         // Navigate to your login/auth screen and remove all previous routes
         Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(builder: (context) => Auth()), // Use AuthPage for explicit navigation
+          MaterialPageRoute(
+            builder: (context) => Auth(),
+          ), // Use AuthPage for explicit navigation
           (route) => false,
         );
       }
@@ -160,7 +220,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder:
+          (context) => const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
+          ),
     );
 
     try {
@@ -168,7 +233,10 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'new_email': _newEmailController.text.trim(),
         'current_password': _currentPasswordController.text.trim(),
       };
-      final response = await CallApi().postData(data, 'user/update-email'); // Adjust endpoint
+      final response = await CallApi().postData(
+        data,
+        'user/update-email',
+      ); // Adjust endpoint
       final body = json.decode(response.body);
 
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
@@ -176,10 +244,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
       if (response.statusCode == 200 && body['success'] == true) {
         if (mounted) {
           _showSuccessDialog(
-              body['message'] ?? "Email updated successfully! Please check your new email for verification if required.");
+            body['message'] ??
+                "Email updated successfully! Please check your new email for verification if required.",
+          );
           // Update local email in shared preferences
-          SharedPreferences localStorage = await SharedPreferences.getInstance();
-          await localStorage.setString('email', _newEmailController.text.trim());
+          SharedPreferences localStorage =
+              await SharedPreferences.getInstance();
+          await localStorage.setString(
+            'email',
+            _newEmailController.text.trim(),
+          );
           setState(() {
             _userEmail = _newEmailController.text.trim();
           });
@@ -188,7 +262,9 @@ class _SettingsScreenState extends State<SettingsScreen> {
         _currentPasswordController.clear();
       } else {
         if (mounted) {
-          _showErrorDialog(body['message'] ?? 'Failed to update email. Please try again.');
+          _showErrorDialog(
+            body['message'] ?? 'Failed to update email. Please try again.',
+          );
         }
       }
     } catch (e) {
@@ -206,7 +282,12 @@ class _SettingsScreenState extends State<SettingsScreen> {
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder:
+          (context) => const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.green),
+            ),
+          ),
     );
 
     try {
@@ -216,21 +297,28 @@ class _SettingsScreenState extends State<SettingsScreen> {
         'password_confirmation': _confirmNewPasswordController.text.trim(),
       };
       // Assuming your change-password endpoint uses PATCH/PUT, adjust if it's POST
-      final response = await CallApi().patchData(data, 'user/change-password'); // Or .putData()
+      final response = await CallApi().patchData(
+        data,
+        'user/change-password',
+      ); // Or .putData()
       final body = json.decode(response.body);
 
       if (mounted) Navigator.pop(context); // Dismiss loading indicator
 
       if (response.statusCode == 200 && body['success'] == true) {
         if (mounted) {
-          _showSuccessDialog(body['message'] ?? "Password updated successfully!");
+          _showSuccessDialog(
+            body['message'] ?? "Password updated successfully!",
+          );
         }
         _currentPasswordController.clear();
         _newPasswordController.clear();
         _confirmNewPasswordController.clear();
       } else {
         if (mounted) {
-          _showErrorDialog(body['message'] ?? 'Failed to update password. Please try again.');
+          _showErrorDialog(
+            body['message'] ?? 'Failed to update password. Please try again.',
+          );
         }
       }
     } catch (e) {
@@ -243,23 +331,35 @@ class _SettingsScreenState extends State<SettingsScreen> {
 
   // Function to delete account
   Future<void> _deleteAccount() async {
-    bool confirm = await showDialog(
+    bool confirm =
+        await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Delete Account"),
-            content: const Text(
-                "Are you sure you want to delete your account? This action cannot be undone. You will be permanently logged out."),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancel"),
+          builder:
+              (context) => AlertDialog(
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(20),
+                ),
+                title: const Text(
+                  "Delete Account",
+                  style: TextStyle(fontWeight: FontWeight.bold),
+                ),
+                content: const Text(
+                  "Are you sure you want to delete your account? This action cannot be undone. You will be permanently logged out.",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text("Cancel"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text(
+                      "Delete",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Delete", style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
         ) ??
         false;
 
@@ -270,77 +370,106 @@ class _SettingsScreenState extends State<SettingsScreen> {
     _currentPasswordController.clear(); // Clear before using for confirmation
     String? password = await showDialog<String>(
       context: context,
-      builder: (context) => AlertDialog(
-        title: const Text("Confirm Password to Delete Account"),
-        content: Form(
-          key: _deleteAccountFormKey, // Use a form key for validation
-          child: MyTextField(
-            controller: _currentPasswordController,
-            obscureText: true,
-            hintText: "Enter current password",
-            prefixIcon: const Icon(Icons.lock),
-            keyboardType: TextInputType.text,
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Password is required to delete account.';
-              }
-              return null;
-            },
+      builder:
+          (context) => AlertDialog(
+            shape: RoundedRectangleBorder(
+              borderRadius: BorderRadius.circular(20),
+            ),
+            title: const Text(
+              "Confirm Password to Delete Account",
+              style: TextStyle(fontWeight: FontWeight.bold),
+            ),
+            content: Form(
+              key: _deleteAccountFormKey, // Use a form key for validation
+              child: MyTextField(
+                controller: _currentPasswordController,
+                obscureText: true,
+                hintText: "Enter current password",
+                prefixIcon: const Icon(Icons.lock),
+                keyboardType: TextInputType.text,
+                validator: (value) {
+                  if (value == null || value.isEmpty) {
+                    return 'Password is required to delete account.';
+                  }
+                  return null;
+                },
+              ),
+            ),
+            actions: [
+              TextButton(
+                onPressed: () {
+                  Navigator.pop(context);
+                },
+                child: const Text("Cancel"),
+              ),
+              ElevatedButton(
+                onPressed: () {
+                  if (_deleteAccountFormKey.currentState!.validate()) {
+                    Navigator.pop(
+                      context,
+                      _currentPasswordController.text.trim(),
+                    );
+                  }
+                },
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+                child: const Text(
+                  "Confirm",
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
           ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              Navigator.pop(context);
-            },
-            child: const Text("Cancel"),
-          ),
-          ElevatedButton(
-            onPressed: () {
-              if (_deleteAccountFormKey.currentState!.validate()) {
-                Navigator.pop(context, _currentPasswordController.text.trim());
-              }
-            },
-            child: const Text("Confirm"),
-          ),
-        ],
-      ),
     );
 
     if (password == null || password.isEmpty) {
-      if (mounted) _showErrorDialog("Password confirmation failed or was cancelled.");
+      if (mounted)
+        _showErrorDialog("Password confirmation failed or was cancelled.");
       return;
     }
 
     showDialog(
       context: context,
       barrierDismissible: false,
-      builder: (context) => const Center(child: CircularProgressIndicator()),
+      builder:
+          (context) => const Center(
+            child: CircularProgressIndicator(
+              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
+            ),
+          ),
     );
 
     try {
       final data = {'current_password': password};
-      final response = await CallApi().postData(data, 'user/delete-account'); 
+      final response = await CallApi().postData(data, 'user/delete-account');
       final body = json.decode(response.body);
 
-      if (mounted) Navigator.pop(context); 
+      if (mounted) Navigator.pop(context);
 
       if (response.statusCode == 200 && body['success'] == true) {
         if (mounted) {
-          _showSuccessDialog(body['message'] ?? "Account deleted successfully!");
+          _showSuccessDialog(
+            body['message'] ?? "Account deleted successfully!",
+          );
         }
         SharedPreferences localStorage = await SharedPreferences.getInstance();
-        await localStorage.clear(); 
+        await localStorage.clear();
         if (mounted) {
           Navigator.pushAndRemoveUntil(
             context,
-            MaterialPageRoute(builder: (context) => Auth()), 
+            MaterialPageRoute(builder: (context) => Auth()),
             (Route<dynamic> route) => false,
           );
         }
       } else {
         if (mounted) {
-          _showErrorDialog(body['message'] ?? 'Failed to delete account. Please try again.');
+          _showErrorDialog(
+            body['message'] ?? 'Failed to delete account. Please try again.',
+          );
         }
       }
     } catch (e) {
@@ -357,7 +486,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Error", style: TextStyle(color: Colors.red)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            "Error",
+            style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+          ),
           content: Text(message),
           actions: [
             TextButton(
@@ -375,7 +510,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: const Text("Success", style: TextStyle(color: Colors.green)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: const Text(
+            "Success",
+            style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold),
+          ),
           content: Text(message),
           actions: [
             TextButton(
@@ -393,7 +534,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(20),
+          ),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Text(content),
           actions: [
             TextButton(
@@ -409,7 +556,8 @@ class _SettingsScreenState extends State<SettingsScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: const Bottombar(), 
+      backgroundColor: const Color(0xFFF5F5F5),
+      bottomNavigationBar: const Bottombar(),
       appBar: MyAppBar(
         titleWidget: const Text(
           "Settings",
@@ -420,37 +568,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
           ),
         ),
         onSearchPressed: () {},
-        isSearching: false, 
+        isSearching: false,
       ),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 20, 148, 24),
+            Container(
+              decoration: const BoxDecoration(
+                gradient: LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+                ),
               ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image(image: AssetImage("assets/images/logo.png"), height: 50),
-                  Text(
-                    'Mzuzu University',
-                    style: TextStyle(color: Colors.white, fontSize: 24, fontWeight: FontWeight.bold),
-                  ),
-                  Text(
-                    'Campus Resource Booking',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
+              child: const DrawerHeader(
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Image(
+                      image: AssetImage("assets/images/logo.png"),
+                      height: 50,
                     ),
-                  ),
-                ],
+                    SizedBox(height: 10),
+                    Text(
+                      'Mzuzu University',
+                      style: TextStyle(
+                        color: Colors.white,
+                        fontSize: 24,
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    Text(
+                      'Campus Resource Booking',
+                      style: TextStyle(color: Colors.white70, fontSize: 15),
+                    ),
+                  ],
+                ),
               ),
             ),
             ListTile(
               title: const Text('Home'),
-              leading: const Icon(Icons.home),
+              leading: const Icon(Icons.home, color: Color(0xFF3B82F6)),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
@@ -460,27 +619,31 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               title: const Text('Profile'),
-              leading: const Icon(Icons.person),
+              leading: const Icon(Icons.person, color: Color(0xFF3B82F6)),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
               },
             ),
             ListTile(
               title: const Text('Resources'),
-              leading: const Icon(Icons.grid_view),
+              leading: const Icon(Icons.grid_view, color: Color(0xFF3B82F6)),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ResourcesScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ResourcesScreen(),
+                  ),
                 );
               },
             ),
             ListTile(
               title: const Text('Bookings'),
-              leading: const Icon(Icons.book_online),
+              leading: const Icon(Icons.book_online, color: Color(0xFF3B82F6)),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
@@ -490,12 +653,16 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               title: const Text('Notifications'),
-              leading: const Icon(Icons.notifications),
+              leading: const Icon(
+                Icons.notifications,
+                color: Color(0xFF3B82F6),
+              ),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(
-                      builder: (context) => const NotificationScreen()),
+                    builder: (context) => const NotificationScreen(),
+                  ),
                 );
               },
             ),
@@ -508,11 +675,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
             ),
             ListTile(
               title: const Text('History'),
-              leading: const Icon(Icons.history),
+              leading: const Icon(Icons.history, color: Color(0xFF3B82F6)),
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const HistoryScreen(),
+                  ),
                 );
               },
             ),
@@ -531,183 +700,286 @@ class _SettingsScreenState extends State<SettingsScreen> {
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             // User Info Section
-            Card(
-              margin: const EdgeInsets.only(bottom: 20),
-              elevation: 4,
-              shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(10)),
+            Container(
+              decoration: BoxDecoration(
+                gradient: const LinearGradient(
+                  begin: Alignment.topLeft,
+                  end: Alignment.bottomRight,
+                  colors: [Color(0xFF1E3A8A), Color(0xFF3B82F6)],
+                ),
+                borderRadius: BorderRadius.circular(20),
+                boxShadow: [
+                  BoxShadow(
+                    color: Colors.blue.withOpacity(0.3),
+                    blurRadius: 10,
+                    offset: const Offset(0, 5),
+                  ),
+                ],
+              ),
               child: Padding(
-                padding: const EdgeInsets.all(16.0),
+                padding: const EdgeInsets.all(20.0),
                 child: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    const Text(
-                      "Current User",
-                      style: TextStyle(fontSize: 20, fontWeight: FontWeight.bold, color: Colors.blueGrey),
-                    ),
-                    const Divider(),
-                    const SizedBox(height: 10),
                     Row(
                       children: [
-                        const Icon(Icons.person, color: Colors.green),
-                        const SizedBox(width: 10),
-                        Flexible(
-                          child: Text(
-                            _userEmail != null ? "Logged in as:\n$_userEmail" : "Loading user email...",
-                            style: const TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+                        Container(
+                          padding: const EdgeInsets.all(12),
+                          decoration: BoxDecoration(
+                            color: Colors.white.withOpacity(0.2),
+                            borderRadius: BorderRadius.circular(12),
+                          ),
+                          child: const Icon(
+                            Icons.person,
+                            color: Colors.white,
+                            size: 24,
+                          ),
+                        ),
+                        const SizedBox(width: 15),
+                        const Expanded(
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                "Current User",
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: Colors.white70,
+                                ),
+                              ),
+                              SizedBox(height: 4),
+                            ],
                           ),
                         ),
                       ],
+                    ),
+                    const SizedBox(height: 15),
+                    Container(
+                      padding: const EdgeInsets.all(15),
+                      decoration: BoxDecoration(
+                        color: Colors.white.withOpacity(0.1),
+                        borderRadius: BorderRadius.circular(12),
+                        border: Border.all(
+                          color: Colors.white.withOpacity(0.2),
+                        ),
+                      ),
+                      child: Row(
+                        children: [
+                          const Icon(
+                            Icons.email,
+                            color: Colors.white70,
+                            size: 20,
+                          ),
+                          const SizedBox(width: 10),
+                          Flexible(
+                            child: Text(
+                              _userEmail != null
+                                  ? _userEmail!
+                                  : "Loading user email...",
+                              style: const TextStyle(
+                                fontSize: 16,
+                                fontWeight: FontWeight.w500,
+                                color: Colors.white,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
                     ),
                   ],
                 ),
               ),
             ),
 
+            const SizedBox(height: 30),
+
             // Account Settings Section
             _buildSettingsSection(
               title: "Account Settings",
+              icon: Icons.account_circle,
               children: [
                 _buildSettingsTile(
                   icon: Icons.email,
                   title: "Change Email",
+                  subtitle: "Update your email address",
                   onTap: () {
                     _newEmailController.clear();
                     _currentPasswordController.clear();
                     showDialog(
                       context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Change Email Address"),
-                        content: Form(
-                          key: _emailFormKey, // Attach form key
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              MyTextField(
-                                controller: _newEmailController,
-                                hintText: "New Email",
-                                obscureText: false,
-                                keyboardType: TextInputType.emailAddress,
-                                prefixIcon: const Icon(Icons.alternate_email),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Please enter new email';
-                                  }
-                                  if (!value.contains('@')) {
-                                    return 'Please enter a valid email';
-                                  }
-                                  return null;
-                                },
+                      builder:
+                          (context) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            title: const Text(
+                              "Change Email Address",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            content: Form(
+                              key: _emailFormKey, // Attach form key
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  MyTextField(
+                                    controller: _newEmailController,
+                                    hintText: "New Email",
+                                    obscureText: false,
+                                    keyboardType: TextInputType.emailAddress,
+                                    prefixIcon: const Icon(
+                                      Icons.alternate_email,
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Please enter new email';
+                                      }
+                                      if (!value.contains('@')) {
+                                        return 'Please enter a valid email';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 15),
+                                  MyTextField(
+                                    controller: _currentPasswordController,
+                                    hintText: "Current Password",
+                                    obscureText: true,
+                                    prefixIcon: const Icon(Icons.lock),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Current password is required';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 10),
-                              MyTextField(
-                                controller: _currentPasswordController,
-                                hintText: "Current Password",
-                                obscureText: true,
-                                prefixIcon: const Icon(Icons.lock),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Current password is required';
-                                  }
-                                  return null;
-                                },
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Cancel"),
+                              ),
+                              ElevatedButton(
+                                onPressed: _changeEmail,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Update Email",
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"),
-                          ),
-                          ElevatedButton(
-                            onPressed: _changeEmail,
-                            child: const Text("Update Email"),
-                          ),
-                        ],
-                      ),
                     );
                   },
                 ),
                 _buildSettingsTile(
                   icon: Icons.lock,
                   title: "Change Password",
+                  subtitle: "Update your password",
                   onTap: () {
                     _currentPasswordController.clear();
                     _newPasswordController.clear();
                     _confirmNewPasswordController.clear();
                     showDialog(
                       context: context,
-                      builder: (context) => AlertDialog(
-                        title: const Text("Change Password"),
-                        content: Form(
-                          key: _passwordFormKey, 
-                          child: Column(
-                            mainAxisSize: MainAxisSize.min,
-                            children: [
-                              MyTextField(
-                                controller: _currentPasswordController,
-                                hintText: "Current Password",
-                                obscureText: true,
-                                prefixIcon: const Icon(Icons.lock),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Current password is required';
-                                  }
-                                  return null;
-                                },
+                      builder:
+                          (context) => AlertDialog(
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(20),
+                            ),
+                            title: const Text(
+                              "Change Password",
+                              style: TextStyle(fontWeight: FontWeight.bold),
+                            ),
+                            content: Form(
+                              key: _passwordFormKey,
+                              child: Column(
+                                mainAxisSize: MainAxisSize.min,
+                                children: [
+                                  MyTextField(
+                                    controller: _currentPasswordController,
+                                    hintText: "Current Password",
+                                    obscureText: true,
+                                    prefixIcon: const Icon(Icons.lock),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Current password is required';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 15),
+                                  MyTextField(
+                                    controller: _newPasswordController,
+                                    hintText: "New Password",
+                                    obscureText: true,
+                                    prefixIcon: const Icon(Icons.vpn_key),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'New password is required';
+                                      }
+                                      if (value.length < 8) {
+                                        return 'Password must be at least 8 characters';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                  const SizedBox(height: 15),
+                                  MyTextField(
+                                    controller: _confirmNewPasswordController,
+                                    hintText: "Confirm New Password",
+                                    obscureText: true,
+                                    prefixIcon: const Icon(
+                                      Icons.vpn_key_outlined,
+                                    ),
+                                    validator: (value) {
+                                      if (value == null || value.isEmpty) {
+                                        return 'Confirm password is required';
+                                      }
+                                      if (value !=
+                                          _newPasswordController.text) {
+                                        return 'Passwords do not match';
+                                      }
+                                      return null;
+                                    },
+                                  ),
+                                ],
                               ),
-                              const SizedBox(height: 10),
-                              MyTextField(
-                                controller: _newPasswordController,
-                                hintText: "New Password",
-                                obscureText: true,
-                                prefixIcon: const Icon(Icons.vpn_key),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'New password is required';
-                                  }
-                                  if (value.length < 8) {
-                                    return 'Password must be at least 8 characters';
-                                  }
-                                  return null;
-                                },
+                            ),
+                            actions: [
+                              TextButton(
+                                onPressed: () => Navigator.pop(context),
+                                child: const Text("Cancel"),
                               ),
-                              const SizedBox(height: 10),
-                              MyTextField(
-                                controller: _confirmNewPasswordController,
-                                hintText: "Confirm New Password",
-                                obscureText: true,
-                                prefixIcon: const Icon(Icons.vpn_key_outlined),
-                                validator: (value) {
-                                  if (value == null || value.isEmpty) {
-                                    return 'Confirm password is required';
-                                  }
-                                  if (value != _newPasswordController.text) {
-                                    return 'Passwords do not match';
-                                  }
-                                  return null;
-                                },
+                              ElevatedButton(
+                                onPressed: _changePassword,
+                                style: ElevatedButton.styleFrom(
+                                  backgroundColor: Colors.green,
+                                  shape: RoundedRectangleBorder(
+                                    borderRadius: BorderRadius.circular(10),
+                                  ),
+                                ),
+                                child: const Text(
+                                  "Update Password",
+                                  style: TextStyle(color: Colors.white),
+                                ),
                               ),
                             ],
                           ),
-                        ),
-                        actions: [
-                          TextButton(
-                            onPressed: () => Navigator.pop(context),
-                            child: const Text("Cancel"),
-                          ),
-                          ElevatedButton(
-                            onPressed: _changePassword,
-                            child: const Text("Update Password"),
-                          ),
-                        ],
-                      ),
                     );
                   },
                 ),
                 _buildSettingsTile(
                   icon: Icons.delete_forever,
                   title: "Delete Account",
+                  subtitle: "Permanently delete your account",
                   color: Colors.red,
                   onTap: _deleteAccount,
                 ),
@@ -717,59 +989,130 @@ class _SettingsScreenState extends State<SettingsScreen> {
             // Notification Settings Section
             _buildSettingsSection(
               title: "Notification Settings",
+              icon: Icons.notifications,
               children: [
-                SwitchListTile(
-                  title: const Text("Email Notifications"),
-                  value: _emailNotificationsEnabled,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _emailNotificationsEnabled = value;
-                    });
-                    _updateNotificationSettings(value, _smsNotificationsEnabled);
-                  },
-                  activeColor: Colors.green,
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: SwitchListTile(
+                    title: const Text(
+                      "Email Notifications",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text("Receive notifications via email"),
+                    value: _emailNotificationsEnabled,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _emailNotificationsEnabled = value;
+                      });
+                      _updateNotificationSettings(
+                        value,
+                        _smsNotificationsEnabled,
+                      );
+                    },
+                    activeColor: Colors.green,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                  ),
                 ),
-                SwitchListTile(
-                  title: const Text("SMS Notifications"),
-                  value: _smsNotificationsEnabled,
-                  onChanged: (bool value) {
-                    setState(() {
-                      _smsNotificationsEnabled = value;
-                    });
-                    _updateNotificationSettings(_emailNotificationsEnabled, value);
-                  },
-                  activeColor: Colors.green,
+                Container(
+                  margin: const EdgeInsets.symmetric(
+                    horizontal: 16,
+                    vertical: 8,
+                  ),
+                  decoration: BoxDecoration(
+                    color: Colors.white,
+                    borderRadius: BorderRadius.circular(15),
+                    boxShadow: [
+                      BoxShadow(
+                        color: Colors.grey.withOpacity(0.1),
+                        blurRadius: 5,
+                        offset: const Offset(0, 2),
+                      ),
+                    ],
+                  ),
+                  child: SwitchListTile(
+                    title: const Text(
+                      "SMS Notifications",
+                      style: TextStyle(fontWeight: FontWeight.w600),
+                    ),
+                    subtitle: const Text("Receive notifications via SMS"),
+                    value: _smsNotificationsEnabled,
+                    onChanged: (bool value) {
+                      setState(() {
+                        _smsNotificationsEnabled = value;
+                      });
+                      _updateNotificationSettings(
+                        _emailNotificationsEnabled,
+                        value,
+                      );
+                    },
+                    activeColor: Colors.green,
+                    contentPadding: const EdgeInsets.symmetric(
+                      horizontal: 20,
+                      vertical: 8,
+                    ),
+                  ),
                 ),
               ],
             ),
 
             _buildSettingsSection(
               title: "Legal & About",
+              icon: Icons.info,
               children: [
                 _buildSettingsTile(
                   icon: Icons.policy,
                   title: "Privacy Policy",
+                  subtitle: "Read our privacy policy",
                   onTap: () {
-                    _showInfoDialog("Privacy Policy", "Link to your app's privacy policy will open here.");
+                    _showInfoDialog(
+                      "Privacy Policy",
+                      "Link to your app's privacy policy will open here.",
+                    );
                   },
                 ),
                 _buildSettingsTile(
                   icon: Icons.description,
                   title: "Terms of Service",
+                  subtitle: "Read our terms of service",
                   onTap: () {
-                    _showInfoDialog("Terms of Service", "Link to your app's terms of service will open here.");
+                    _showInfoDialog(
+                      "Terms of Service",
+                      "Link to your app's terms of service will open here.",
+                    );
                   },
                 ),
                 _buildSettingsTile(
                   icon: Icons.info,
                   title: "About App",
+                  subtitle: "Version 1.0.0 • Developed by Hastings",
                   onTap: () {
                     _showInfoDialog(
-                        "About Resource Booking App", "Version: 1.0.0\nDeveloped by Hastings.\nThis app allows users to book resources on campus easily and efficiently.");
+                      "About Resource Booking App",
+                      "Version: 1.0.0\nDeveloped by Hastings.\nThis app allows users to book resources on campus easily and efficiently.",
+                    );
                   },
                 ),
               ],
             ),
+
+            const SizedBox(height: 30),
           ],
         ),
       ),
@@ -777,24 +1120,51 @@ class _SettingsScreenState extends State<SettingsScreen> {
   }
 
   // Helper widget to build consistent settings sections
-  Widget _buildSettingsSection({required String title, required List<Widget> children}) {
+  Widget _buildSettingsSection({
+    required String title,
+    required IconData icon,
+    required List<Widget> children,
+  }) {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
-        Text(
-          title,
-          style: const TextStyle(fontSize: 22, fontWeight: FontWeight.bold, color: Colors.green),
-        ),
-        const Divider(color: Colors.grey),
-        const SizedBox(height: 10),
-        Card(
-          elevation: 2,
+        Container(
           margin: const EdgeInsets.only(bottom: 20),
-          shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(8)),
-          child: Column(
-            children: children,
+          child: Row(
+            children: [
+              Container(
+                padding: const EdgeInsets.all(8),
+                decoration: BoxDecoration(
+                  color: const Color(0xFF3B82F6),
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Icon(icon, color: Colors.white, size: 20),
+              ),
+              const SizedBox(width: 12),
+              Text(
+                title,
+                style: const TextStyle(
+                  fontSize: 22,
+                  fontWeight: FontWeight.bold,
+                  color: Color(0xFF1F2937),
+                ),
+              ),
+            ],
           ),
+        ),
+        Container(
+          decoration: BoxDecoration(
+            color: Colors.white,
+            borderRadius: BorderRadius.circular(20),
+            boxShadow: [
+              BoxShadow(
+                color: Colors.grey.withOpacity(0.1),
+                blurRadius: 10,
+                offset: const Offset(0, 5),
+              ),
+            ],
+          ),
+          child: Column(children: children),
         ),
       ],
     );
@@ -804,15 +1174,48 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Widget _buildSettingsTile({
     required IconData icon,
     required String title,
+    required String subtitle,
     required VoidCallback onTap,
     Color color = Colors.black87,
   }) {
-    return ListTile(
-      leading: Icon(icon, color: color),
-      title: Text(title, style: TextStyle(color: color)),
-      trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
-      onTap: onTap,
-      contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+    return Container(
+      margin: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(15),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            blurRadius: 5,
+            offset: const Offset(0, 2),
+          ),
+        ],
+      ),
+      child: ListTile(
+        leading: Container(
+          padding: const EdgeInsets.all(8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.1),
+            borderRadius: BorderRadius.circular(10),
+          ),
+          child: Icon(icon, color: color, size: 20),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(color: color, fontWeight: FontWeight.w600),
+        ),
+        subtitle: Text(
+          subtitle,
+          style: TextStyle(color: Colors.grey[600], fontSize: 12),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: Colors.grey[400],
+        ),
+        onTap: onTap,
+        contentPadding: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
+      ),
     );
   }
 }

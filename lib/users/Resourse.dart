@@ -197,7 +197,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             }
           });
           if (errorMessages.isNotEmpty) {
-            errorMessage += "\n" + errorMessages.join(', ');
+            errorMessage += "\n${errorMessages.join(', ')}";
           }
         }
         throw Exception(errorMessage);
@@ -299,7 +299,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                           tempUserIdFilter = '';
                         });
                       },
-                      dropdownColor: Theme.of(context).colorScheme.surfaceVariant, // For dark mode
+                      dropdownColor: Theme.of(context).colorScheme.surfaceContainerHighest, // For dark mode
                       style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                     ),
                     const SizedBox(height: 16),
@@ -323,7 +323,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                             tempResourceTypeFilter = newValue!;
                           });
                         },
-                        dropdownColor: Theme.of(context).colorScheme.surfaceVariant,
+                        dropdownColor: Theme.of(context).colorScheme.surfaceContainerHighest,
                         style: TextStyle(color: Theme.of(context).colorScheme.onSurface),
                       ),
                     const SizedBox(height: 16),
@@ -513,7 +513,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             const SizedBox(height: 16),
             Text(
               'Searching...',
-              style: TextStyle(fontSize: 16, color: colorScheme.onBackground),
+              style: TextStyle(fontSize: 16, color: colorScheme.onSurface),
             ),
           ],
         ),
@@ -532,7 +532,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             const SizedBox(height: 16),
             Text(
               'No matching results found for your search criteria.',
-              style: TextStyle(fontSize: 18, color: colorScheme.onBackground),
+              style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
               textAlign: TextAlign.center,
             ),
             const SizedBox(height: 16),
@@ -568,7 +568,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
         return Center(
             child: Text(
                 'Enter keywords or apply filters to search.',
-                style: TextStyle(fontSize: 16, color: colorScheme.onBackground.withOpacity(0.7)),
+                style: TextStyle(fontSize: 16, color: colorScheme.onSurface.withOpacity(0.7)),
                 textAlign: TextAlign.center,
             ),
         );
@@ -602,7 +602,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             return Center(
               child: Text(
                 'No resources available.',
-                style: TextStyle(fontSize: 18, color: colorScheme.onBackground),
+                style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
               ),
             );
           } else {
@@ -630,7 +630,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
       padding: const EdgeInsets.symmetric(vertical: 8.0),
       child: Material(
         borderRadius: BorderRadius.circular(20),
-        color: colorScheme.surfaceVariant, 
+        color: colorScheme.surfaceContainerHighest, 
         elevation: 5,
         shadowColor: colorScheme.shadow,
         child: InkWell(

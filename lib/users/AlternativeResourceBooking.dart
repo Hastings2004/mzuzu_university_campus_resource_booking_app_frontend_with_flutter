@@ -13,13 +13,13 @@ class AlternativeResourcesScreen extends StatelessWidget {
   final DateTime endTime;
 
   const AlternativeResourcesScreen({
-    Key? key,
+    super.key,
     required this.alternativeResources,
     required this.bookingPurpose,
     required this.estimatedPeople,
     required this.startTime,
     required this.endTime,
-  }) : super(key: key);
+  });
 
   @override
   Widget build(BuildContext context) {

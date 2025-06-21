@@ -31,23 +31,30 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   // --- Utility & Logout ---
   void logout() async {
-    final bool confirmLogout = await showDialog(
+    final bool confirmLogout =
+        await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text('Confirm Logout'),
-            content: const Text('Are you sure you want to log out?'),
-            actions: <Widget>[
-              TextButton(
-                onPressed: () => Navigator.of(context).pop(false),
-                child: const Text('Cancel'),
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Confirm Logout'),
+                content: const Text('Are you sure you want to log out?'),
+                actions: <Widget>[
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('Cancel'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    child: const Text(
+                      'Logout',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
               ),
-              ElevatedButton(
-                onPressed: () => Navigator.of(context).pop(true),
-                style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-                child: const Text('Logout', style: TextStyle(color: Colors.white)),
-              ),
-            ],
-          ),
         ) ??
         false;
 
@@ -56,10 +63,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
       await prefs.clear();
 
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/',
-          (route) => false,
-        );
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     }
   }
@@ -81,7 +85,13 @@ class _NotificationScreenState extends State<NotificationScreen> {
     }
   }
 
-  void _showNotificationDetailDialog(BuildContext context, String title, String message, String timeAgo, int notificationId) {
+  void _showNotificationDetailDialog(
+    BuildContext context,
+    String title,
+    String message,
+    String timeAgo,
+    int notificationId,
+  ) {
     // Mark as read when the dialog is shown
     _markNotificationAsRead(notificationId);
 
@@ -89,7 +99,10 @@ class _NotificationScreenState extends State<NotificationScreen> {
       context: context,
       builder: (context) {
         return AlertDialog(
-          title: Text(title, style: const TextStyle(fontWeight: FontWeight.bold)),
+          title: Text(
+            title,
+            style: const TextStyle(fontWeight: FontWeight.bold),
+          ),
           content: Column(
             mainAxisSize: MainAxisSize.min,
             crossAxisAlignment: CrossAxisAlignment.start,
@@ -128,20 +141,23 @@ class _NotificationScreenState extends State<NotificationScreen> {
       final unreadRes = await CallApi().getData('notifications/unread');
       final unreadBody = json.decode(unreadRes.body);
 
-      if (notificationsRes.statusCode == 200 && notificationsBody['success'] == true) {
+      if (notificationsRes.statusCode == 200 &&
+          notificationsBody['success'] == true) {
         List<dynamic> notificationsJson = notificationsBody['notifications'];
         setState(() {
-          _notifications = notificationsJson
-              .map((json) => NotificationModel.fromJson(json))
-              .toList();
+          _notifications =
+              notificationsJson
+                  .map((json) => NotificationModel.fromJson(json))
+                  .toList();
           _notifications.sort((a, b) => b.timestamp.compareTo(a.timestamp));
         });
       } else {
-        String errorMessage = notificationsBody['message'] ?? 'Failed to load notifications.';
+        String errorMessage =
+            notificationsBody['message'] ?? 'Failed to load notifications.';
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMessage)));
         }
       }
 
@@ -150,7 +166,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
           _unreadNotificationCount = unreadBody['notifications'] ?? 0;
         });
       } else {
-        debugPrint("Failed to fetch unread notification count: ${unreadBody['message']}");
+        debugPrint(
+          "Failed to fetch unread notification count: ${unreadBody['message']}",
+        );
       }
     } catch (e) {
       debugPrint("Error fetching notifications or unread count: $e");
@@ -170,14 +188,19 @@ class _NotificationScreenState extends State<NotificationScreen> {
 
   Future<void> _markNotificationAsRead(int notificationId) async {
     try {
-      final response = await CallApi().postData({}, 'notifications/$notificationId/mark-as-read');
+      final response = await CallApi().postData(
+        {},
+        'notifications/$notificationId/mark-as-read',
+      );
       final body = json.decode(response.body);
 
       if (response.statusCode == 200 && body['success'] == true) {
         debugPrint("Notification $notificationId marked as read.");
         // Optimistically update the local list and unread count
         setState(() {
-          final index = _notifications.indexWhere((n) => n.id == notificationId);
+          final index = _notifications.indexWhere(
+            (n) => n.id == notificationId,
+          );
           if (index != -1 && _notifications[index].status == 'unread') {
             _notifications[index].status = 'read'; // Correctly assign 'read'
             if (_unreadNotificationCount > 0) {
@@ -197,29 +220,39 @@ class _NotificationScreenState extends State<NotificationScreen> {
   }
 
   Future<void> _markAllNotificationsAsRead() async {
-    bool confirm = await showDialog(
+    bool confirm =
+        await showDialog(
           context: context,
-          builder: (context) => AlertDialog(
-            title: const Text("Clear All Notifications"),
-            content: const Text("Are you sure you want to clear all notifications?"),
-            actions: [
-              TextButton(
-                onPressed: () => Navigator.pop(context, false),
-                child: const Text("Cancel"),
+          builder:
+              (context) => AlertDialog(
+                title: const Text("Clear All Notifications"),
+                content: const Text(
+                  "Are you sure you want to clear all notifications?",
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, false),
+                    child: const Text("Cancel"),
+                  ),
+                  TextButton(
+                    onPressed: () => Navigator.pop(context, true),
+                    child: const Text(
+                      "Clear All",
+                      style: TextStyle(color: Colors.red),
+                    ),
+                  ),
+                ],
               ),
-              TextButton(
-                onPressed: () => Navigator.pop(context, true),
-                child: const Text("Clear All", style: TextStyle(color: Colors.red)),
-              ),
-            ],
-          ),
         ) ??
         false;
 
     if (!confirm) return;
 
     try {
-      final res = await CallApi().postData({}, 'notifications/mark-all-as-read'); // Use the new endpoint
+      final res = await CallApi().postData(
+        {},
+        'notifications/mark-all-as-read',
+      ); // Use the new endpoint
       final body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
@@ -231,11 +264,12 @@ class _NotificationScreenState extends State<NotificationScreen> {
         // Refresh the list after clearing all
         _fetchNotificationsAndUnreadCount(); // Re-fetch to get updated statuses and count
       } else {
-        String errorMessage = body['message'] ?? 'Failed to clear all notifications.';
+        String errorMessage =
+            body['message'] ?? 'Failed to clear all notifications.';
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMessage)));
         }
       }
     } catch (e) {
@@ -264,7 +298,6 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ),
         elevation: 0,
-        backgroundColor: Colors.white,
         actions: [
           // Clear All Button
           TextButton(
@@ -322,7 +355,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
               },
             ),
@@ -332,7 +367,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ResourcesScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ResourcesScreen(),
+                  ),
                 );
               },
             ),
@@ -348,20 +385,27 @@ class _NotificationScreenState extends State<NotificationScreen> {
             ),
             ListTile(
               title: const Text('Notifications'),
-              leading: const Icon(Icons.notifications, color: Colors.blueAccent),
-              trailing: _unreadNotificationCount > 0
-                  ? Container(
-                      padding: const EdgeInsets.all(6),
-                      decoration: const BoxDecoration(
-                        color: Colors.red,
-                        shape: BoxShape.circle,
-                      ),
-                      child: Text(
-                        '$_unreadNotificationCount',
-                        style: const TextStyle(color: Colors.white, fontSize: 12),
-                      ),
-                    )
-                  : null,
+              leading: const Icon(
+                Icons.notifications,
+                color: Colors.blueAccent,
+              ),
+              trailing:
+                  _unreadNotificationCount > 0
+                      ? Container(
+                        padding: const EdgeInsets.all(6),
+                        decoration: const BoxDecoration(
+                          color: Colors.red,
+                          shape: BoxShape.circle,
+                        ),
+                        child: Text(
+                          '$_unreadNotificationCount',
+                          style: const TextStyle(
+                            color: Colors.white,
+                            fontSize: 12,
+                          ),
+                        ),
+                      )
+                      : null,
               onTap: () {
                 Navigator.pop(context); // Close the drawer
               },
@@ -372,7 +416,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
                 );
               },
             ),
@@ -382,7 +428,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
               onTap: () {
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const HistoryScreen(),
+                  ),
                 );
               },
             ),
@@ -395,70 +443,89 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : _notifications.isEmpty
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : _notifications.isEmpty
               ? const Center(
-                  child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
-                    children: [
-                      Icon(Icons.notifications_off, size: 80, color: Colors.grey),
-                      SizedBox(height: 20),
-                      Text(
-                        "No new notifications",
-                        style: TextStyle(fontSize: 22, color: Colors.grey),
-                      ),
-                    ],
-                  ),
-                )
-              : ListView.builder(
-                  itemCount: _notifications.length,
-                  itemBuilder: (context, index) {
-                    final notification = _notifications[index];
-                    String timeAgo = _getTimeAgo(notification.timestamp);
-
-                    return Card(
-                      margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                      elevation: 3,
-                      // Apply background color based on status
-                      color: notification.status == 'unread' ? Colors.blue.shade50 : null,
-                      child: ListTile(
-                        leading: Icon(
-                          // Corrected icon for read/unread state
-                          notification.status == 'unread' ? Icons.mail : Icons.mark_email_read,
-                          color: notification.status == 'unread' ? Colors.blueAccent : Colors.grey,
-                        ),
-                        title: Text(
-                          notification.title,
-                          style: TextStyle(
-                            // Apply fontWeight based on status
-                            fontWeight: notification.status == 'unread' ? FontWeight.bold : FontWeight.normal,
-                          ),
-                        ),
-                        subtitle: Column(
-                          crossAxisAlignment: CrossAxisAlignment.start,
-                          children: [
-                            Text(notification.message),
-                            const SizedBox(height: 4),
-                            Text(
-                              timeAgo,
-                              style: const TextStyle(color: Colors.grey, fontSize: 12),
-                            ),
-                          ],
-                        ),
-                        onTap: () {
-                          _showNotificationDetailDialog(
-                            context,
-                            notification.title,
-                            notification.message,
-                            timeAgo,
-                            notification.id, // Pass notification ID to mark as read
-                          );
-                        },
-                      ),
-                    );
-                  },
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.notifications_off, size: 80, color: Colors.grey),
+                    SizedBox(height: 20),
+                    Text(
+                      "No new notifications",
+                      style: TextStyle(fontSize: 22, color: Colors.grey),
+                    ),
+                  ],
                 ),
+              )
+              : ListView.builder(
+                itemCount: _notifications.length,
+                itemBuilder: (context, index) {
+                  final notification = _notifications[index];
+                  String timeAgo = _getTimeAgo(notification.timestamp);
+
+                  return Card(
+                    margin: const EdgeInsets.symmetric(
+                      horizontal: 16.0,
+                      vertical: 8.0,
+                    ),
+                    elevation: 3,
+                    // Apply background color based on status
+                    color:
+                        notification.status == 'unread'
+                            ? Colors.blue.shade50
+                            : null,
+                    child: ListTile(
+                      leading: Icon(
+                        // Corrected icon for read/unread state
+                        notification.status == 'unread'
+                            ? Icons.mail
+                            : Icons.mark_email_read,
+                        color:
+                            notification.status == 'unread'
+                                ? Colors.blueAccent
+                                : Colors.grey,
+                      ),
+                      title: Text(
+                        notification.title,
+                        style: TextStyle(
+                          // Apply fontWeight based on status
+                          fontWeight:
+                              notification.status == 'unread'
+                                  ? FontWeight.bold
+                                  : FontWeight.normal,
+                        ),
+                      ),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(notification.message),
+                          const SizedBox(height: 4),
+                          Text(
+                            timeAgo,
+                            style: const TextStyle(
+                              color: Colors.grey,
+                              fontSize: 12,
+                            ),
+                          ),
+                        ],
+                      ),
+                      onTap: () {
+                        _showNotificationDetailDialog(
+                          context,
+                          notification.title,
+                          notification.message,
+                          timeAgo,
+                          notification
+                              .id, // Pass notification ID to mark as read
+                        );
+                      },
+                    ),
+                  );
+                },
+              ),
     );
   }
 }

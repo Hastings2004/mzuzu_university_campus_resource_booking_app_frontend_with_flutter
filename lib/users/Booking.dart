@@ -17,7 +17,7 @@ import 'package:resource_booking_app/users/History.dart'; // Import your new Boo
 
 
 class BookingScreen extends StatefulWidget {
-  BookingScreen({super.key});
+  const BookingScreen({super.key});
 
   @override
   State<BookingScreen> createState() => _BookingScreenState();

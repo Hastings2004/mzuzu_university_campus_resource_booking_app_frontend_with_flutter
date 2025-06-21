@@ -214,7 +214,7 @@ class _ImageUploaderState extends State<ImageUploader> {
               },
             ),
             Text(
-              "${user.email!}",
+              user.email!,
               style: const TextStyle(fontSize: 20),
             ),
           ],
