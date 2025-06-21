@@ -13,6 +13,7 @@ import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Settings.dart';
+import 'package:resource_booking_app/users/History.dart';
 
 class ResourcesScreen extends StatefulWidget {
   const ResourcesScreen({super.key});
@@ -886,6 +887,21 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   MaterialPageRoute(builder: (context) => const SettingsScreen()),
                 );
               },
+            ),
+            ListTile(
+              title: Text('History', style: TextStyle(color: colorScheme.onSurface)),
+              leading: Icon(Icons.history, color: colorScheme.onSurfaceVariant),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                );
+              },
+            ),
+            ListTile(
+              title: Text('Logout', style: TextStyle(color: colorScheme.error)),
+              leading: Icon(Icons.logout, color: colorScheme.error),
+              onTap: logout,
             ),
           ],
         ),

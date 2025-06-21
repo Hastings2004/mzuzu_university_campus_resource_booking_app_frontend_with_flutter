@@ -1,16 +1,45 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
+import 'package:resource_booking_app/models/booking.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/Resourse.dart'; 
+import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Required for logout logic
+import 'package:intl/intl.dart';
 
-class HistoryScreen extends StatelessWidget {
+
+class HistoryScreen extends StatefulWidget {
   const HistoryScreen({super.key});
+
+  @override
+  State<HistoryScreen> createState() => _HistoryScreenState();
+}
+
+class _HistoryScreenState extends State<HistoryScreen> {
+  late Future<List<Booking>> _bookingHistoryFuture;
+
+  @override
+  void initState() {
+    super.initState();
+    _bookingHistoryFuture = _fetchBookingHistory();
+  }
+
+  Future<List<Booking>> _fetchBookingHistory() async {
+    final response = await CallApi().getData('bookings/user');
+    if (response.statusCode == 200) {
+      final List<dynamic> bookingData = json.decode(response.body);
+      return bookingData.map((data) => Booking.fromJson(data)).toList();
+    } else {
+      throw Exception('Failed to load booking history');
+    }
+  }
 
   // You would typically handle token clearing and navigation to the login page here.
   Future<void> _handleLogout(BuildContext context) async {
@@ -120,68 +149,100 @@ class HistoryScreen extends StatelessWidget {
           ],
         ),
       ),
-      body: SingleChildScrollView(
-        child: Column(
-          children: [
-            const SizedBox(height: 20),
-            const Text(
-              'Booking History',
-              style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
-            ),
-            const SizedBox(height: 20),
-            // Placeholder for booking history items
-            // You would replace this with actual data fetched from your API
-            ListView.builder(
-              shrinkWrap: true, // Important for ListView.builder inside SingleChildScrollView
-              physics: const NeverScrollableScrollPhysics(), // Prevents nested scrolling
-              itemCount: 10, // Example count. Replace with your actual history list length
-              itemBuilder: (context, index) {
-                return Card(
-                  margin: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
-                  elevation: 2,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
+      body: FutureBuilder<List<Booking>>(
+        future: _bookingHistoryFuture,
+        builder: (context, snapshot) {
+          if (snapshot.connectionState == ConnectionState.waiting) {
+            return const Center(child: CircularProgressIndicator());
+          } else if (snapshot.hasError) {
+            return Center(child: Text('Error: ${snapshot.error}'));
+          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
+            return const Center(child: Text('No booking history found.'));
+          } else {
+            final bookings = snapshot.data!;
+            return SingleChildScrollView(
+              child: Column(
+                children: [
+                  const SizedBox(height: 20),
+                  const Text(
+                    'Booking History',
+                    style: TextStyle(fontSize: 24, fontWeight: FontWeight.bold),
                   ),
-                  child: Padding(
-                    padding: const EdgeInsets.all(16.0),
-                    child: Column(
-                      crossAxisAlignment: CrossAxisAlignment.start,
-                      children: [
-                        Text(
-                          'Resource: Meeting Room A', // Replace with actual resource name
-                          style: TextStyle(
-                            fontSize: 18,
-                            fontWeight: FontWeight.bold,
-                            color: Colors.green[800],
+                  const SizedBox(height: 20),
+                  ListView.builder(
+                    shrinkWrap: true, // Important for ListView.builder inside SingleChildScrollView
+                    physics:
+                        const NeverScrollableScrollPhysics(), // Prevents nested scrolling
+                    itemCount: bookings.length, // Example count. Replace with your actual history list length
+                    itemBuilder: (context, index) {
+                      final booking = bookings[index];
+                      return Card(
+                        margin: const EdgeInsets.symmetric(
+                            horizontal: 16.0, vertical: 8.0),
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: Padding(
+                          padding: const EdgeInsets.all(16.0),
+                          child: Column(
+                            crossAxisAlignment: CrossAxisAlignment.start,
+                            children: [
+                              Text(
+                                'Resource: ${booking.resourceName}', // Replace with actual resource name
+                                style: TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green[800],
+                                ),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Date: ${DateFormat.yMMMd().format(booking.startTime)}', // Replace with actual date
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.grey[700]),
+                              ),
+                              Text(
+                                'Time: ${DateFormat.jm().format(booking.startTime)} - ${DateFormat.jm().format(booking.endTime)}', // Replace with actual time
+                                style: TextStyle(
+                                    fontSize: 16, color: Colors.grey[700]),
+                              ),
+                              const SizedBox(height: 8),
+                              Text(
+                                'Status: ${booking.status}', // Replace with actual status (e.g., Pending, Approved, Cancelled)
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w500,
+                                  color: _getStatusColor(booking.status),
+                                ),
+                              ),
+                            ],
                           ),
                         ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Date: 2024-06-11', // Replace with actual date
-                          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                        ),
-                        Text(
-                          'Time: 10:00 AM - 12:00 PM', // Replace with actual time
-                          style: TextStyle(fontSize: 16, color: Colors.grey[700]),
-                        ),
-                        const SizedBox(height: 8),
-                        Text(
-                          'Status: Completed', // Replace with actual status (e.g., Pending, Approved, Cancelled)
-                          style: TextStyle(
-                            fontSize: 16,
-                            fontWeight: FontWeight.w500,
-                            color: (index % 2 == 0) ? Colors.blue : Colors.red, // Example status coloring
-                          ),
-                        ),
-                      ],
-                    ),
+                      );
+                    },
                   ),
-                );
-              },
-            ),
-          ],
-        ),
+                ],
+              ),
+            );
+          }
+        },
       ),
     );
+  }
+
+  Color _getStatusColor(String status) {
+    switch (status.toLowerCase()) {
+      case 'approved':
+        return Colors.green;
+      case 'pending':
+        return Colors.orange;
+      case 'cancelled':
+        return Colors.red;
+      case 'completed':
+        return Colors.blue;
+      default:
+        return Colors.grey;
+    }
   }
 }

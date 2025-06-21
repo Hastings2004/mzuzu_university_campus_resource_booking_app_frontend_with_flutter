@@ -13,6 +13,7 @@ import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/models/booking.dart'; // Import your new Booking model
+import 'package:resource_booking_app/users/History.dart'; // Import your new Booking model
 
 
 class BookingScreen extends StatefulWidget {
@@ -241,6 +242,16 @@ class _BookingScreenState extends State<BookingScreen> {
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => SettingsScreen()),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('History'),
+              leading: const Icon(Icons.history),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
                 );
               },
             ),

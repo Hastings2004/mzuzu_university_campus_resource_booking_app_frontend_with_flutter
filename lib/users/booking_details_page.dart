@@ -8,6 +8,7 @@ import 'package:resource_booking_app/auth/Api.dart'; // Import your API service 
 import 'dart:convert'; // For json.decode
 
 import 'package:resource_booking_app/users/UpdateBookingScreen.dart'; // Import the new Update Booking Screen
+import 'package:resource_booking_app/users/report_issue_page.dart';
 
 class BookingDetailsPage extends StatefulWidget {
   final Booking booking;
@@ -111,6 +112,18 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
       print("Booking potentially updated, consider refreshing data.");
       
     }
+  }
+
+  void _navigateToReportIssuePage() {
+    Navigator.push(
+      context,
+      MaterialPageRoute(
+        builder: (context) => ReportIssuePage(
+          resourceId: _currentBooking.resourceId,
+          resourceName: _currentBooking.resourceName,
+        ),
+      ),
+    );
   }
 
   Widget _buildDetailRow(IconData icon, String label, String value) {
@@ -250,16 +263,22 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                           ),
                         ),
                         const SizedBox(width: 10),
-                        Chip(
-                          label: Text(
+                        Container(
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 6,
+                          ),
+                          decoration: BoxDecoration(
+                            color: statusColor,
+                            borderRadius: BorderRadius.circular(20),
+                          ),
+                          child: Text(
                             _currentBooking.status.toUpperCase(),
-                            style: TextStyle(
-                              color: statusColor,
+                            style: const TextStyle(
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                             ),
                           ),
-                          backgroundColor: statusColor.withOpacity(0.1),
-                          side: BorderSide(color: statusColor, width: 1),
                         ),
                       ],
                     ),
@@ -278,40 +297,61 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                 ),
               ],
             if (canModify) // Only show buttons if the booking can be modified
-              Row(
-                mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-                children: [
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _navigateToUpdateBooking,
-                      icon: const Icon(Icons.edit, color: Colors.white),
-                      label: const Text('Update Booking', style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.blue,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+              Padding(
+                padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                child: Row(
+                  children: [
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.edit),
+                        label: const Text('Update Booking'),
+                        onPressed: _navigateToUpdateBooking,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.blueAccent,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                  const SizedBox(width: 10),
-                  Expanded(
-                    child: ElevatedButton.icon(
-                      onPressed: _cancelBooking,
-                      icon: const Icon(Icons.cancel, color: Colors.white),
-                      label: const Text('Cancel Booking', style: TextStyle(color: Colors.white)),
-                      style: ElevatedButton.styleFrom(
-                        backgroundColor: Colors.red,
-                        padding: const EdgeInsets.symmetric(vertical: 12),
-                        shape: RoundedRectangleBorder(
-                          borderRadius: BorderRadius.circular(10),
+                    const SizedBox(width: 10),
+                    Expanded(
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.cancel),
+                        label: const Text('Cancel Booking'),
+                        onPressed: _cancelBooking,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.red,
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
                         ),
                       ),
                     ),
-                  ),
-                ],
+                  ],
+                ),
               ),
+            const SizedBox(height: 10), // Spacing
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 8.0),
+              child: ElevatedButton.icon(
+                icon: const Icon(Icons.report_problem),
+                label: const Text('Report an Issue'),
+                onPressed: _navigateToReportIssuePage,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.orange[700],
+                  foregroundColor: Colors.white,
+                  padding: const EdgeInsets.symmetric(vertical: 12),
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(10),
+                  ),
+                ),
+              ),
+            ),
           ],
         ),
       ),

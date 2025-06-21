@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Auth.dart'; 
-import 'dart:convert'; // For JSON encoding/decoding
+import 'dart:convert'; 
 import 'package:shared_preferences/shared_preferences.dart'; 
-import 'package:resource_booking_app/auth/Api.dart'; // Your custom API service
+import 'package:resource_booking_app/auth/Api.dart'; 
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart'; 
 import 'package:resource_booking_app/components/TextField.dart'; 
@@ -11,6 +11,7 @@ import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart'; 
+import 'History.dart';
 
 class SettingsScreen extends StatefulWidget {
   const SettingsScreen({super.key});
@@ -447,14 +448,80 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 ],
               ),
             ),
-            _buildDrawerTile(Icons.home, 'Home', () => Home()),
-            _buildDrawerTile(Icons.person, 'Profile', () => const ProfileScreen()),
-            _buildDrawerTile(Icons.grid_view, 'Resources', () => const ResourcesScreen()),
-            _buildDrawerTile(Icons.book_online, 'Bookings', () => BookingScreen()),
-            _buildDrawerTile(Icons.notifications, 'Notifications', () => const NotificationScreen()),
-            _buildDrawerTile(Icons.settings, 'Settings', () => Navigator.pop(context), isActive: true),
+            ListTile(
+              title: const Text('Home'),
+              leading: const Icon(Icons.home),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Home()),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Profile'),
+              leading: const Icon(Icons.person),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Resources'),
+              leading: const Icon(Icons.grid_view),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ResourcesScreen()),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Bookings'),
+              leading: const Icon(Icons.book_online),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => BookingScreen()),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Notifications'),
+              leading: const Icon(Icons.notifications),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                      builder: (context) => const NotificationScreen()),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Settings'),
+              leading: const Icon(Icons.settings, color: Colors.blueAccent),
+              onTap: () {
+                Navigator.pop(context);
+              },
+            ),
+            ListTile(
+              title: const Text('History'),
+              leading: const Icon(Icons.history),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                );
+              },
+            ),
             const Divider(),
-            _buildDrawerTile(Icons.logout, 'Logout', _logout, isDestructive: true),
+            ListTile(
+              title: const Text('Logout'),
+              leading: const Icon(Icons.logout, color: Colors.red),
+              onTap: _logout,
+            ),
           ],
         ),
       ),
@@ -746,35 +813,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       trailing: const Icon(Icons.arrow_forward_ios, size: 16, color: Colors.grey),
       onTap: onTap,
       contentPadding: const EdgeInsets.symmetric(horizontal: 16, vertical: 8),
-    );
-  }
-
-  // Helper widget for drawer tiles
-  Widget _buildDrawerTile(IconData icon, String title, Function onTapCallback, {bool isActive = false, bool isDestructive = false}) {
-    return ListTile(
-      title: Text(
-        title,
-        style: TextStyle(
-          color: isActive ? Colors.blueAccent : (isDestructive ? Colors.red : Colors.black87),
-          fontWeight: isActive ? FontWeight.bold : FontWeight.normal,
-        ),
-      ),
-      leading: Icon(
-        icon,
-        color: isActive ? Colors.blueAccent : (isDestructive ? Colors.red : Colors.grey),
-      ),
-      onTap: () {
-        // Close the drawer before navigating
-        if (Navigator.of(context).canPop()) {
-          Navigator.of(context).pop();
-        }
-        // Execute the navigation logic
-        if (onTapCallback is Function()) {
-          onTapCallback();
-        } else if (onTapCallback is Widget Function()) { 
-           Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => onTapCallback()));
-        }
-      },
     );
   }
 }

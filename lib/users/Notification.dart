@@ -9,6 +9,7 @@ import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
+import 'package:resource_booking_app/users/History.dart';
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});
@@ -262,11 +263,16 @@ class _NotificationScreenState extends State<NotificationScreen> {
             color: Colors.white,
           ),
         ),
+        elevation: 0,
+        backgroundColor: Colors.white,
         actions: [
-          IconButton(
-            icon: const Icon(Icons.clear_all, color: Colors.white),
-            tooltip: "Clear All Notifications",
+          // Clear All Button
+          TextButton(
             onPressed: _markAllNotificationsAsRead,
+            child: const Text(
+              'Clear All',
+              style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold),
+            ),
           ),
         ],
       ),
@@ -274,18 +280,18 @@ class _NotificationScreenState extends State<NotificationScreen> {
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(
+            const DrawerHeader(
+              decoration: BoxDecoration(
                 color: Color.fromARGB(255, 20, 148, 24),
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
                 children: [
-                  Image.asset(
-                    "assets/images/logo.png",
+                  Image(
+                    image: AssetImage("assets/images/logo.png"),
                     height: 50,
                   ),
-                  const Text(
+                  Text(
                     'Mzuzu University',
                     style: TextStyle(
                       color: Colors.white,
@@ -293,12 +299,9 @@ class _NotificationScreenState extends State<NotificationScreen> {
                       fontWeight: FontWeight.bold,
                     ),
                   ),
-                  const Text(
+                  Text(
                     'Campus Resource Booking',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
                 ],
               ),
@@ -307,28 +310,40 @@ class _NotificationScreenState extends State<NotificationScreen> {
               title: const Text('Home'),
               leading: const Icon(Icons.home),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const Home()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const Home()),
+                );
               },
             ),
             ListTile(
               title: const Text('Profile'),
               leading: const Icon(Icons.person),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                );
               },
             ),
             ListTile(
               title: const Text('Resources'),
               leading: const Icon(Icons.grid_view),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ResourcesScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const ResourcesScreen()),
+                );
               },
             ),
             ListTile(
               title: const Text('Bookings'),
               leading: const Icon(Icons.book_online),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => BookingScreen()),
+                );
               },
             ),
             ListTile(
@@ -348,17 +363,27 @@ class _NotificationScreenState extends State<NotificationScreen> {
                     )
                   : null,
               onTap: () {
-                Navigator.pop(context); // Close drawer
-                // Consider refreshing the count here if the user might have interacted
-                // with notifications outside this screen or if the count is stale.
-                // _fetchUnreadNotificationCount();
+                Navigator.pop(context); // Close the drawer
               },
             ),
             ListTile(
               title: const Text('Settings'),
               leading: const Icon(Icons.settings),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const SettingsScreen()),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('History'),
+              leading: const Icon(Icons.history),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                );
               },
             ),
             const Divider(),

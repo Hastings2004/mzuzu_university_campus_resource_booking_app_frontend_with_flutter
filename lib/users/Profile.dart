@@ -11,6 +11,7 @@ import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/users/EditProfile.dart'; // Your EditProfileScreen
 import 'package:resource_booking_app/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Import your new UserModel
+import 'History.dart'; // Import your new UserModel
 
 class ProfileScreen extends StatefulWidget {
   const ProfileScreen({super.key});
@@ -211,6 +212,16 @@ class _ProfileScreenState extends State<ProfileScreen> {
               leading: const Icon(Icons.settings),
               onTap: () {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+              },
+            ),
+            ListTile(
+              title: const Text('History'),
+              leading: const Icon(Icons.history),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => const HistoryScreen()),
+                );
               },
             ),
             const Divider(),

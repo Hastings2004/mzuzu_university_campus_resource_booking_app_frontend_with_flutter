@@ -250,9 +250,14 @@ class _HomeState extends State<Home> {
             ),
             ListTile(
               title: const Text('History'),
-              leading: const Icon(Icons.history, color: Colors.green), // Highlight current page
+              leading: const Icon(Icons.history),
               onTap: () {
-                Navigator.push(context, MaterialPageRoute(builder: (context)=> HistoryScreen())); // Close the drawer as we are on the History screen
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const HistoryScreen(),
+                  ),
+                );
               },
             ),
             const Divider(),
