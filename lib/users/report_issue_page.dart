@@ -1,6 +1,4 @@
 import 'dart:convert';
-import 'dart:io';
-
 import 'package:flutter/foundation.dart' show kIsWeb;
 import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
@@ -8,7 +6,6 @@ import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Notification.dart';
@@ -41,7 +38,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
 
   bool _isLoading = false;
   String? _error;
-  bool _success = false;
 
   @override
   void initState() {
@@ -82,7 +78,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
     setState(() {
       _isLoading = true;
       _error = null;
-      _success = false;
     });
 
     try {
@@ -128,7 +123,6 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
 
       if (response.statusCode >= 200 && response.statusCode < 300) {
         setState(() {
-          _success = true;
           _subjectController.clear();
           _descriptionController.clear();
           _nameController.text = widget.resourceName;
