@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
-import 'package:resource_booking_app/components/Button.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/History.dart';
 import 'dart:convert';
@@ -64,11 +63,11 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
       await prefs.clear();
 
       if (mounted) {
-        // Navigate to your login/auth screen and remove all previous routes
+        // Navigate to your login screen and remove all previous routes
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
           (route) => false,
-        ); // Assuming '/' is your initial login route
+        ); 
       }
     }
   }
