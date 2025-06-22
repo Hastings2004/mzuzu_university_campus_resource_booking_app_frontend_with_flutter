@@ -1,10 +1,9 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:http/http.dart' as http;
 import 'package:shared_preferences/shared_preferences.dart'; // Import for SharedPreferences
 
 class CallApi {
-  // Use localhost instead of 127.0.0.1 to help with CORS issues
+ 
   // Make sure your backend has CORS configured to allow requests from localhost:61112
   final String _url = "http://localhost:8000/api/";
   String? _token; // To store the authentication token
