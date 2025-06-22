@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Auth.dart';
+import 'package:resource_booking_app/components/terms.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -1100,16 +1101,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                   title: "Terms of Service",
                   subtitle: "Read our terms of service",
                   onTap: () {
-                    _showInfoDialog(
-                      "Terms of Service",
-                      "Link to your app's terms of service will open here.",
-                    );
+                    Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const TermsScreen()));
                   },
                 ),
                 _buildSettingsTile(
                   icon: Icons.info,
                   title: "About App",
-                  subtitle: "Version 1.0.0 • Developed by Hastings",
+                  subtitle: "Version 1.0.1 • Developed by Hastings",
                   onTap: () {
                     _showInfoDialog(
                       "About Resource Booking App",
