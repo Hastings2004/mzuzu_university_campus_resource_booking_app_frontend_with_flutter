@@ -11,6 +11,7 @@ import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
+import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // Required for logout logic
 import 'package:intl/intl.dart';
 
@@ -124,6 +125,13 @@ class _HistoryScreenState extends State<HistoryScreen> {
               leading: const Icon(Icons.notifications),
               onTap: () {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
+              },
+            ),
+            ListTile(
+              title: const Text('Report Issue'),
+              leading: const Icon(Icons.report),
+              onTap: () {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const IssueManagementScreen()));
               },
             ),
             ListTile(

@@ -16,6 +16,7 @@ import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
+import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ResourceDetails extends StatefulWidget {
@@ -790,6 +791,11 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           context,
           MaterialPageRoute(builder: (context) => BookingScreen()),
         ),
+      ),
+      DrawerItem(
+        'Report Issue',
+        Icons.report,
+        () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const IssueManagementScreen())),
       ),
       DrawerItem(
         'Notifications',

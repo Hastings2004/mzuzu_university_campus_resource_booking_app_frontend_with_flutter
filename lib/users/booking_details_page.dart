@@ -3,7 +3,7 @@ import 'package:intl/intl.dart';
 import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
-import 'package:resource_booking_app/models/booking.dart'; 
+import 'package:resource_booking_app/models/booking.dart';
 import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/History.dart';
@@ -11,11 +11,11 @@ import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
-import 'package:resource_booking_app/users/Settings.dart'; 
-import 'dart:convert'; 
+import 'package:resource_booking_app/users/Settings.dart';
+import 'dart:convert';
 
-import 'package:resource_booking_app/users/UpdateBookingScreen.dart'; 
-import 'package:resource_booking_app/users/report_issue_page.dart';
+import 'package:resource_booking_app/users/UpdateBookingScreen.dart';
+import 'package:resource_booking_app/users/issue_management_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class BookingDetailsPage extends StatefulWidget {
@@ -44,37 +44,46 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         _currentBooking.status.toLowerCase() != 'approved') {
       ScaffoldMessenger.of(context).showSnackBar(
         const SnackBar(
-            content: Text('Booking cannot be cancelled in its current state.')),
+          content: Text('Booking cannot be cancelled in its current state.'),
+        ),
       );
       return;
     }
 
-    final bool confirmCancel = await showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Confirm Cancellation'),
-        content:
-            const Text('Are you sure you want to cancel this booking? This action cannot be undone.'),
-        actions: [
-          TextButton(
-            onPressed: () => Navigator.of(context).pop(false),
-            child: const Text('No'),
-          ),
-          ElevatedButton(
-            onPressed: () => Navigator.of(context).pop(true),
-            style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
-            child: const Text('Yes, Cancel', style: TextStyle(color: Colors.white)),
-          ),
-        ],
-      ),
-    ) ?? false; // Default to false if dialog is dismissed
+    final bool confirmCancel =
+        await showDialog(
+          context: context,
+          builder:
+              (context) => AlertDialog(
+                title: const Text('Confirm Cancellation'),
+                content: const Text(
+                  'Are you sure you want to cancel this booking? This action cannot be undone.',
+                ),
+                actions: [
+                  TextButton(
+                    onPressed: () => Navigator.of(context).pop(false),
+                    child: const Text('No'),
+                  ),
+                  ElevatedButton(
+                    onPressed: () => Navigator.of(context).pop(true),
+                    style: ElevatedButton.styleFrom(
+                      backgroundColor: Colors.red,
+                    ),
+                    child: const Text(
+                      'Yes, Cancel',
+                      style: TextStyle(color: Colors.white),
+                    ),
+                  ),
+                ],
+              ),
+        ) ??
+        false; // Default to false if dialog is dismissed
 
     if (!confirmCancel) {
       return; // User cancelled the dialog
     }
 
     try {
-     
       final res = await CallApi().postData(
         {'status': 'cancelled'}, // Send the new status
         'bookings/${_currentBooking.id}/cancel', // Example endpoint for cancellation
@@ -84,7 +93,8 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
       if (res.statusCode == 200 && body['success'] == true) {
         setState(() {
           _currentBooking = _currentBooking.copyWith(
-              status: 'cancelled'); // Update local state
+            status: 'cancelled',
+          ); // Update local state
         });
         ScaffoldMessenger.of(context).showSnackBar(
           const SnackBar(content: Text('Booking cancelled successfully!')),
@@ -93,9 +103,9 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         // Navigator.pop(context, true); // Indicate success to the previous screen
       } else {
         String errorMessage = body['message'] ?? 'Failed to cancel booking.';
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text(errorMessage)),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text(errorMessage)));
       }
     } catch (e) {
       print("Error cancelling booking: $e");
@@ -116,9 +126,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
 
     // If the update screen indicates a change, you might want to refresh details
     if (updated == true) {
-      
       print("Booking potentially updated, consider refreshing data.");
-      
     }
   }
 
@@ -126,10 +134,11 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
     Navigator.push(
       context,
       MaterialPageRoute(
-        builder: (context) => ReportIssuePage(
-          resourceId: _currentBooking.resourceId,
-          resourceName: _currentBooking.resourceName,
-        ),
+        builder:
+            (context) => ReportIssuePage(
+              resourceId: _currentBooking.resourceId,
+              resourceName: _currentBooking.resourceName,
+            ),
       ),
     );
   }
@@ -186,12 +195,17 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
         statusColor = Colors.grey;
     }
 
-    String formattedStartTime = DateFormat('MMM d,EEEE HH:mm').format(_currentBooking.startTime);
-    String formattedEndTime = DateFormat('MMM d,EEEE HH:mm').format(_currentBooking.endTime);
+    String formattedStartTime = DateFormat(
+      'MMM d,EEEE HH:mm',
+    ).format(_currentBooking.startTime);
+    String formattedEndTime = DateFormat(
+      'MMM d,EEEE HH:mm',
+    ).format(_currentBooking.endTime);
 
     // Determine if actions (update/cancel) should be available
-    final bool canModify = _currentBooking.status.toLowerCase() == 'pending' ||
-                           _currentBooking.status.toLowerCase() == 'approved'; // Or only pending
+    final bool canModify =
+        _currentBooking.status.toLowerCase() == 'pending' ||
+        _currentBooking.status.toLowerCase() == 'approved'; // Or only pending
 
     return Scaffold(
       appBar: MyAppBar(
@@ -234,7 +248,6 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
               title: const Text('Home'),
               leading: const Icon(Icons.home, color: Colors.blueAccent),
               onTap: () {
-                
                 Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => Home()),
@@ -320,10 +333,11 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
           ],
         ),
       ),
-     
+
       body: Padding(
         padding: const EdgeInsets.all(16.0),
-        child: Column( // Use Column to add buttons below the card
+        child: Column(
+          // Use Column to add buttons below the card
           children: [
             Card(
               elevation: 5,
@@ -367,7 +381,11 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                       'Location:',
                       _currentBooking.resourceLocation,
                     ),
-                    _buildDetailRow(Icons.description, 'Purpose:', _currentBooking.purpose),
+                    _buildDetailRow(
+                      Icons.description,
+                      'Purpose:',
+                      _currentBooking.purpose,
+                    ),
                     _buildDetailRow(
                       Icons.calendar_today,
                       'Start Time:',
@@ -415,15 +433,17 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
               ),
             ),
             const SizedBox(height: 20),
-            if(_currentBooking.status == 'cancelled' || _currentBooking.status == 'rejected' || _currentBooking.status == 'expired') 
-              // Show a message if the booking is cancelled or rejected
-              ...[
-                Text(
-                  'This booking cannot be modified.',
-                  style: const TextStyle(fontSize: 16, color: Colors.red),
-                  textAlign: TextAlign.center,
-                ),
-              ],
+            if (_currentBooking.status == 'cancelled' ||
+                _currentBooking.status == 'rejected' ||
+                _currentBooking.status == 'expired')
+            // Show a message if the booking is cancelled or rejected
+            ...[
+              Text(
+                'This booking cannot be modified.',
+                style: const TextStyle(fontSize: 16, color: Colors.red),
+                textAlign: TextAlign.center,
+              ),
+            ],
             if (canModify) // Only show buttons if the booking can be modified
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
@@ -488,12 +508,11 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
 
   Future<void> logout() async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); 
+    await prefs.clear();
     Navigator.pushAndRemoveUntil(
       context,
-      MaterialPageRoute(builder: (context) => const Auth()), 
+      MaterialPageRoute(builder: (context) => const Auth()),
       (Route<dynamic> route) => false, // Remove all previous routes
     );
-
   }
 }

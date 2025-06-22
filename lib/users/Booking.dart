@@ -3,6 +3,7 @@ import 'package:intl/intl.dart' show DateFormat;
 import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/users/booking_details_page.dart';
+import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For json.decode
 import 'package:resource_booking_app/auth/Api.dart'; // API service
@@ -233,6 +234,18 @@ class _BookingScreenState extends State<BookingScreen> {
               leading: const Icon(Icons.notifications),
               onTap: () {
                 Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => NotificationScreen()));
+              },
+            ),
+             ListTile(
+              title: const Text('Report Issue'),
+              leading: const Icon(Icons.report),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const IssueManagementScreen(),
+                  ),
+                );
               },
             ),
             ListTile(

@@ -9,6 +9,7 @@ import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart'; // Corrected spelling for ResourcesScreen
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // For local storage
 import 'dart:convert'; // For JSON decoding
 
@@ -232,6 +233,18 @@ class _HomeState extends State<Home> {
                   context,
                   MaterialPageRoute(
                     builder: (context) => const NotificationScreen(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Report Issue'),
+              leading: const Icon(Icons.report),
+              onTap: () {
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const IssueManagementScreen(),
                   ),
                 );
               },

@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Auth.dart';
+import 'package:resource_booking_app/users/user_issues.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resource_booking_app/auth/Api.dart';
@@ -664,6 +665,13 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     builder: (context) => const NotificationScreen(),
                   ),
                 );
+              },
+            ),
+            ListTile(
+              title: const Text('Report Issue'),
+              leading: const Icon(Icons.report),
+              onTap: () {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const IssueManagementScreen()));
               },
             ),
             ListTile(

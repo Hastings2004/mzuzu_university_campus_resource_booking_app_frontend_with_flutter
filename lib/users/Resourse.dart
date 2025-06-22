@@ -1,5 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
+import 'package:resource_booking_app/users/user_issues.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart'; 
@@ -866,6 +867,13 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   context,
                   MaterialPageRoute(builder: (context) => BookingScreen()),
                 );
+              },
+            ),
+            ListTile(
+              title: const Text('Report Issue'),
+              leading: const Icon(Icons.report),
+              onTap: () {
+                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const IssueManagementScreen()));
               },
             ),
             ListTile(
