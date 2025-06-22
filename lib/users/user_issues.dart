@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
+import 'package:resource_booking_app/components/Button.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/History.dart';
 import 'dart:convert';
@@ -15,8 +16,6 @@ import 'package:resource_booking_app/users/issue_management_screen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class IssueManagementScreen extends StatefulWidget {
-  
-
   const IssueManagementScreen({super.key});
 
   @override
@@ -28,7 +27,7 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
   String? _error;
 
   List<dynamic> _userIssues = [];
-  
+
   void logout() async {
     // Show a confirmation dialog
     final bool confirmLogout =
@@ -73,7 +72,6 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
       }
     }
   }
-
 
   @override
   void initState() {
@@ -170,14 +168,12 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
             ),
             ListTile(
               title: const Text('Home'),
-              leading: const Icon(Icons.home, color: Colors.blueAccent),
+              leading: const Icon(Icons.home),
               onTap: () {
                 Navigator.pop(context);
                 Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(
-                    builder: (context) => const Home(),
-                  ),
+                  MaterialPageRoute(builder: (context) => const Home()),
                 );
               },
             ),
@@ -229,7 +225,7 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
             ),
             ListTile(
               title: const Text('Report Issue'),
-              leading: const Icon(Icons.report),
+              leading: const Icon(Icons.report, color: Colors.blueAccent),
               onTap: () {
                 Navigator.pop(context);
               },
@@ -276,18 +272,31 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
             Row(
               mainAxisAlignment: MainAxisAlignment.end,
               children: [
-                GestureDetector(onTap: (){
-                  Navigator.pushReplacement(
-                    context,
-                    MaterialPageRoute(
-                      builder: (context) => const ReportIssuePage(resourceId: 0, resourceName: ''),
-                    ),
-                  );
-                }, child: Text('Report Issue')),
-              ]
+                ElevatedButton(
+                  onPressed: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder:
+                            (context) => const ReportIssuePage(
+                              resourceId: 0,
+                              resourceName: '',
+                            ),
+                      ),
+                    );
+                  },
+                  child: Text(
+                    'Report Issue',
+                    style: TextStyle(color: Colors.white),
+                  ),
+                  style: ButtonStyle(
+                    backgroundColor: WidgetStateProperty.all(Colors.green),
+                  ),
+                ),
+              ],
+            ),
+            SizedBox(height: 10),
 
-            ), 
-            
             if (_error != null)
               Container(
                 width: double.infinity,
@@ -353,7 +362,7 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
                       child: Column(
                         crossAxisAlignment: CrossAxisAlignment.start,
                         children: [
-                          Row(                            
+                          Row(
                             children: [
                               Expanded(
                                 child: Text(
@@ -390,7 +399,7 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
                           const SizedBox(height: 12),
                           _buildIssueDetail(
                             'Resource',
-                            issue['name'] ?? 'Unknown',
+                            issue['resource']?['name'] ?? 'Unknown',
                           ),
                           if (issue['description'] != null &&
                               issue['description'].toString().isNotEmpty)
@@ -442,6 +451,7 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
   }
 
   Widget _buildIssueImage(String photoUrl) {
+    print('Attempting to load image from URL: $photoUrl');
     return Padding(
       padding: const EdgeInsets.only(bottom: 8),
       child: Column(

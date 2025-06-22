@@ -4,6 +4,7 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:http/http.dart' as http;
+import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
@@ -161,6 +162,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
+      bottomNavigationBar: const Bottombar(),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,

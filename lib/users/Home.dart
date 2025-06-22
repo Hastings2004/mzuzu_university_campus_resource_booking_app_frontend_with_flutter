@@ -31,10 +31,15 @@ class _HomeState extends State<Home> {
   Map<String, dynamic>? _upcomingBooking;
   bool _isLoadingBookings = true;
 
+  // State for announcements
+  List<dynamic> _announcements = [];
+  bool _isLoadingAnnouncements = true;
+
   @override
   void initState() {
     super.initState();
     _fetchCurrentUserAndBookingData();
+    _fetchAnnouncements();
   }
 
   Future<void> _fetchCurrentUserAndBookingData() async {
@@ -59,14 +64,11 @@ class _HomeState extends State<Home> {
 
     // Fetch upcoming booking from your API
     try {
-      var res = await CallApi().getData(
-        'user/upcoming-booking',
-      ); 
+      var res = await CallApi().getData('user/upcoming-booking');
       var body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
         if (body['bookings'] != null && body['bookings'].isNotEmpty) {
-        
           setState(() {
             _upcomingBooking = body['bookings'][0];
             print(_upcomingBooking);
@@ -93,6 +95,33 @@ class _HomeState extends State<Home> {
       setState(() {
         _isLoadingBookings = false;
       });
+    }
+  }
+
+  Future<void> _fetchAnnouncements() async {
+    try {
+      var res = await CallApi().getData('news');
+      var body = json.decode(res.body);
+      if (res.statusCode == 200) {
+        // Assuming Laravel's paginated response, data is in 'data' key
+        if (body['data'] != null && body['data'] is List) {
+          if (mounted) {
+            setState(() {
+              _announcements = body['data'];
+            });
+          }
+        }
+      } else {
+        print("Failed to load announcements");
+      }
+    } catch (e) {
+      print("Error fetching announcements: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingAnnouncements = false;
+        });
+      }
     }
   }
 
@@ -463,7 +492,7 @@ class _HomeState extends State<Home> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const ResourcesScreen(),
+                              builder: (context) => const BookingScreen(),
                             ),
                           );
                         },
@@ -558,33 +587,45 @@ class _HomeState extends State<Home> {
                     ),
                   ),
                   const Divider(),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const ListTile(
-                      leading: Icon(Icons.campaign, color: Colors.red),
-                      title: Text("System Maintenance Scheduled!"),
-                      subtitle: Text(
-                        "Expected downtime on 28th May, 8 AM - 10 AM. Bookings may be affected.",
+                  _isLoadingAnnouncements
+                      ? const Center(child: CircularProgressIndicator())
+                      : _announcements.isEmpty
+                      ? Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const ListTile(
+                          leading: Icon(Icons.info_outline),
+                          title: Text("No new announcements"),
+                          subtitle: Text("Check back later for updates."),
+                        ),
+                      )
+                      : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _announcements.length,
+                        itemBuilder: (context, index) {
+                          final announcement = _announcements[index];
+                          return Card(
+                            elevation: 2,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            margin: const EdgeInsets.symmetric(vertical: 5),
+                            child: ListTile(
+                              leading: const Icon(
+                                Icons.campaign,
+                                color: Colors.red,
+                              ),
+                              title: Text(announcement['title'] ?? 'No Title'),
+                              subtitle: Text(
+                                announcement['content'] ?? 'No Content',
+                              ),
+                            ),
+                          );
+                        },
                       ),
-                    ),
-                  ),
-                  const SizedBox(height: 10),
-                  Card(
-                    elevation: 2,
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(10),
-                    ),
-                    child: const ListTile(
-                      leading: Icon(Icons.celebration, color: Colors.purple),
-                      title: Text("Resource Updates"),
-                      subtitle: Text(
-                        "Currently most resources are occupied due to classes",
-                      ),
-                    ),
-                  ),
                 ],
               ),
             ),

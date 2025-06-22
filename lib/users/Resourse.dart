@@ -805,13 +805,13 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
         isSearching: _isSearching,
       ),
       drawer: Drawer(
-        backgroundColor: colorScheme.surface, // Drawer background
+        backgroundColor: Colors.white, // Drawer background
         child: ListView(
           padding: EdgeInsets.zero,
           children: [
             DrawerHeader(
               decoration: BoxDecoration(
-                color: colorScheme.primary, // Drawer header background (Mzuzu University green)
+                color: Color.fromARGB(255, 20, 148, 24), // Drawer header background (Mzuzu University green)
               ),
               child: Column(
                 mainAxisAlignment: MainAxisAlignment.center,
