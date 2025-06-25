@@ -1,8 +1,0 @@
-flutter_native_splash:
-  android: true
-  ios: true
-  web: true
-
-  background_color: "#FFFFFF"
-  image: "assets/images/logo.jpg"
-  branding: "assets/images/ju.jpg"
