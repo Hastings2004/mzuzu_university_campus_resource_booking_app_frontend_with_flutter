@@ -5,17 +5,16 @@ import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/users/booking_details_page.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // For json.decode
-import 'package:resource_booking_app/auth/Api.dart'; // API service
+import 'dart:convert';
+import 'package:resource_booking_app/auth/Api.dart'; 
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/users/Home.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/models/booking.dart'; // Import your new Booking model
-import 'package:resource_booking_app/users/History.dart'; // Import your new Booking model
-
+import 'package:resource_booking_app/models/booking.dart'; 
+import 'package:resource_booking_app/users/History.dart'; 
 
 class BookingScreen extends StatefulWidget {
   const BookingScreen({super.key});
@@ -30,7 +29,7 @@ class _BookingScreenState extends State<BookingScreen> {
   final TextEditingController _searchController = TextEditingController();
 
   Future<List<Booking>>? _bookingsFuture;
-  int? _userId; // To store the authenticated user's ID
+  int? _userId; 
 
   @override
   void initState() {
@@ -54,11 +53,10 @@ class _BookingScreenState extends State<BookingScreen> {
     if (_userId != null) {
       _bookingsFuture = fetchBookings();
     } else {
-      // Handle case where user ID is not found (e.g., redirect to login)
       print("User ID not found in shared preferences. Redirecting to login.");
       Navigator.pushAndRemoveUntil(
         context,
-        MaterialPageRoute(builder: (context) => Auth()), // Redirect to AuthGate or LoginScreen
+        MaterialPageRoute(builder: (context) => Auth()), 
         (Route<dynamic> route) => false,
       );
     }
@@ -83,14 +81,13 @@ class _BookingScreenState extends State<BookingScreen> {
   Future<List<Booking>> fetchBookings() async {
     try {
       
-      final res = await CallApi().getData('bookings'); // Or 'bookings/user/$_userId' if needed
+      final res = await CallApi().getData('bookings'); 
       final body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
-        List<dynamic> bookingJson = body['bookings']; // Assuming 'bookings' is the key holding the array
+        List<dynamic> bookingJson = body['bookings'];
         return bookingJson.map((json) => Booking.fromJson(json)).toList();
       } else {
-        // Handle API error messages
         String errorMessage = body['message'] ?? 'Failed to load bookings.';
         throw Exception(errorMessage);
       }
@@ -101,7 +98,6 @@ class _BookingScreenState extends State<BookingScreen> {
   }
 
   void logout() async {
-    // Show a confirmation dialog
     final bool confirmLogout = await showDialog(
           context: context,
           builder: (context) => AlertDialog(
@@ -226,7 +222,7 @@ class _BookingScreenState extends State<BookingScreen> {
               title: const Text('Bookings'),
               leading: const Icon(Icons.book_online, color: Colors.blueAccent),
               onTap: () {
-                Navigator.pop(context); // Already on this screen
+                Navigator.pop(context); 
               },
             ),
             ListTile(
@@ -268,7 +264,7 @@ class _BookingScreenState extends State<BookingScreen> {
                 );
               },
             ),
-            const Divider(), // Separator
+            const Divider(), 
             ListTile(
               title: const Text('Logout'),
               leading: const Icon(Icons.logout, color: Colors.red),
@@ -288,7 +284,7 @@ class _BookingScreenState extends State<BookingScreen> {
             ),
           ),
           Expanded(
-            child: _userId == null // Show loading or error if user ID is not loaded
+            child: _userId == null 
                 ? const Center(child: CircularProgressIndicator())
                 : FutureBuilder<List<Booking>>(
                     future: _bookingsFuture,
@@ -337,7 +333,7 @@ class _BookingScreenState extends State<BookingScreen> {
                         itemBuilder: (context, index) {
                           var booking = filteredBookings[index];
                           String formattedStartTime = DateFormat(
-                            'MMM d, yyyy HH:mm', // Changed format to yyyy for clarity
+                            'MMM d, yyyy HH:mm', 
                           ).format(booking.startTime);
                           String formattedEndTime = DateFormat(
                             'MMM d, yyyy HH:mm',
@@ -363,8 +359,6 @@ class _BookingScreenState extends State<BookingScreen> {
 
                           return GestureDetector(
                             onTap: () {
-                              // Handle tap if needed, e.g., navigate to booking details
-                              print('Tapped on booking: ${booking.resourceName}');
                               Navigator.push(
                                 context,
                                 MaterialPageRoute(
@@ -411,7 +405,6 @@ class _BookingScreenState extends State<BookingScreen> {
                                         ),
                                         const SizedBox(height: 8),
                             
-                                        // Add other resource details here
                                         if (booking.resourceDescription != null && booking.resourceDescription!.isNotEmpty) ...[
                                           Text(
                                             'Description: ${booking.resourceDescription}',

@@ -1,5 +1,4 @@
 import 'dart:convert';
-
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/auth/Auth.dart';
@@ -12,7 +11,7 @@ import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Required for logout logic
+import 'package:shared_preferences/shared_preferences.dart'; 
 import 'package:intl/intl.dart';
 
 
@@ -42,14 +41,14 @@ class _HistoryScreenState extends State<HistoryScreen> {
     }
   }
 
-  // You would typically handle token clearing and navigation to the login page here.
+ 
   Future<void> _handleLogout(BuildContext context) async {
     SharedPreferences prefs = await SharedPreferences.getInstance();
     await prefs.clear(); 
     Navigator.pushAndRemoveUntil(
       context,
       MaterialPageRoute(builder: (context) => const Auth()), 
-      (Route<dynamic> route) => false, // Remove all previous routes
+      (Route<dynamic> route) => false, 
     );
   }
 
@@ -57,7 +56,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: MyAppBar(titleWidget: const Text("History", style: TextStyle(color: Colors.white),)), // Ensure MyAppBar accepts a Text widget
-      bottomNavigationBar: const Bottombar(), // Ensure Bottombar is a const widget
+      bottomNavigationBar: const Bottombar(), 
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,
@@ -102,8 +101,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
               title: const Text('Profile'),
               leading: const Icon(Icons.person, color: Colors.blueAccent),
               onTap: () {
-                // If this is the current screen, pop the drawer. Otherwise, navigate.
-                Navigator.pop(context); // Close the drawer
+                Navigator.pop(context); 
               },
             ),
             ListTile(
@@ -143,16 +141,16 @@ class _HistoryScreenState extends State<HistoryScreen> {
             ),
             ListTile(
               title: const Text('History'),
-              leading: const Icon(Icons.history, color: Colors.green), // Highlight current page
+              leading: const Icon(Icons.history, color: Colors.green), 
               onTap: () {
-                Navigator.pop(context); // Close the drawer as we are on the History screen
+                Navigator.pop(context); 
               },
             ),
             const Divider(),
             ListTile(
               title: const Text('Logout'),
               leading: const Icon(Icons.logout, color: Colors.red),
-              onTap: () => _handleLogout(context), // Call the logout function
+              onTap: () => _handleLogout(context), 
             ),
           ],
         ),
@@ -178,10 +176,10 @@ class _HistoryScreenState extends State<HistoryScreen> {
                   ),
                   const SizedBox(height: 20),
                   ListView.builder(
-                    shrinkWrap: true, // Important for ListView.builder inside SingleChildScrollView
+                    shrinkWrap: true, 
                     physics:
-                        const NeverScrollableScrollPhysics(), // Prevents nested scrolling
-                    itemCount: bookings.length, // Example count. Replace with your actual history list length
+                    const NeverScrollableScrollPhysics(), 
+                    itemCount: bookings.length, 
                     itemBuilder: (context, index) {
                       final booking = bookings[index];
                       return Card(
@@ -197,7 +195,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                             crossAxisAlignment: CrossAxisAlignment.start,
                             children: [
                               Text(
-                                'Resource: ${booking.resourceName}', // Replace with actual resource name
+                                'Resource: ${booking.resourceName}',
                                 style: TextStyle(
                                   fontSize: 18,
                                   fontWeight: FontWeight.bold,
@@ -206,7 +204,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Date: ${DateFormat.yMMMd().format(booking.startTime)}', // Replace with actual date
+                                'Date: ${DateFormat.yMMMd().format(booking.startTime)}', 
                                 style: TextStyle(
                                     fontSize: 16, color: Colors.grey[700]),
                               ),
@@ -217,7 +215,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
                               ),
                               const SizedBox(height: 8),
                               Text(
-                                'Status: ${booking.status}', // Replace with actual status (e.g., Pending, Approved, Cancelled)
+                                'Status: ${booking.status}',
                                 style: TextStyle(
                                   fontSize: 16,
                                   fontWeight: FontWeight.w500,

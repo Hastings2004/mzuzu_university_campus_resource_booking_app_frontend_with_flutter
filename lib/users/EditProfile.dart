@@ -3,8 +3,8 @@ import 'package:resource_booking_app/auth/AuthPage.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // For json.decode and json.encode
-import 'package:resource_booking_app/auth/Api.dart'; // Your API service
+import 'dart:convert'; 
+import 'package:resource_booking_app/auth/Api.dart'; 
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
@@ -31,13 +31,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
 
-  bool _isLoading = true; // To show loading state while fetching data
-  String _currentRole = 'user'; // Default role, updated by fetched data
+  bool _isLoading = true; 
+  String _currentRole = 'user'; 
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); // Fetch user data to pre-fill fields
+    _fetchUserData(); 
   }
 
   @override
@@ -55,7 +55,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
       if (res.statusCode == 200 && body['success'] == true) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.clear(); // Clear all stored user data
+        await prefs.clear(); 
         if (mounted) {
           Navigator.push(
             context,
@@ -86,15 +86,14 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _isLoading = true;
     });
     try {
-      // Assuming your API has an endpoint like 'profile' or 'users/{id}'
-      final res = await CallApi().getData('profile'); // Or 'users/${widget.userId}' if ID is needed in route
+      final res = await CallApi().getData('profile'); 
       final body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
-        UserProfile user = UserProfile.fromJson(body['user']); // Assuming 'user' is the key
+        UserProfile user = UserProfile.fromJson(body['user']); 
         _firstNameController.text = user.firstName;
         _lastNameController.text = user.lastName;
-        _emailController.text = user.email; // Email from API response
+        _emailController.text = user.email; 
         _currentRole = user.role;
       } else {
         String errorMessage = body['message'] ?? 'Failed to load user data.';
@@ -123,15 +122,15 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   Future<void> _updateProfile() async {
     if (_formKey.currentState!.validate()) {
       setState(() {
-        _isLoading = true; // Show loading when updating
+        _isLoading = true; 
+
       });
 
        print('Updating user with ID: ${widget.userId}');
 
       final data = {
         'first_name': _firstNameController.text.trim(),
-        'last_name': _lastNameController.text.trim(),
-        
+        'last_name': _lastNameController.text.trim(),      
         
       };
 
@@ -150,7 +149,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   actions: [
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); // Close the dialog
+                        Navigator.of(context).pop(); 
                       },
                       child: const Text('OK'),
                     ),
@@ -158,7 +157,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                 );
               },
             ).then((_) {
-              // After dialog is dismissed, pop back to previous screen (ProfileScreen)
               if (mounted) {
                 Navigator.pop(context);
               }
@@ -203,7 +201,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             color: Colors.white,
           ),
         ),
-        // No search functionality for edit profile screen
+       
         onSearchPressed: () {},
         isSearching: false,
       ),
@@ -219,7 +217,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               child: Column(
                 children: [
                   Image(
-                    image: AssetImage("assets/images/logo.png"), // Use AssetImage
+                    image: AssetImage("assets/images/logo.png"),
                     height: 50,
                   ),
                   Text(
@@ -362,7 +360,6 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                       // Validator for specific ID format can be added here
                     ),*/
                     const SizedBox(height: 15),
-                    // Display email (read-only)
                     TextFormField(
                       controller: _emailController,
                       decoration: InputDecoration(

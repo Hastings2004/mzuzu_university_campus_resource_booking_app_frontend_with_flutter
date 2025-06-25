@@ -9,6 +9,7 @@ import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart'; // Corrected spelling for ResourcesScreen
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:intl/intl.dart'; // For date formatting
+import 'package:resource_booking_app/users/issue_management_screen.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart'; // For local storage
 import 'dart:convert'; // For JSON decoding
@@ -52,17 +53,16 @@ class _HomeState extends State<Home> {
     print(
       "User ID: $_userId, First_Name: $_firstName, Last_Name: $_lastName Email: $_userEmail",
     );
-    setState(() {}); // Update the UI with initial user data
+    setState(() {}); 
 
     if (_userId == null) {
-      // If user ID is not found, means not logged in, navigate to login
       if (mounted) {
         Navigator.of(context).popUntil((route) => route.isFirst);
       }
       return;
     }
 
-    // Fetch upcoming booking from your API
+    // Fetch upcoming booking 
     try {
       var res = await CallApi().getData('user/upcoming-booking');
       var body = json.decode(res.body);
@@ -75,7 +75,7 @@ class _HomeState extends State<Home> {
           });
         } else {
           setState(() {
-            _upcomingBooking = null; // No upcoming bookings
+            _upcomingBooking = null; 
           });
         }
       } else {
@@ -161,11 +161,10 @@ class _HomeState extends State<Home> {
       await prefs.clear();
 
       if (mounted) {
-        // Navigate to your login/auth screen and remove all previous routes
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
           (route) => false,
-        ); // Assuming '/' is your initial login route
+        ); 
       }
     }
   }
@@ -344,7 +343,55 @@ class _HomeState extends State<Home> {
             ),
             const SizedBox(height: 20),
 
-            // Quick Look at Upcoming Bookings Section
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              child: Card(
+                elevation: 4,
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(10),
+                ),
+                child: Padding(
+                  padding: const EdgeInsets.all(16.0),
+                  child: Column(
+                    mainAxisAlignment: MainAxisAlignment.center,
+                    children: [
+                      Row(
+                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                        children: [
+                          const Text(
+                            "Your Profile",
+                            style: TextStyle(
+                              fontSize: 20,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                          TextButton(
+                            onPressed: () {
+                              Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                  builder: (context) => ProfileScreen(),
+                                ),
+                              );
+                            },
+                            child: const Text(
+                              "View",
+                              style: TextStyle(
+                                color: Colors.blue,
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                          ),
+                        ],
+                      ),
+                      const Divider(),
+                    ],
+                  ),
+                ),                
+              ),
+            ),
+            const SizedBox(height: 15,),
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -406,7 +453,7 @@ class _HomeState extends State<Home> {
                             children: [
                               Text(
                                 _upcomingBooking!['resource']['name'] ??
-                                    'Unknown Resource', // Adjust key as per API
+                                    'Unknown Resource',
                                 style: const TextStyle(
                                   fontSize: 18,
                                   color: Colors.blue,
@@ -415,7 +462,7 @@ class _HomeState extends State<Home> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'Location: ${_upcomingBooking!['resource']['location'] ?? 'N/A'}', // Adjust key as per API
+                                'Location: ${_upcomingBooking!['resource']['location'] ?? 'N/A'}', 
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.black87,
@@ -552,6 +599,100 @@ class _HomeState extends State<Home> {
                               SizedBox(height: 8),
                               Text(
                                 "All Resources",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                ],
+              ),
+            ),
+            const SizedBox(height: 10,),
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const HistoryScreen(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.history,
+                                size: 40,
+                                color: Colors.deepOrangeAccent,
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                "Booking History",
+                                textAlign: TextAlign.center,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  fontWeight: FontWeight.w600,
+                                ),
+                              ),
+                            ],
+                          ),
+                        ),
+                      ),
+                    ),
+                  ),
+                  const SizedBox(width: 10),
+                  Expanded(
+                    child: Card(
+                      elevation: 4,
+                      shape: RoundedRectangleBorder(
+                        borderRadius: BorderRadius.circular(10),
+                      ),
+                      child: InkWell(
+                        onTap: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => IssueManagementScreen(),
+                            ),
+                          );
+                        },
+                        borderRadius: BorderRadius.circular(10),
+                        child: const Padding(
+                          padding: EdgeInsets.all(16.0),
+                          child: Column(
+                            mainAxisAlignment: MainAxisAlignment.center,
+                            children: [
+                              Icon(
+                                Icons.report_problem_outlined,
+                                size: 40,
+                                color: Color.fromARGB(255, 81, 0, 255),
+                              ),
+                              SizedBox(height: 8),
+                              Text(
+                                "Report Issue",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16,

@@ -32,9 +32,9 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   UserData? _userData;
 
   String? _selectedBookingType;
-  String? _selectedPriority; // New state for priority
+  String? _selectedPriority; 
   String _bookingOption =
-      "single_day"; // New state for booking option (single_day, multi_day)
+      "single_day"; 
 
   final List<String> _bookingType = [
     'class',
@@ -63,7 +63,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // State management
   bool _isLoading = false;
   bool _isInitialized = false;
-  bool? _isResourceAvailable; // New state for availability check result
+  bool? _isResourceAvailable; 
 
   // Debouncer for API calls
   Timer? _debounceTimer;
@@ -122,9 +122,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     }
   }
 
-  // Optimized logout with better error handling
   void logout() async {
-    // Show a confirmation dialog
     final bool confirmLogout =
         await showDialog(
           context: context,
@@ -135,15 +133,15 @@ class _ResourceDetailsState extends State<ResourceDetails> {
                 actions: <Widget>[
                   TextButton(
                     onPressed:
-                        () => Navigator.of(context).pop(false), // User cancels
+                        () => Navigator.of(context).pop(false), 
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
                     onPressed:
-                        () => Navigator.of(context).pop(true), // User confirms
+                        () => Navigator.of(context).pop(true), 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
-                    ), // Optional: make logout button red
+                    ), 
                     child: const Text(
                       'Logout',
                       style: TextStyle(color: Colors.white),
@@ -159,7 +157,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       await prefs.clear();
 
       if (mounted) {
-        // Navigate to your login/auth screen and remove all previous routes
         Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     }
@@ -186,7 +183,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       setState(() {
         if (isStart) {
           _selectedStartDate = pickedDate;
-          // Clear end date if it's before new start date
           if (_selectedEndDate != null &&
               _selectedEndDate!.isBefore(pickedDate)) {
             _selectedEndDate = null;
@@ -200,11 +196,10 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
       // Clear conflict cache when dates change
       _conflictCache.clear();
-      _isResourceAvailable = null; // Reset availability check
+      _isResourceAvailable = null; 
     }
   }
 
-  // Optimized time selection
   Future<void> _selectTime(BuildContext context, bool isStart) async {
     final initialTime =
         isStart
@@ -238,7 +233,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     }
   }
 
-  // Debounced conflict checking
   void _debounceConflictCheck() {
     _debounceTimer?.cancel();
     _debounceTimer = Timer(const Duration(milliseconds: 700), () {
@@ -250,7 +244,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       } else {
         setState(() {
           _isResourceAvailable =
-              null; // Clear availability if dates/times are incomplete
+              null; 
         });
       }
     });
@@ -259,7 +253,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // Background conflict checking (similar to handleAvailabilityCheck in React)
   Future<void> _checkForConflicts() async {
     setState(() {
-      _isResourceAvailable = null; // Set to checking state
+      _isResourceAvailable = null; 
     });
 
     DateTime fullStartTime, fullEndTime;
@@ -268,7 +262,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       final now = DateTime.now();
       final dateString = DateFormat('yyyy-MM-dd').format(now);
       if (_selectedStartTime == null || _selectedEndTime == null) {
-        return; // Wait for full time selection
+        return; 
       }
       fullStartTime = DateTime.parse(
         '${dateString}T${_formatTime(_selectedStartTime!)}:00',
@@ -277,7 +271,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         '${dateString}T${_formatTime(_selectedEndTime!)}:00',
       );
 
-      // Client-side validation for single day
       if (fullStartTime.day != fullEndTime.day ||
           fullStartTime.month != fullEndTime.month ||
           fullStartTime.year != fullEndTime.year) {
@@ -296,7 +289,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           _selectedStartTime == null ||
           _selectedEndDate == null ||
           _selectedEndTime == null) {
-        return; // Wait for full date/time selection
+        return; 
       }
       fullStartTime = _combineDateTime(
         _selectedStartDate!,
@@ -333,7 +326,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     final cacheKey =
         '${widget.resource.id}_${fullStartTime.toIso8601String()}_${fullEndTime.toIso8601String()}';
 
-    // Check cache first
     if (_conflictCache.containsKey(cacheKey)) {
       if (mounted) {
         setState(() {
@@ -422,7 +414,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     return DateTime(date.year, date.month, date.day, time.hour, time.minute);
   }
 
-  // Optimized notification sending (similar to sendNotification in React)
   Future<void> _sendNotification(String title, String message) async {
     if (_userData == null) return;
 
@@ -432,7 +423,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
             'user_id': _userData!.id,
             'title': title,
             'message': message,
-            'type': 'booking_status', // Or a more specific type
+            'type': 'booking_status',
           }, 'notifications')
           .timeout(const Duration(seconds: 5));
 
@@ -446,17 +437,15 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       debugPrint("Notification send timed out.");
     } catch (e) {
       debugPrint("Notification failed: $e");
-      // Don't show error to user for notification failures
+     
     }
   }
 
-  // Optimized booking function with better validation and error handling
   Future<void> _bookResource() async {
     if (!_isInitialized || _userData == null || _isLoading) return;
 
     if (!_formKey.currentState!.validate()) return;
 
-    // New validation for supporting document
     if ((_selectedBookingType == 'student_meeting' ||
             _selectedBookingType == 'university_activity' ||
             _selectedBookingType == 'church_meeting' ||
@@ -470,7 +459,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
     if (!_validateBookingTime()) return;
 
-    // Check availability one last time before booking
     if (_isResourceAvailable == false) {
       _showErrorSnackBar(
         'The selected time slot is not available. Please choose another.',
@@ -483,14 +471,12 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     try {
       DateTime startDateTime, endDateTime;
       if (_bookingOption == "single_day") {
-        // Use the same date for start and end, but different times
         startDateTime = _combineDateTime(
           _selectedStartDate!,
           _selectedStartTime!,
         );
         endDateTime = _combineDateTime(_selectedStartDate!, _selectedEndTime!);
       } else {
-        // Multi day: use selected start and end dates and times
         startDateTime = _combineDateTime(
           _selectedStartDate!,
           _selectedStartTime!,
@@ -498,7 +484,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         endDateTime = _combineDateTime(_selectedEndDate!, _selectedEndTime!);
       }
 
-      // New Multipart request logic
       SharedPreferences prefs = await SharedPreferences.getInstance();
       final token = prefs.getString('token');
 
@@ -514,7 +499,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       request.headers['Authorization'] = 'Bearer $token';
       request.headers['Accept'] = 'application/json';
 
-      // Add fields
       request.fields['user_id'] = _userData!.id.toString();
       request.fields['resource_id'] = widget.resource.id.toString();
       request.fields['start_time'] = startDateTime.toIso8601String();
@@ -527,7 +511,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         request.fields['priority'] = _selectedPriority!.toLowerCase();
       }
 
-      // Add file if it exists
       if (_supportingDocument != null) {
         if (kIsWeb) {
           request.files.add(
@@ -1028,7 +1011,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0.0),
           child: DropdownButtonFormField<String>(
-            value: _selectedBookingType, // Set the current value
+            value: _selectedBookingType, 
             decoration: const InputDecoration(
               labelText: 'Booking Type',
               border: OutlineInputBorder(),
@@ -1036,17 +1019,16 @@ class _ResourceDetailsState extends State<ResourceDetails> {
             ),
             items:
                 _bookingType.map((String type) {
-                  // Iterate over the list of types
                   return DropdownMenuItem<String>(
                     value: type,
                     child: Text(
                       type.replaceAll('_', ' ').toTitleCase(),
-                    ), // Optional: format for display
+                    ), 
                   );
                 }).toList(),
             onChanged: (String? newValue) {
               setState(() {
-                _selectedBookingType = newValue; // Update the selected value
+                _selectedBookingType = newValue;
                 if (newValue != 'student_meeting' &&
                     newValue != 'university_activity' &&
                     newValue != 'church_meeting' &&

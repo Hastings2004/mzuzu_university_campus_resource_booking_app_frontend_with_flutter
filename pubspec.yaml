@@ -103,8 +103,10 @@ flutter:
 flutter_native_splash:
   color: "#FFFFFF"
   image: assets/images/logo.png
+  text: "Mzuzu University Resource Booking App"
   android_12:
     image: assets/images/logo.png
+    branding: "Mzuzu University Resource Booking App"
     #color: "#FFFFFF"
 
     # Splash screen background color.

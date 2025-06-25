@@ -444,7 +444,7 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                 textAlign: TextAlign.center,
               ),
             ],
-            if (canModify) // Only show buttons if the booking can be modified
+            if (canModify) 
               Padding(
                 padding: const EdgeInsets.symmetric(horizontal: 8.0),
                 child: Row(
@@ -480,26 +480,27 @@ class _BookingDetailsPageState extends State<BookingDetailsPage> {
                         ),
                       ),
                     ),
+                     Padding(
+                      padding: const EdgeInsets.symmetric(horizontal: 8.0),
+                      child: ElevatedButton.icon(
+                        icon: const Icon(Icons.report_problem),
+                        label: const Text('Report an Issue'),
+                        onPressed: _navigateToReportIssuePage,
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.orange[700],
+                          foregroundColor: Colors.white,
+                          padding: const EdgeInsets.symmetric(vertical: 12),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(10),
+                          ),
+                        ),
+                      ),
+                    ),
                   ],
                 ),
               ),
-            const SizedBox(height: 10), // Spacing
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 8.0),
-              child: ElevatedButton.icon(
-                icon: const Icon(Icons.report_problem),
-                label: const Text('Report an Issue'),
-                onPressed: _navigateToReportIssuePage,
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.orange[700],
-                  foregroundColor: Colors.white,
-                  padding: const EdgeInsets.symmetric(vertical: 12),
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-              ),
-            ),
+            const SizedBox(height: 10), 
+           
           ],
         ),
       ),
