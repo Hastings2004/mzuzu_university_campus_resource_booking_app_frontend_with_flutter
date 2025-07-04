@@ -1,10 +1,10 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Api.dart'; // Assuming this handles http requests
 import 'package:resource_booking_app/components/Button.dart';
-import 'package:resource_booking_app/components/TextField.dart'; 
+import 'package:resource_booking_app/components/TextField.dart';
 import 'dart:convert';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // Import for storing the token
+import 'package:resource_booking_app/auth/EmailVerification.dart';
+import 'package:shared_preferences/shared_preferences.dart'; 
 
 class Register extends StatefulWidget {
   final VoidCallback showLoginScreen;
@@ -22,7 +22,7 @@ class _ApiRegisterState extends State<Register> {
   final lastNameController = TextEditingController();
 
   String? _userType; // New variable for user type (student/staff)
-  final List<String> _userTypes = ['Student', 'Staff']; 
+  final List<String> _userTypes = ['Student', 'Staff'];
   String? _errorMessage; // To display error messages below the form
 
   @override
@@ -49,7 +49,7 @@ class _ApiRegisterState extends State<Register> {
                 Navigator.pop(context);
               },
               child: const Text("OK"),
-            )
+            ),
           ],
         );
       },
@@ -84,9 +84,7 @@ class _ApiRegisterState extends State<Register> {
       context: context,
       barrierDismissible: false,
       builder: (context) {
-        return const Center(
-          child: CircularProgressIndicator(),
-        );
+        return const Center(child: CircularProgressIndicator());
       },
     );
 
@@ -98,11 +96,15 @@ class _ApiRegisterState extends State<Register> {
         "email": emailController.text.trim(),
         "password": passwordController.text,
         "password_confirmation": confirmPasswordController.text,
-        "user_type": _userType!.toLowerCase(), // Send as 'student' or 'staff' to backend
+        "user_type":
+            _userType!.toLowerCase(), 
       };
 
       // Make the API call using your CallApi class
-      var res = await CallApi().postData(data, 'register/'); // Your Laravel registration API endpoint
+      var res = await CallApi().postData(
+        data,
+        'register/',
+      ); 
       var body = json.decode(res.body);
 
       // Dismiss the loading indicator
@@ -112,13 +114,11 @@ class _ApiRegisterState extends State<Register> {
 
       // Handle API response
       if (res.statusCode == 200 && body['success'] == true) {
-        // Assuming your Laravel API returns a 'token', 'user_id', 'user_name', and 'user_email' upon successful registration
         final String token = body['token'];
-        final int userId = body['user']['id']; // Assuming your user object has an 'id'
-        final String firstName = body['user']['first_name']; // Combine for display
+        final int userId = body['user']['id'];
+        final String firstName = body['user']['first_name'];
         final String lastName = body['user']['last_name'];
         final String userEmail = body['user']['email'];
-
 
         // Store user data and token using shared_preferences
         SharedPreferences prefs = await SharedPreferences.getInstance();
@@ -127,14 +127,15 @@ class _ApiRegisterState extends State<Register> {
         await prefs.setString('first_name', firstName);
         await prefs.setString('last_name', lastName);
         await prefs.setString('user_email', userEmail);
-        await prefs.setString('user_type', _userType!.toLowerCase()); // Store user type
+        await prefs.setString('user_type', _userType!.toLowerCase());
 
-        // Navigate to the home screen upon successful registration
+        // Navigate to email verification screen instead of home
         if (mounted) {
-          Navigator.pushReplacement(
-            context,
-            MaterialPageRoute(builder: (context) => Home()), // Navigate to Home screen
-          );
+          String displayMessage = "Please check your email for verification.";
+          setState(() {
+            _errorMessage = displayMessage;
+          });
+          _showErrorDialog(_errorMessage!);
         }
       } else {
         // Handle registration errors from Laravel API based on response structure
@@ -165,10 +166,13 @@ class _ApiRegisterState extends State<Register> {
     } catch (e) {
       // Catch any network or parsing errors
       if (mounted) {
-        Navigator.pop(context); // Pop the loading indicator in case of an exception
+        Navigator.pop(
+          context,
+        ); // Pop the loading indicator in case of an exception
       }
       setState(() {
-        _errorMessage = "Could not connect to the server. Please check your internet connection or try again later.";
+        _errorMessage =
+            "Could not connect to the server. Please check your internet connection or try again later.";
       });
       _showErrorDialog(_errorMessage!);
       print("Registration Error: $e"); // Log the error for debugging
@@ -186,17 +190,27 @@ class _ApiRegisterState extends State<Register> {
             // Constrain the content to at least the height of the screen
             child: ConstrainedBox(
               constraints: BoxConstraints(
-                minHeight: constraints.maxHeight, // Minimum height is screen height
+                minHeight:
+                    constraints.maxHeight, // Minimum height is screen height
               ),
-              child: IntrinsicHeight( // Make column take only as much height as its children need, but not less than minHeight
+              child: IntrinsicHeight(
+                // Make column take only as much height as its children need, but not less than minHeight
                 child: SafeArea(
                   child: Padding(
-                    padding: const EdgeInsets.all(16.0), // Keep your padding here
+                    padding: const EdgeInsets.all(
+                      16.0,
+                    ), // Keep your padding here
                     child: Column(
-                      mainAxisAlignment: MainAxisAlignment.center, // Vertically center the content
-                      crossAxisAlignment: CrossAxisAlignment.center, // Horizontally center children within the column
+                      mainAxisAlignment:
+                          MainAxisAlignment
+                              .center, // Vertically center the content
+                      crossAxisAlignment:
+                          CrossAxisAlignment
+                              .center, // Horizontally center children within the column
                       children: [
-                        const SizedBox(height: 30), // Initial spacing or logo top margin
+                        const SizedBox(
+                          height: 30,
+                        ), // Initial spacing or logo top margin
                         Image.asset(
                           "assets/images/logo.png", // Ensure this path is correct
                           height: 100,
@@ -250,10 +264,15 @@ class _ApiRegisterState extends State<Register> {
                         const SizedBox(height: 10),
                         //Dropdown for User Type
                         Padding(
-                          padding: const EdgeInsets.symmetric(horizontal: 25.0), // Padding is applied to the Column's parent, so this can be 0.0 or adjusted as needed
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 25.0,
+                          ), // Padding is applied to the Column's parent, so this can be 0.0 or adjusted as needed
                           child: Container(
                             decoration: BoxDecoration(
-                              border: Border.all(color: Colors.green, width: 1.5),
+                              border: Border.all(
+                                color: Colors.green,
+                                width: 1.5,
+                              ),
                               borderRadius: BorderRadius.circular(15.0),
                               color: Colors.grey.shade200,
                             ),
@@ -261,26 +280,36 @@ class _ApiRegisterState extends State<Register> {
                               child: DropdownButton<String>(
                                 value: _userType,
                                 hint: const Padding(
-                                  padding: EdgeInsets.symmetric(horizontal: 12.0), // Adjust padding for hint
+                                  padding: EdgeInsets.symmetric(
+                                    horizontal: 12.0,
+                                  ), // Adjust padding for hint
                                   child: Text('Select User Type'),
                                 ),
                                 isExpanded: true,
                                 icon: const Icon(Icons.arrow_drop_down),
-                                style: TextStyle(color: Colors.grey[700], fontSize: 16),
+                                style: TextStyle(
+                                  color: Colors.grey[700],
+                                  fontSize: 16,
+                                ),
                                 onChanged: (String? newValue) {
                                   setState(() {
                                     _userType = newValue;
                                   });
                                 },
-                                items: _userTypes.map<DropdownMenuItem<String>>((String value) {
-                                  return DropdownMenuItem<String>(
-                                    value: value,
-                                    child: Padding(
-                                      padding: const EdgeInsets.symmetric(horizontal: 12.0), // Adjust padding for items
-                                      child: Text(value),
-                                    ),
-                                  );
-                                }).toList(),
+                                items:
+                                    _userTypes.map<DropdownMenuItem<String>>((
+                                      String value,
+                                    ) {
+                                      return DropdownMenuItem<String>(
+                                        value: value,
+                                        child: Padding(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 12.0,
+                                          ), // Adjust padding for items
+                                          child: Text(value),
+                                        ),
+                                      );
+                                    }).toList(),
                               ),
                             ),
                           ),
@@ -332,15 +361,16 @@ class _ApiRegisterState extends State<Register> {
                             padding: const EdgeInsets.only(bottom: 15.0),
                             child: Text(
                               _errorMessage!,
-                              style: const TextStyle(color: Colors.red, fontSize: 14),
+                              style: const TextStyle(
+                                color: Colors.red,
+                                fontSize: 14,
+                              ),
                               textAlign: TextAlign.center,
                             ),
                           ),
 
                         MyButton(onTap: signUpUser, text: "Sign Up"),
-                        const SizedBox(
-                          height: 20,
-                        ),
+                        const SizedBox(height: 20),
                         GestureDetector(
                           onTap: widget.showLoginScreen,
                           child: Row(
@@ -348,16 +378,22 @@ class _ApiRegisterState extends State<Register> {
                             children: [
                               Text(
                                 "Already have an account?",
-                                style: TextStyle(color: Colors.green[700], fontSize: 16),
+                                style: TextStyle(
+                                  color: Colors.green[700],
+                                  fontSize: 16,
+                                ),
                               ),
                               const SizedBox(width: 5),
                               Text(
                                 "Login now",
-                                style: TextStyle(color: Colors.blue[700], fontSize: 16),
+                                style: TextStyle(
+                                  color: Colors.blue[700],
+                                  fontSize: 16,
+                                ),
                               ),
                             ],
                           ),
-                        )
+                        ),
                       ],
                     ),
                   ),

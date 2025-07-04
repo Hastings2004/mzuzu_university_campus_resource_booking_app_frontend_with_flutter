@@ -4,17 +4,26 @@ class UserProfile {
   final String lastName;
   final String email;
   final String? phoneNumber;
-  final String? staffId;
+  final String? userType;
   final String role;
-
+  final String? identityNumber;
+  final String? district;
+  final String? village;
+  final String? physicalAddress;
+  final String? postalAddress;
   UserProfile({
     required this.id,
     required this.firstName,
     required this.lastName,
     required this.email,
     this.phoneNumber,
-    this.staffId,
+    this.userType,
     required this.role,
+    this.identityNumber,
+    this.district,
+    this.village,
+    this.physicalAddress,
+    this.postalAddress,
   });
 
   factory UserProfile.fromJson(Map<String, dynamic> json) {
@@ -24,8 +33,13 @@ class UserProfile {
       lastName: json['last_name'] ?? '',
       email: json['email'] ?? '',
       phoneNumber: json['phone_number'],
-      staffId: json['staff_id'],
+      userType: json['user_type'],
       role: json['role'] ?? 'user',
+      identityNumber: json['identity_number'],
+      district: json['district'],
+      village: json['village'],
+      physicalAddress: json['physical_address'],
+      postalAddress: json['postal_address'],
     );
   }
 
@@ -34,8 +48,12 @@ class UserProfile {
       'first_name': firstName,
       'last_name': lastName,
       'phone_number': phoneNumber,
-      'user_id': staffId,
-     
+      'user_type': userType,
+      'identity_number': identityNumber,
+      'district': district,
+      'village': village,
+      'physical_address': physicalAddress,
+      'postal_address': postalAddress,
     };
   }
 }

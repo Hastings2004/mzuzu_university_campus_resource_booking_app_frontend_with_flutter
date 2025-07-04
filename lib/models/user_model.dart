@@ -5,6 +5,10 @@ class UserModel {
   final String email;
   final String? phoneNumber; 
   final String? studentId;  
+  final String? district;
+  final String? village;
+  final String? physicalAddress;
+  final String? postalAddress;
 
   UserModel({
     required this.id,
@@ -13,6 +17,10 @@ class UserModel {
     required this.email,
     this.phoneNumber,
     this.studentId,
+    this.district,
+    this.village,
+    this.physicalAddress,
+    this.postalAddress,
   });
 
   factory UserModel.fromJson(Map<String, dynamic> json) {
@@ -23,6 +31,10 @@ class UserModel {
       email: json['email'] ?? '',
       phoneNumber: json['phone_number'], 
       studentId: json['student_id'],   
+      district: json['district'],
+      village: json['village'],
+      physicalAddress: json['physical_address'],
+      postalAddress: json['postal_address'],
     );
   }
 
@@ -34,6 +46,10 @@ class UserModel {
       'email': email,
       'phone_number': phoneNumber,
       'student_id': studentId,
+      'district': district,
+      'village': village,
+      'physical_address': physicalAddress,
+      'postal_address': postalAddress,
     };
   }
 }

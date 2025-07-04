@@ -27,7 +27,7 @@ class ResourceModel {
       capacity: json['capacity'] as int?, 
       status: json['status'] as String?,
       description: json['description'] as String?,
-      imageUrl: json['image_url'] as String?, 
+      imageUrl: json['image'] as String?, 
       type: json['type'] as String? ?? 'Unknown', 
     );
   }
@@ -41,7 +41,7 @@ class ResourceModel {
       capacity: json['capacity'] as int?,
       status: json['status'] as String?,
       description: json['description'] as String?,
-      imageUrl: json['image_url'] as String?,
+      imageUrl: json['image'] as String?,
       type: json['type'] as String? ?? 'Unknown', 
     );
   }
@@ -55,7 +55,7 @@ class ResourceModel {
       'capacity': capacity, 
       'status': status,
       'description': description,
-      'image_url': imageUrl,
+      'image': imageUrl,
       'type': type, 
     };
   }

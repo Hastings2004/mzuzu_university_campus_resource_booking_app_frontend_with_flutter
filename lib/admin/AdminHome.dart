@@ -8,7 +8,7 @@ class Adminhome extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Bottombar(),
+      bottomNavigationBar: Bottombar(currentIndex: 0),
       appBar: MyAppBar(
         titleWidget: const Text(
           "Home",

@@ -5,7 +5,9 @@ import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 
 class Bottombar extends StatelessWidget {
-  const Bottombar({super.key});
+  final int currentIndex;
+
+  const Bottombar({super.key, this.currentIndex = 0});
 
   @override
   Widget build(BuildContext context) {
@@ -16,44 +18,71 @@ class Bottombar extends StatelessWidget {
         mainAxisAlignment: MainAxisAlignment.spaceBetween,
         children: <Widget>[
           IconButton(
-            icon: const Icon(Icons.home, color: Colors.white, weight: 20, size: 30),
+            icon: Icon(
+              Icons.home,
+              color: currentIndex == 0 ? Colors.blue : Colors.white,
+              weight: 20,
+              size: 30,
+            ),
             onPressed: () {
-              // Handle home button press
-              Navigator.pushReplacement(
+              if (currentIndex != 0) {
+                Navigator.pushReplacement(
                   context,
                   MaterialPageRoute(builder: (context) => const Home()),
                 );
+              }
             },
           ),
           IconButton(
-            icon: const Icon(Icons.grid_view, color: Colors.white, weight: 20, size: 30),
+            icon: Icon(
+              Icons.grid_view,
+              color: currentIndex == 1 ? Colors.blue : Colors.white,
+              weight: 20,
+              size: 30,
+            ),
             onPressed: () {
-              // Handle search button press
-              Navigator.pushReplacement(
+              if (currentIndex != 1) {
+                Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ResourcesScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ResourcesScreen(),
+                  ),
                 );
+              }
             },
           ),
           IconButton(
-            onPressed: (){
-              // Handle booking button press
-              Navigator.pushReplacement(
+            onPressed: () {
+              if (currentIndex != 2) {
+                Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) =>  BookingScreen()),
+                  MaterialPageRoute(builder: (context) => BookingScreen()),
                 );
-            }, 
-                icon: Icon(Icons.book_online, color: Colors.white, weight: 20, size: 30,)
+              }
+            },
+            icon: Icon(
+              Icons.book_online,
+              color: currentIndex == 2 ? Colors.blue : Colors.white,
+              weight: 20,
+              size: 30,
+            ),
           ),
           IconButton(
-            icon: const Icon(Icons.person, color: Colors.white, weight: 20, size: 30),
-            
+            icon: Icon(
+              Icons.person,
+              color: currentIndex == 3 ? Colors.blue : Colors.white,
+              weight: 20,
+              size: 30,
+            ),
             onPressed: () {
-              // Handle profile button press
-              Navigator.pushReplacement(
+              if (currentIndex != 3) {
+                Navigator.pushReplacement(
                   context,
-                  MaterialPageRoute(builder: (context) => const ProfileScreen()),
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
                 );
+              }
             },
           ),
         ],

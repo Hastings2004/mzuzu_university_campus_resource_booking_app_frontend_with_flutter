@@ -714,13 +714,16 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       child: ListView(
         padding: EdgeInsets.zero,
         children: [
-          const DrawerHeader(
-            decoration: BoxDecoration(color: Color.fromARGB(255, 20, 148, 24)),
+          DrawerHeader(
+            decoration: const BoxDecoration(color: Color.fromARGB(255, 20, 148, 24)),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Icon(Icons.school, size: 50, color: Colors.white),
-                Text(
+                Image.asset(
+                    "assets/images/logo.png",
+                    height: 50,
+                  ),
+                const Text(
                   'Mzuzu University',
                   style: TextStyle(
                     color: Colors.white,
@@ -728,7 +731,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
                     fontWeight: FontWeight.bold,
                   ),
                 ),
-                Text(
+                const Text(
                   'Campus Resource Booking',
                   style: TextStyle(color: Colors.white, fontSize: 15),
                 ),

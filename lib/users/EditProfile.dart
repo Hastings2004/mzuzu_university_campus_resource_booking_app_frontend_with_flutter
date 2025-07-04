@@ -3,8 +3,8 @@ import 'package:resource_booking_app/auth/AuthPage.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/models/user_model.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; 
-import 'package:resource_booking_app/auth/Api.dart'; 
+import 'dart:convert';
+import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
@@ -12,14 +12,16 @@ import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/models/user_profile.dart'; 
-
+import 'package:resource_booking_app/models/user_profile.dart';
 
 class EditProfileScreen extends StatefulWidget {
-  
   final int userId;
 
-  const EditProfileScreen({super.key, required this.userId, required UserModel userProfile});
+  const EditProfileScreen({
+    super.key,
+    required this.userId,
+    required UserModel userProfile,
+  });
 
   @override
   State<EditProfileScreen> createState() => _EditProfileScreenState();
@@ -30,44 +32,61 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
   final TextEditingController _firstNameController = TextEditingController();
   final TextEditingController _lastNameController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _phoneController = TextEditingController();
+  final TextEditingController _idController = TextEditingController();
+  final TextEditingController _districtController = TextEditingController();
+  final TextEditingController _villageController = TextEditingController();
+  final TextEditingController _physicalAddressController =
+      TextEditingController();
+  final TextEditingController _postalAddressController =
+      TextEditingController();
 
-  bool _isLoading = true; 
-  String _currentRole = 'user'; 
+  bool _isLoading = true;
+  String _currentRole = 'user';
 
   @override
   void initState() {
     super.initState();
-    _fetchUserData(); 
+    _fetchUserData();
   }
 
   @override
   void dispose() {
     _firstNameController.dispose();
     _lastNameController.dispose();
-        _emailController.dispose();
+    _emailController.dispose();
+    _phoneController.dispose();
+    _idController.dispose();
+    _districtController.dispose();
+    _villageController.dispose();
+    _physicalAddressController.dispose();
+    _postalAddressController.dispose();
     super.dispose();
   }
 
   void logout() async {
     try {
-      final res = await CallApi().getData('logout'); 
+      final res = await CallApi().getData('logout');
       final body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
         SharedPreferences prefs = await SharedPreferences.getInstance();
-        await prefs.clear(); 
+        await prefs.clear();
         if (mounted) {
           Navigator.push(
             context,
-            MaterialPageRoute(builder: (context) =>Authpage()) 
-            
+            MaterialPageRoute(builder: (context) => Authpage()),
           );
         }
       } else {
         print("Logout failed: ${body['message']}");
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text('Logout failed: ${body['message'] ?? "Please try again."}')),
+            SnackBar(
+              content: Text(
+                'Logout failed: ${body['message'] ?? "Please try again."}',
+              ),
+            ),
           );
         }
       }
@@ -75,7 +94,9 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       print("Exception during logout: $e");
       if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(content: Text('Error logging out. Please check your connection.')),
+          const SnackBar(
+            content: Text('Error logging out. Please check your connection.'),
+          ),
         );
       }
     }
@@ -86,29 +107,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
       _isLoading = true;
     });
     try {
-      final res = await CallApi().getData('profile'); 
+      final res = await CallApi().getData('profile');
       final body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
-        UserProfile user = UserProfile.fromJson(body['user']); 
+        UserProfile user = UserProfile.fromJson(body['user']);
         _firstNameController.text = user.firstName;
         _lastNameController.text = user.lastName;
-        _emailController.text = user.email; 
-        _currentRole = user.role;
+        _emailController.text = user.email;
+        _currentRole = user.userType ?? 'user';
+        _phoneController.text = user.phoneNumber ?? '';
+        _idController.text = user.identityNumber ?? '';
+        _districtController.text = user.district ?? '';
+        _villageController.text = user.village ?? '';
+        _physicalAddressController.text = user.physicalAddress ?? '';
+        _postalAddressController.text = user.postalAddress ?? '';
       } else {
         String errorMessage = body['message'] ?? 'Failed to load user data.';
         if (mounted) {
-          ScaffoldMessenger.of(context).showSnackBar(
-            SnackBar(content: Text(errorMessage)),
-          );
+          ScaffoldMessenger.of(
+            context,
+          ).showSnackBar(SnackBar(content: Text(errorMessage)));
         }
       }
     } catch (e) {
       print("Error fetching user data: $e");
       if (mounted) {
-        ScaffoldMessenger.of(context).showSnackBar(
-          SnackBar(content: Text('Failed to load user data: $e')),
-        );
+        ScaffoldMessenger.of(
+          context,
+        ).showSnackBar(SnackBar(content: Text('Failed to load user data: $e')));
       }
     } finally {
       if (mounted) {
@@ -121,22 +148,45 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
 
   Future<void> _updateProfile() async {
     if (_formKey.currentState!.validate()) {
-      setState(() {
-        _isLoading = true; 
+      // Additional client-side validation
+      String? validationError = _validateFields();
+      if (validationError != null) {
+        ScaffoldMessenger.of(context).showSnackBar(
+          SnackBar(
+            content: Text(validationError),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 5),
+          ),
+        );
+        return;
+      }
 
+      setState(() {
+        _isLoading = true;
       });
 
-       print('Updating user with ID: ${widget.userId}');
+      print('Updating user with ID: ${widget.userId}');
 
       final data = {
-        'first_name': _firstNameController.text.trim(),
-        'last_name': _lastNameController.text.trim(),      
-        
+        'phone': _phoneController.text.trim(),
+        'identity_number': _idController.text.trim(),
+        'district': _districtController.text.trim(),
+        'village': _villageController.text.trim(),
+        'physical_address': _physicalAddressController.text.trim(),
+        'post_address': _postalAddressController.text.trim(),
       };
 
+      print('Sending data: $data');
+
       try {
-        final res = await CallApi().putData(data, 'users/${widget.userId}/update'); 
+        final res = await CallApi().putData(
+          data,
+          'users/${widget.userId}/update',
+        );
         final body = json.decode(res.body);
+
+        print('Response status: ${res.statusCode}');
+        print('Response body: $body');
 
         if (res.statusCode == 200 && body['success'] == true) {
           if (mounted) {
@@ -145,11 +195,13 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               builder: (context) {
                 return AlertDialog(
                   title: const Text('Profile Updated'),
-                  content: const Text('Your profile has been updated successfully!'),
+                  content: const Text(
+                    'Your profile has been updated successfully!',
+                  ),
                   actions: [
                     TextButton(
                       onPressed: () {
-                        Navigator.of(context).pop(); 
+                        Navigator.of(context).pop();
                       },
                       child: const Text('OK'),
                     ),
@@ -163,10 +215,35 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             });
           }
         } else {
-          String errorMessage = body['message'] ?? 'Failed to update profile.';
+          String errorMessage = 'Failed to update profile.';
+
+          // Handle validation errors (422 status code)
+          if (res.statusCode == 422 && body['errors'] != null) {
+            // Extract validation errors
+            Map<String, dynamic> errors = body['errors'];
+            List<String> errorMessages = [];
+
+            errors.forEach((field, messages) {
+              if (messages is List) {
+                errorMessages.addAll(messages.cast<String>());
+              }
+            });
+
+            errorMessage =
+                errorMessages.isNotEmpty
+                    ? errorMessages.join('\n')
+                    : body['message'] ?? 'Validation failed.';
+          } else {
+            errorMessage = body['message'] ?? 'Failed to update profile.';
+          }
+
           if (mounted) {
             ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text(errorMessage)),
+              SnackBar(
+                content: Text(errorMessage),
+                duration: const Duration(seconds: 5),
+                backgroundColor: Colors.red,
+              ),
             );
           }
         }
@@ -189,6 +266,50 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
     }
   }
 
+  String? _validateFields() {
+    // Check field lengths according to Laravel validation rules
+    // Note: first_name, last_name, and email are non-editable, so we don't validate them here
+
+    if (_phoneController.text.trim().length > 30) {
+      return 'Phone number cannot exceed 30 characters';
+    }
+
+    if (_idController.text.trim().length > 255) {
+      return 'Identity number cannot exceed 255 characters';
+    }
+
+    if (_districtController.text.trim().length > 255) {
+      return 'District cannot exceed 255 characters';
+    }
+
+    if (_villageController.text.trim().length > 255) {
+      return 'Village cannot exceed 255 characters';
+    }
+
+    // Check if required fields are not empty
+    if (_phoneController.text.trim().isEmpty) {
+      return 'Phone number is required';
+    }
+
+    if (_districtController.text.trim().isEmpty) {
+      return 'District is required';
+    }
+
+    if (_villageController.text.trim().isEmpty) {
+      return 'Village is required';
+    }
+
+    if (_physicalAddressController.text.trim().isEmpty) {
+      return 'Physical address is required';
+    }
+
+    if (_postalAddressController.text.trim().isEmpty) {
+      return 'Postal address is required';
+    }
+
+    return null; // No validation errors
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -201,7 +322,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
             color: Colors.white,
           ),
         ),
-       
+
         onSearchPressed: () {},
         isSearching: false,
       ),
@@ -230,10 +351,7 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
                   ),
                   Text(
                     'Campus Resource Booking',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 15,
-                    ),
+                    style: TextStyle(color: Colors.white, fontSize: 15),
                   ),
                 ],
               ),
@@ -242,42 +360,68 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
               title: const Text('Home'),
               leading: const Icon(Icons.home),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => Home()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => Home()),
+                );
               },
             ),
             ListTile(
               title: const Text('Profile'),
               leading: const Icon(Icons.person, color: Colors.blueAccent),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ProfileScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ProfileScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
               title: const Text('Resources'),
               leading: const Icon(Icons.grid_view),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const ResourcesScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const ResourcesScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
               title: const Text('Bookings'),
               leading: const Icon(Icons.book_online),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => BookingScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(builder: (context) => BookingScreen()),
+                );
               },
             ),
             ListTile(
               title: const Text('Notifications'),
               leading: const Icon(Icons.notifications),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const NotificationScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const NotificationScreen(),
+                  ),
+                );
               },
             ),
             ListTile(
               title: const Text('Settings'),
               leading: const Icon(Icons.settings),
               onTap: () {
-                Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const SettingsScreen()));
+                Navigator.pushReplacement(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const SettingsScreen(),
+                  ),
+                );
               },
             ),
             const Divider(), // Separator
@@ -289,120 +433,207 @@ class _EditProfileScreenState extends State<EditProfileScreen> {
           ],
         ),
       ),
-      body: _isLoading
-          ? const Center(child: CircularProgressIndicator())
-          : SingleChildScrollView(
-              padding: const EdgeInsets.all(16.0),
-              child: Form(
-                key: _formKey,
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      'Update Your Information',
-                      style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.green.shade700, fontWeight: FontWeight.bold),
-                    ),
-                    const SizedBox(height: 20),
-                    TextFormField(
-                      controller: _firstNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'First Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your first name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _lastNameController,
-                      decoration: const InputDecoration(
-                        labelText: 'Last Name',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.person_outline),
-                      ),
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your last name';
-                        }
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 15),
-                    /*TextFormField(
-                      controller: _phoneController,
-                      decoration: const InputDecoration(
-                        labelText: 'Phone Number',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.phone),
-                      ),
-                      keyboardType: TextInputType.phone,
-                      validator: (value) {
-                        if (value == null || value.isEmpty) {
-                          return 'Please enter your phone number';
-                        }
-                        // Add more robust phone number validation if needed
-                        return null;
-                      },
-                    ),
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _staffIdController,
-                      decoration: const InputDecoration(
-                        labelText: 'Staff ID / Student ID',
-                        border: OutlineInputBorder(),
-                        prefixIcon: Icon(Icons.badge),
-                      ),
-                      // Validator for specific ID format can be added here
-                    ),*/
-                    const SizedBox(height: 15),
-                    TextFormField(
-                      controller: _emailController,
-                      decoration: InputDecoration(
-                        labelText: 'Email',
-                        border: const OutlineInputBorder(),
-                        prefixIcon: const Icon(Icons.email),
-                        filled: true,
-                        fillColor: Colors.grey[200],
-                      ),
-                      readOnly: true, // Email is managed by API/Auth system
-                    ),
-                    const SizedBox(height: 15),
-                    // Display Role (read-only, assuming role is set by admin)
-                    ListTile(
-                      leading: const Icon(Icons.verified_user, color: Colors.blueGrey),
-                      title: const Text('User Role'),
-                      subtitle: Text(_currentRole.isNotEmpty ? _currentRole : 'N/A'),
-                      tileColor: Colors.grey[100],
-                      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(5)),
-                    ),
-                    const SizedBox(height: 30),
-                    Center(
-                      child: ElevatedButton(
-                        onPressed: _isLoading ? null : _updateProfile, // Disable button while loading
-                        style: ElevatedButton.styleFrom(
-                          backgroundColor: const Color.fromARGB(255, 20, 148, 24),
-                          padding: const EdgeInsets.symmetric(horizontal: 50, vertical: 15),
-                          shape: RoundedRectangleBorder(
-                            borderRadius: BorderRadius.circular(10),
-                          ),
+      body:
+          _isLoading
+              ? const Center(child: CircularProgressIndicator())
+              : SingleChildScrollView(
+                padding: const EdgeInsets.all(16.0),
+                child: Form(
+                  key: _formKey,
+                  child: Column(
+                    crossAxisAlignment: CrossAxisAlignment.start,
+                    children: [
+                      Text(
+                        'Update Your Information',
+                        style: Theme.of(
+                          context,
+                        ).textTheme.headlineSmall?.copyWith(
+                          color: Colors.green.shade700,
+                          fontWeight: FontWeight.bold,
                         ),
-                        child: _isLoading
-                            ? const CircularProgressIndicator(color: Colors.white)
-                            : const Text(
-                                'Save Changes',
-                                style: TextStyle(fontSize: 18, color: Colors.white),
-                              ),
                       ),
-                    ),
-                  ],
+                      const SizedBox(height: 20),
+                      TextFormField(
+                        controller: _firstNameController,
+                        enabled: false,
+                        decoration: InputDecoration(
+                          labelText: 'First Name',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.person),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                        ),
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _lastNameController,
+                        enabled: false,
+                        decoration: InputDecoration(
+                          labelText: 'Last Name',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.person),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                        ),
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _phoneController,
+                        decoration: const InputDecoration(
+                          labelText: 'Phone Number',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.phone),
+                        ),
+                        keyboardType: TextInputType.phone,
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your phone number';
+                          }
+                          // Add more robust phone number validation if needed
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _idController,
+                        decoration: const InputDecoration(
+                          labelText: 'Staff ID / Student ID',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.badge),
+                        ),
+                        // Validator for specific ID format can be added here
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _districtController,
+                        decoration: const InputDecoration(
+                          labelText: 'District',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_city),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your district';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _villageController,
+                        decoration: const InputDecoration(
+                          labelText: 'Village',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your village';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _physicalAddressController,
+                        decoration: const InputDecoration(
+                          labelText: 'Physical Address',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your physical address';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _postalAddressController,
+                        decoration: const InputDecoration(
+                          labelText: 'Postal Address',
+                          border: OutlineInputBorder(),
+                          prefixIcon: Icon(Icons.location_on),
+                        ),
+                        validator: (value) {
+                          if (value == null || value.isEmpty) {
+                            return 'Please enter your postal address';
+                          }
+                          return null;
+                        },
+                      ),
+                      const SizedBox(height: 15),
+                      TextFormField(
+                        controller: _emailController,
+                        enabled: false,
+                        decoration: InputDecoration(
+                          labelText: 'Email',
+                          border: const OutlineInputBorder(),
+                          prefixIcon: const Icon(Icons.email),
+                          filled: true,
+                          fillColor: Colors.grey[200],
+                        ),
+                        style: TextStyle(color: Colors.grey[700]),
+                      ),
+                      const SizedBox(height: 15),
+
+                      ListTile(
+                        leading: const Icon(
+                          Icons.verified_user,
+                          color: Colors.blueGrey,
+                        ),
+                        title: Text('User Role ${_currentRole}'),
+                        subtitle: Text(
+                          _currentRole.isNotEmpty ? _currentRole : 'N/A',
+                        ),
+                        tileColor: Colors.grey[100],
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(5),
+                        ),
+                      ),
+                      const SizedBox(height: 30),
+                      Center(
+                        child: ElevatedButton(
+                          onPressed:
+                              _isLoading
+                                  ? null
+                                  : _updateProfile, // Disable button while loading
+                          style: ElevatedButton.styleFrom(
+                            backgroundColor: const Color.fromARGB(
+                              255,
+                              20,
+                              148,
+                              24,
+                            ),
+                            padding: const EdgeInsets.symmetric(
+                              horizontal: 50,
+                              vertical: 15,
+                            ),
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                          ),
+                          child:
+                              _isLoading
+                                  ? const CircularProgressIndicator(
+                                    color: Colors.white,
+                                  )
+                                  : const Text(
+                                    'Save Changes',
+                                    style: TextStyle(
+                                      fontSize: 18,
+                                      color: Colors.white,
+                                    ),
+                                  ),
+                        ),
+                      ),
+                    ],
+                  ),
                 ),
               ),
-            ),
     );
   }
 }

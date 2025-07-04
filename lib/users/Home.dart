@@ -53,7 +53,7 @@ class _HomeState extends State<Home> {
     print(
       "User ID: $_userId, First_Name: $_firstName, Last_Name: $_lastName Email: $_userEmail",
     );
-    setState(() {}); 
+    setState(() {});
 
     if (_userId == null) {
       if (mounted) {
@@ -62,7 +62,7 @@ class _HomeState extends State<Home> {
       return;
     }
 
-    // Fetch upcoming booking 
+    // Fetch upcoming booking
     try {
       var res = await CallApi().getData('user/upcoming-booking');
       var body = json.decode(res.body);
@@ -75,7 +75,7 @@ class _HomeState extends State<Home> {
           });
         } else {
           setState(() {
-            _upcomingBooking = null; 
+            _upcomingBooking = null;
           });
         }
       } else {
@@ -161,10 +161,7 @@ class _HomeState extends State<Home> {
       await prefs.clear();
 
       if (mounted) {
-        Navigator.of(context).pushNamedAndRemoveUntil(
-          '/',
-          (route) => false,
-        ); 
+        Navigator.of(context).pushNamedAndRemoveUntil('/', (route) => false);
       }
     }
   }
@@ -172,7 +169,7 @@ class _HomeState extends State<Home> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      bottomNavigationBar: Bottombar(),
+      bottomNavigationBar: Bottombar(currentIndex: 0),
       appBar: MyAppBar(
         titleWidget: const Text(
           "Home",
@@ -344,7 +341,10 @@ class _HomeState extends State<Home> {
             const SizedBox(height: 20),
 
             Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8.0),
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
               child: Card(
                 elevation: 4,
                 shape: RoundedRectangleBorder(
@@ -388,10 +388,10 @@ class _HomeState extends State<Home> {
                       const Divider(),
                     ],
                   ),
-                ),                
+                ),
               ),
             ),
-            const SizedBox(height: 15,),
+            const SizedBox(height: 15),
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
@@ -462,7 +462,7 @@ class _HomeState extends State<Home> {
                               ),
                               const SizedBox(height: 5),
                               Text(
-                                'Location: ${_upcomingBooking!['resource']['location'] ?? 'N/A'}', 
+                                'Location: ${_upcomingBooking!['resource']['location'] ?? 'N/A'}',
                                 style: const TextStyle(
                                   fontSize: 14,
                                   color: Colors.black87,
@@ -614,7 +614,7 @@ class _HomeState extends State<Home> {
                 ],
               ),
             ),
-            const SizedBox(height: 10,),
+            const SizedBox(height: 10),
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,
