@@ -9,7 +9,6 @@ import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
 import 'package:intl/intl.dart';
-import 'package:resource_booking_app/users/issue_management_screen.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:resource_booking_app/users/RecommendationScreen.dart';
 import 'package:shared_preferences/shared_preferences.dart';
