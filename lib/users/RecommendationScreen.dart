@@ -350,14 +350,14 @@ class _RecommendationScreenState extends State<RecommendationScreen>
                         color: Colors.grey,
                       ),
                       const SizedBox(width: 4),
-                      Expanded( // Ensure location text doesn't overflow
+                      Expanded( 
                         child: Text(
                           location,
                           style: const TextStyle(
-                            fontSize: 14, // Slightly larger font for single column
+                            fontSize: 14, 
                             color: Colors.grey,
                           ),
-                          maxLines: 1, // Limit location to 1 line
+                          maxLines: 1, 
                           overflow: TextOverflow.ellipsis,
                         ),
                       ),
@@ -410,13 +410,13 @@ class _RecommendationScreenState extends State<RecommendationScreen>
                     ),
                     const SizedBox(height: 4),
                     Wrap(
-                      spacing: 6, // Adjusted spacing for single column
-                      runSpacing: 6, // Adjusted runSpacing for single column
-                      children: (reasons as List<dynamic>).take(3).map((reason) { // Can take more reasons
+                      spacing: 6,
+                      runSpacing: 6,
+                      children: (reasons).take(3).map((reason) {
                         return Container(
                           padding: const EdgeInsets.symmetric(
-                            horizontal: 8, // Adjusted padding
-                            vertical: 4, // Adjusted padding
+                            horizontal: 8,
+                            vertical: 4,
                           ),
                           decoration: BoxDecoration(
                             color: Colors.grey[200],
