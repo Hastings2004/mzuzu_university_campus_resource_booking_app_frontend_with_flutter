@@ -22,7 +22,7 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ResourceDetails extends StatefulWidget {
   final ResourceModel resource;
 
-  const ResourceDetails({super.key, required this.resource});
+  const ResourceDetails({super.key, required this.resource, required resourceId});
 
   @override
   _ResourceDetailsState createState() => _ResourceDetailsState();

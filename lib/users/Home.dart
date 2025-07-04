@@ -1,17 +1,18 @@
 import 'package:flutter/material.dart';
-import 'package:resource_booking_app/auth/Api.dart'; // Import your API helper
+import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/History.dart';
 import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart'; // Corrected spelling for ResourcesScreen
+import 'package:resource_booking_app/users/Resourse.dart';
 import 'package:resource_booking_app/users/Settings.dart';
-import 'package:intl/intl.dart'; // For date formatting
+import 'package:intl/intl.dart';
 import 'package:resource_booking_app/users/issue_management_screen.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
-import 'package:shared_preferences/shared_preferences.dart'; // For local storage
+import 'package:resource_booking_app/users/RecommendationScreen.dart';
+import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For JSON decoding
 
 class Home extends StatefulWidget {
@@ -36,11 +37,16 @@ class _HomeState extends State<Home> {
   List<dynamic> _announcements = [];
   bool _isLoadingAnnouncements = true;
 
+  // State for recommendations
+  List<dynamic> _recommendations = [];
+  bool _isLoadingRecommendations = true;
+
   @override
   void initState() {
     super.initState();
     _fetchCurrentUserAndBookingData();
     _fetchAnnouncements();
+    _fetchRecommendations();
   }
 
   Future<void> _fetchCurrentUserAndBookingData() async {
@@ -83,13 +89,13 @@ class _HomeState extends State<Home> {
           "Error fetching upcoming bookings from API: ${body['message'] ?? 'Unknown error'}",
         );
         setState(() {
-          _upcomingBooking = null; // Clear if error
+          _upcomingBooking = null; 
         });
       }
     } catch (e) {
       print("Network or parsing error fetching upcoming bookings: $e");
       setState(() {
-        _upcomingBooking = null; // Clear if error
+        _upcomingBooking = null; 
       });
     } finally {
       setState(() {
@@ -125,6 +131,32 @@ class _HomeState extends State<Home> {
     }
   }
 
+  Future<void> _fetchRecommendations() async {
+    try {
+      var res = await CallApi().getData('recommendations/resources?limit=3');
+      var body = json.decode(res.body);
+      if (res.statusCode == 200 && body['success'] == true) {
+        if (mounted) {
+          setState(() {
+            _recommendations = body['recommendations'] ?? [];
+          });
+        }
+      } else {
+        print(
+          "Failed to load recommendations: ${body['message'] ?? 'Unknown error'}",
+        );
+      }
+    } catch (e) {
+      print("Error fetching recommendations: $e");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoadingRecommendations = false;
+        });
+      }
+    }
+  }
+
   void logout() async {
     // Show a confirmation dialog
     final bool confirmLogout =
@@ -137,15 +169,15 @@ class _HomeState extends State<Home> {
                 actions: <Widget>[
                   TextButton(
                     onPressed:
-                        () => Navigator.of(context).pop(false), // User cancels
+                        () => Navigator.of(context).pop(false), 
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
                     onPressed:
-                        () => Navigator.of(context).pop(true), // User confirms
+                        () => Navigator.of(context).pop(true), 
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
-                    ), // Optional: make logout button red
+                    ), 
                     child: const Text(
                       'Logout',
                       style: TextStyle(color: Colors.white),
@@ -311,33 +343,7 @@ class _HomeState extends State<Home> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-            const SizedBox(height: 20),
-            // Personalized Welcome Message
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Welcome, $_firstName $_lastName!",
-                  style: const TextStyle(
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold,
-                    color: Colors.green,
-                  ),
-                ),
-              ),
-            ),
-            const SizedBox(height: 10),
-            Padding(
-              padding: const EdgeInsets.symmetric(horizontal: 16.0),
-              child: Align(
-                alignment: Alignment.centerLeft,
-                child: Text(
-                  "Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}",
-                  style: const TextStyle(fontSize: 14, color: Colors.black54),
-                ),
-              ),
-            ),
+                       
             const SizedBox(height: 20),
 
             Padding(
@@ -386,6 +392,32 @@ class _HomeState extends State<Home> {
                         ],
                       ),
                       const Divider(),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Welcome, $_firstName $_lastName!",
+                            style: const TextStyle(
+                              fontSize: 18,
+                              fontWeight: FontWeight.bold,
+                              color: Colors.green,
+                            ),
+                          ),
+                        ),
+                      ),
+                      const SizedBox(height: 10),
+                      Padding(
+                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
+                        child: Align(
+                          alignment: Alignment.centerLeft,
+                          child: Text(
+                            "Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}",
+                            style: const TextStyle(fontSize: 14, color: Colors.black54),
+                          ),
+                        ),
+                      ),
+            
                     ],
                   ),
                 ),
@@ -628,12 +660,13 @@ class _HomeState extends State<Home> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child: InkWell(
+                      child:InkWell(
                         onTap: () {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => const HistoryScreen(),
+                              builder:
+                                  (context) => const RecommendationScreen(),
                             ),
                           );
                         },
@@ -644,13 +677,13 @@ class _HomeState extends State<Home> {
                             mainAxisAlignment: MainAxisAlignment.center,
                             children: [
                               Icon(
-                                Icons.history,
+                                Icons.recommend,
                                 size: 40,
-                                color: Colors.deepOrangeAccent,
+                                color: Colors.purple,
                               ),
                               SizedBox(height: 8),
                               Text(
-                                "Booking History",
+                                "Recommendations",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16,
@@ -675,7 +708,8 @@ class _HomeState extends State<Home> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder: (context) => IssueManagementScreen(),
+                              builder:
+                                  (context) => IssueManagementScreen(),
                             ),
                           );
                         },
@@ -692,7 +726,7 @@ class _HomeState extends State<Home> {
                               ),
                               SizedBox(height: 8),
                               Text(
-                                "Report Issue",
+                                "Report Issues",
                                 textAlign: TextAlign.center,
                                 style: TextStyle(
                                   fontSize: 16,
@@ -707,10 +741,196 @@ class _HomeState extends State<Home> {
                   ),
                 ],
               ),
+            ),                  
+            const SizedBox(height: 20),
+
+            // Recommendations Section
+            Padding(
+              padding: const EdgeInsets.symmetric(
+                horizontal: 16.0,
+                vertical: 8.0,
+              ),
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      const Text(
+                        "Recommended for You",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: Colors.green,
+                        ),
+                      ),
+                      TextButton(
+                        onPressed: () {
+                          Navigator.push(
+                            context,
+                            MaterialPageRoute(
+                              builder: (context) => const ResourcesScreen(),
+                            ),
+                          );
+                        },
+                        child: const Text(
+                          "View All",
+                          style: TextStyle(
+                            color: Colors.blue,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                      ),
+                    ],
+                  ),
+                  const Divider(),
+                  _isLoadingRecommendations
+                      ? const Center(child: CircularProgressIndicator())
+                      : _recommendations.isEmpty
+                      ? Card(
+                        elevation: 2,
+                        shape: RoundedRectangleBorder(
+                          borderRadius: BorderRadius.circular(10),
+                        ),
+                        child: const ListTile(
+                          leading: Icon(Icons.recommend, color: Colors.orange),
+                          title: Text("No recommendations available"),
+                          subtitle: Text(
+                            "Start booking resources to get personalized recommendations.",
+                          ),
+                        ),
+                      )
+                      : ListView.builder(
+                        shrinkWrap: true,
+                        physics: const NeverScrollableScrollPhysics(),
+                        itemCount: _recommendations.length,
+                        itemBuilder: (context, index) {
+                          final recommendation = _recommendations[index];
+                          final resource = recommendation['resource'];
+                          final score = recommendation['score'];
+                          final reasons =
+                              recommendation['reasons'] ?? ['Popular choice'];
+
+                          return Card(
+                            elevation: 3,
+                            shape: RoundedRectangleBorder(
+                              borderRadius: BorderRadius.circular(10),
+                            ),
+                            margin: const EdgeInsets.symmetric(vertical: 5),
+                            child: InkWell(
+                              onTap: () {
+                                Navigator.push(
+                                  context,
+                                  MaterialPageRoute(
+                                    builder:
+                                        (context) => const ResourcesScreen(),
+                                  ),
+                                );
+                              },
+                              borderRadius: BorderRadius.circular(10),
+                              child: Padding(
+                                padding: const EdgeInsets.all(12.0),
+                                child: Column(
+                                  crossAxisAlignment: CrossAxisAlignment.start,
+                                  children: [
+                                    Row(
+                                      children: [
+                                        Expanded(
+                                          child: Column(
+                                            crossAxisAlignment:
+                                                CrossAxisAlignment.start,
+                                            children: [
+                                              Text(
+                                                resource['name'] ??
+                                                    'Unknown Resource',
+                                                style: const TextStyle(
+                                                  fontSize: 16,
+                                                  fontWeight: FontWeight.bold,
+                                                  color: Colors.blue,
+                                                ),
+                                              ),
+                                              const SizedBox(height: 4),
+                                              Text(
+                                                'Location: ${resource['location'] ?? 'N/A'}',
+                                                style: const TextStyle(
+                                                  fontSize: 14,
+                                                  color: Colors.black87,
+                                                ),
+                                              ),
+                                              if (resource['capacity'] != null)
+                                                Text(
+                                                  'Capacity: ${resource['capacity']} people',
+                                                  style: const TextStyle(
+                                                    fontSize: 12,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                            ],
+                                          ),
+                                        ),
+                                        Container(
+                                          padding: const EdgeInsets.symmetric(
+                                            horizontal: 8,
+                                            vertical: 4,
+                                          ),
+                                          decoration: BoxDecoration(
+                                            color: Colors.orange,
+                                            borderRadius: BorderRadius.circular(
+                                              12,
+                                            ),
+                                          ),
+                                          child: Text(
+                                            '${score.toStringAsFixed(1)}',
+                                            style: const TextStyle(
+                                              color: Colors.white,
+                                              fontWeight: FontWeight.bold,
+                                              fontSize: 12,
+                                            ),
+                                          ),
+                                        ),
+                                      ],
+                                    ),
+                                    const SizedBox(height: 8),
+                                    Wrap(
+                                      spacing: 4,
+                                      children:
+                                          (reasons as List<dynamic>).take(2).map(
+                                            (reason) {
+                                              return Container(
+                                                padding:
+                                                    const EdgeInsets.symmetric(
+                                                      horizontal: 6,
+                                                      vertical: 2,
+                                                    ),
+                                                decoration: BoxDecoration(
+                                                  color: Colors.grey[200],
+                                                  borderRadius:
+                                                      BorderRadius.circular(8),
+                                                ),
+                                                child: Text(
+                                                  reason.toString(),
+                                                  style: const TextStyle(
+                                                    fontSize: 10,
+                                                    color: Colors.black54,
+                                                  ),
+                                                ),
+                                              );
+                                            },
+                                          ).toList(),
+                                    ),
+                                  ],
+                                ),
+                              ),
+                            ),
+                          );
+                        },
+                      ),
+                ],
+              ),
             ),
             const SizedBox(height: 20),
 
-            // Placeholder for Announcements/News
+            // Announcements & News Section
             Padding(
               padding: const EdgeInsets.symmetric(
                 horizontal: 16.0,

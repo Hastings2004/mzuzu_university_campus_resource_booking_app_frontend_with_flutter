@@ -774,7 +774,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ResourceDetails(resource: resource),
+                builder: (context) => ResourceDetails(resourceId: resource.id,resource: resource),
               ),
             );
           },
