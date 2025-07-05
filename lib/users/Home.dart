@@ -11,6 +11,8 @@ import 'package:resource_booking_app/users/Settings.dart';
 import 'package:intl/intl.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:resource_booking_app/users/RecommendationScreen.dart';
+import 'package:resource_booking_app/users/BookingDashboard.dart';
+import 'package:resource_booking_app/users/BookingCalendar.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For JSON decoding
 
@@ -88,13 +90,13 @@ class _HomeState extends State<Home> {
           "Error fetching upcoming bookings from API: ${body['message'] ?? 'Unknown error'}",
         );
         setState(() {
-          _upcomingBooking = null; 
+          _upcomingBooking = null;
         });
       }
     } catch (e) {
       print("Network or parsing error fetching upcoming bookings: $e");
       setState(() {
-        _upcomingBooking = null; 
+        _upcomingBooking = null;
       });
     } finally {
       setState(() {
@@ -167,16 +169,14 @@ class _HomeState extends State<Home> {
                 content: const Text('Are you sure you want to log out?'),
                 actions: <Widget>[
                   TextButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(false), 
+                    onPressed: () => Navigator.of(context).pop(false),
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(true), 
+                    onPressed: () => Navigator.of(context).pop(true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
-                    ), 
+                    ),
                     child: const Text(
                       'Logout',
                       style: TextStyle(color: Colors.white),
@@ -282,6 +282,30 @@ class _HomeState extends State<Home> {
               },
             ),
             ListTile(
+              title: const Text('Booking Dashboard'),
+              leading: const Icon(Icons.dashboard),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BookingDashboard(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
+              title: const Text('Booking Calendar'),
+              leading: const Icon(Icons.calendar_month),
+              onTap: () {
+                Navigator.push(
+                  context,
+                  MaterialPageRoute(
+                    builder: (context) => const BookingCalendar(),
+                  ),
+                );
+              },
+            ),
+            ListTile(
               title: const Text('Notifications'),
               leading: const Icon(Icons.notifications),
               onTap: () {
@@ -342,7 +366,6 @@ class _HomeState extends State<Home> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.center,
           children: [
-                       
             const SizedBox(height: 20),
 
             Padding(
@@ -412,11 +435,13 @@ class _HomeState extends State<Home> {
                           alignment: Alignment.centerLeft,
                           child: Text(
                             "Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}",
-                            style: const TextStyle(fontSize: 14, color: Colors.black54),
+                            style: const TextStyle(
+                              fontSize: 14,
+                              color: Colors.black54,
+                            ),
                           ),
                         ),
                       ),
-            
                     ],
                   ),
                 ),
@@ -659,7 +684,7 @@ class _HomeState extends State<Home> {
                       shape: RoundedRectangleBorder(
                         borderRadius: BorderRadius.circular(10),
                       ),
-                      child:InkWell(
+                      child: InkWell(
                         onTap: () {
                           Navigator.push(
                             context,
@@ -707,8 +732,7 @@ class _HomeState extends State<Home> {
                           Navigator.push(
                             context,
                             MaterialPageRoute(
-                              builder:
-                                  (context) => IssueManagementScreen(),
+                              builder: (context) => IssueManagementScreen(),
                             ),
                           );
                         },
@@ -740,7 +764,7 @@ class _HomeState extends State<Home> {
                   ),
                 ],
               ),
-            ),                  
+            ),
             const SizedBox(height: 20),
 
             // Recommendations Section

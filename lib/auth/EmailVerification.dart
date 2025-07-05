@@ -2,7 +2,6 @@ import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/Button.dart';
 import 'package:resource_booking_app/users/Home.dart';
-import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert';
 
 class EmailVerification extends StatefulWidget {
