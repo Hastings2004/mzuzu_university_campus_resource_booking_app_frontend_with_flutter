@@ -22,7 +22,11 @@ import 'package:shared_preferences/shared_preferences.dart';
 class ResourceDetails extends StatefulWidget {
   final ResourceModel resource;
 
-  const ResourceDetails({super.key, required this.resource, required resourceId});
+  const ResourceDetails({
+    super.key,
+    required this.resource,
+    required resourceId,
+  });
 
   @override
   _ResourceDetailsState createState() => _ResourceDetailsState();
@@ -32,9 +36,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   UserData? _userData;
 
   String? _selectedBookingType;
-  String? _selectedPriority; 
-  String _bookingOption =
-      "single_day"; 
+  String? _selectedPriority;
+  String _bookingOption = "single_day";
 
   final List<String> _bookingType = [
     'class',
@@ -63,7 +66,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // State management
   bool _isLoading = false;
   bool _isInitialized = false;
-  bool? _isResourceAvailable; 
+  bool? _isResourceAvailable;
 
   // Debouncer for API calls
   Timer? _debounceTimer;
@@ -71,10 +74,18 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // Cache for conflict checking
   final Map<String, bool> _conflictCache = {};
 
+  // NEW: Calendar and booking features
+  DateTime _selectedCalendarDate = DateTime.now();
+  List<Map<String, dynamic>> _resourceBookings = [];
+  List<Map<String, dynamic>> _bookingsForSelectedDate = [];
+  List<Map<String, dynamic>> _suggestions = [];
+  bool _isLoadingBookings = false;
+
   @override
   void initState() {
     super.initState();
     _initializeUserData();
+    _loadResourceBookings();
   }
 
   @override
@@ -106,6 +117,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         setState(() {
           _isInitialized = true;
         });
+        // Load resource bookings after initialization
+        _loadResourceBookings();
       }
     } catch (e) {
       debugPrint("Error loading user data: $e");
@@ -132,16 +145,14 @@ class _ResourceDetailsState extends State<ResourceDetails> {
                 content: const Text('Are you sure you want to log out?'),
                 actions: <Widget>[
                   TextButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(false), 
+                    onPressed: () => Navigator.of(context).pop(false),
                     child: const Text('Cancel'),
                   ),
                   ElevatedButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(true), 
+                    onPressed: () => Navigator.of(context).pop(true),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.red,
-                    ), 
+                    ),
                     child: const Text(
                       'Logout',
                       style: TextStyle(color: Colors.white),
@@ -196,7 +207,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
       // Clear conflict cache when dates change
       _conflictCache.clear();
-      _isResourceAvailable = null; 
+      _isResourceAvailable = null;
     }
   }
 
@@ -243,34 +254,34 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         _checkForConflicts();
       } else {
         setState(() {
-          _isResourceAvailable =
-              null; 
+          _isResourceAvailable = null;
         });
       }
     });
   }
 
-  // Background conflict checking (similar to handleAvailabilityCheck in React)
+  // Enhanced conflict checking with suggestions (similar to handleAvailabilityCheck in React)
   Future<void> _checkForConflicts() async {
     setState(() {
-      _isResourceAvailable = null; 
+      _isResourceAvailable = null;
+      _suggestions = []; // Clear suggestions on new check
     });
 
     DateTime fullStartTime, fullEndTime;
 
     if (_bookingOption == "single_day") {
-      final now = DateTime.now();
-      final dateString = DateFormat('yyyy-MM-dd').format(now);
-      if (_selectedStartTime == null || _selectedEndTime == null) {
-        return; 
+      if (_selectedStartDate == null ||
+          _selectedStartTime == null ||
+          _selectedEndTime == null) {
+        return;
       }
-      fullStartTime = DateTime.parse(
-        '${dateString}T${_formatTime(_selectedStartTime!)}:00',
+      fullStartTime = _combineDateTime(
+        _selectedStartDate!,
+        _selectedStartTime!,
       );
-      fullEndTime = DateTime.parse(
-        '${dateString}T${_formatTime(_selectedEndTime!)}:00',
-      );
+      fullEndTime = _combineDateTime(_selectedStartDate!, _selectedEndTime!);
 
+      // Validate single day booking spans only one day
       if (fullStartTime.day != fullEndTime.day ||
           fullStartTime.month != fullEndTime.month ||
           fullStartTime.year != fullEndTime.year) {
@@ -289,13 +300,28 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           _selectedStartTime == null ||
           _selectedEndDate == null ||
           _selectedEndTime == null) {
-        return; 
+        return;
       }
       fullStartTime = _combineDateTime(
         _selectedStartDate!,
         _selectedStartTime!,
       );
       fullEndTime = _combineDateTime(_selectedEndDate!, _selectedEndTime!);
+
+      // Validate multi-day booking is actually multi-day (at least 2 days)
+      final diffTime = fullEndTime.difference(fullStartTime);
+      final diffDays = diffTime.inDays;
+      if (diffDays < 2) {
+        if (mounted) {
+          setState(() {
+            _isResourceAvailable = false;
+          });
+          _showErrorSnackBar(
+            "For 'Multi Day' booking, the duration must be at least 2 full days.",
+          );
+        }
+        return;
+      }
     }
 
     if (fullStartTime.isAfter(fullEndTime) ||
@@ -356,6 +382,35 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       }
 
       if (hasConflict && mounted) {
+        // Check for suggestions in the response
+        if (body['suggestions'] != null) {
+          setState(() {
+            _suggestions = List<Map<String, dynamic>>.from(body['suggestions']);
+          });
+        } else {
+          // Try to get suggestions from a separate endpoint
+          try {
+            final suggestionsResponse = await CallApi()
+                .postData({
+                  'resource_id': widget.resource.id,
+                  'start_time': fullStartTime.toIso8601String(),
+                  'end_time': fullEndTime.toIso8601String(),
+                }, 'bookings/get-suggestions')
+                .timeout(const Duration(seconds: 3));
+
+            final suggestionsData = json.decode(suggestionsResponse.body);
+            if (suggestionsData['suggestions'] != null) {
+              setState(() {
+                _suggestions = List<Map<String, dynamic>>.from(
+                  suggestionsData['suggestions'],
+                );
+              });
+            }
+          } catch (suggestionsError) {
+            debugPrint('No suggestions available: $suggestionsError');
+          }
+        }
+
         await showDialog(
           context: context,
           barrierDismissible: false,
@@ -363,7 +418,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
               (context) => AlertDialog(
                 title: const Text('Booking Conflict'),
                 content: Text(
-                  'Time slot is not available: ${body['message'] ?? 'Unknown conflict'}',
+                  'Time slot is not available: ${body['message'] ?? 'Unknown conflict'}\n\n'
+                  '${_suggestions.isNotEmpty ? 'Alternative time slots are available below.' : ''}',
                 ),
                 actions: [
                   TextButton(
@@ -437,7 +493,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       debugPrint("Notification send timed out.");
     } catch (e) {
       debugPrint("Notification failed: $e");
-     
     }
   }
 
@@ -628,6 +683,12 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       ),
     );
 
+    // Clear suggestions and reload bookings
+    setState(() {
+      _suggestions = [];
+    });
+    await _loadResourceBookings();
+
     if (mounted) {
       await showDialog(
         context: context,
@@ -686,6 +747,351 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     }
   }
 
+  // NEW: Load resource bookings
+  Future<void> _loadResourceBookings() async {
+    if (!_isInitialized) return;
+
+    setState(() {
+      _isLoadingBookings = true;
+    });
+
+    try {
+      final response = await CallApi().getData(
+        'resources/${widget.resource.id}/bookings',
+      );
+      final data = json.decode(response.body);
+
+      if (data['bookings'] != null) {
+        final List<Map<String, dynamic>> bookings =
+            List<Map<String, dynamic>>.from(data['bookings']);
+
+        // Categorize bookings by status
+        final categorizedBookings =
+            bookings.map((booking) {
+              final startTime = DateTime.parse(booking['start_time']);
+              final endTime = DateTime.parse(booking['end_time']);
+              final now = DateTime.now();
+
+              // Determine if booking is currently in use
+              bool isInUse = false;
+              if (booking['status'] == 'approved') {
+                isInUse = now.isAfter(startTime) && now.isBefore(endTime);
+              }
+
+              return {...booking, 'is_in_use': isInUse};
+            }).toList();
+
+        setState(() {
+          _resourceBookings = categorizedBookings;
+          _updateBookingsForSelectedDate();
+        });
+      }
+    } catch (e) {
+      debugPrint("Failed to load resource bookings: $e");
+    } finally {
+      setState(() {
+        _isLoadingBookings = false;
+      });
+    }
+  }
+
+  // NEW: Update bookings for selected calendar date
+  void _updateBookingsForSelectedDate() {
+    final selectedDate = _selectedCalendarDate;
+    final bookings =
+        _resourceBookings.where((booking) {
+          final start = DateTime.parse(booking['start_time']);
+          final end = DateTime.parse(booking['end_time']);
+
+          // Check if the selected date falls within the booking period
+          final startDate = DateTime(start.year, start.month, start.day);
+          final endDate = DateTime(end.year, end.month, end.day);
+          final selectedDateOnly = DateTime(
+            selectedDate.year,
+            selectedDate.month,
+            selectedDate.day,
+          );
+
+          return selectedDateOnly.isAfter(
+                startDate.subtract(const Duration(days: 1)),
+              ) &&
+              selectedDateOnly.isBefore(endDate.add(const Duration(days: 1)));
+        }).toList();
+
+    setState(() {
+      _bookingsForSelectedDate = bookings;
+    });
+  }
+
+  // NEW: Check if a date has bookings
+  bool _isDateBooked(DateTime date) {
+    return _resourceBookings.any((booking) {
+      final start = DateTime.parse(booking['start_time']);
+      final end = DateTime.parse(booking['end_time']);
+
+      final startDate = DateTime(start.year, start.month, start.day);
+      final endDate = DateTime(end.year, end.month, end.day);
+      final checkDate = DateTime(date.year, date.month, date.day);
+
+      return checkDate.isAfter(startDate.subtract(const Duration(days: 1))) &&
+          checkDate.isBefore(endDate.add(const Duration(days: 1)));
+    });
+  }
+
+  // NEW: Handle calendar date selection
+  void _onCalendarDateSelected(DateTime date) {
+    setState(() {
+      _selectedCalendarDate = date;
+    });
+    _updateBookingsForSelectedDate();
+  }
+
+  // NEW: Build calendar widget
+  Widget _buildCalendar() {
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Resource Availability Calendar',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.blue,
+              ),
+            ),
+            const SizedBox(height: 16),
+            CalendarDatePicker(
+              initialDate: _selectedCalendarDate,
+              firstDate: DateTime.now().subtract(const Duration(days: 30)),
+              lastDate: DateTime.now().add(const Duration(days: 365)),
+              onDateChanged: _onCalendarDateSelected,
+              selectableDayPredicate: (date) {
+                // Allow selection of future dates
+                return date.isAfter(
+                  DateTime.now().subtract(const Duration(days: 1)),
+                );
+              },
+            ),
+            const SizedBox(height: 16),
+            _buildBookingsForSelectedDate(),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // NEW: Build bookings for selected date
+  Widget _buildBookingsForSelectedDate() {
+    return Column(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Text(
+          'Bookings on ${DateFormat('MMM d, yyyy').format(_selectedCalendarDate)}',
+          style: const TextStyle(
+            fontSize: 16,
+            fontWeight: FontWeight.bold,
+            color: Colors.green,
+          ),
+        ),
+        const SizedBox(height: 8),
+        if (_bookingsForSelectedDate.isEmpty)
+          const Text(
+            'No bookings for this date.',
+            style: TextStyle(color: Colors.grey, fontStyle: FontStyle.italic),
+          )
+        else
+          ...(_bookingsForSelectedDate
+              .map(
+                (booking) => Card(
+                  margin: const EdgeInsets.symmetric(vertical: 4),
+                  child: Padding(
+                    padding: const EdgeInsets.all(12),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Row(
+                          children: [
+                            Container(
+                              padding: const EdgeInsets.symmetric(
+                                horizontal: 8,
+                                vertical: 4,
+                              ),
+                              decoration: BoxDecoration(
+                                color:
+                                    booking['is_in_use'] == true
+                                        ? Colors.orange
+                                        : booking['status'] == 'approved'
+                                        ? Colors.green
+                                        : Colors.blue,
+                                borderRadius: BorderRadius.circular(12),
+                              ),
+                              child: Text(
+                                booking['is_in_use'] == true
+                                    ? 'IN USE'
+                                    : booking['status'].toUpperCase(),
+                                style: const TextStyle(
+                                  color: Colors.white,
+                                  fontSize: 12,
+                                  fontWeight: FontWeight.bold,
+                                ),
+                              ),
+                            ),
+                            const Spacer(),
+                            Text(
+                              booking['purpose'] ?? 'No purpose specified',
+                              style: const TextStyle(
+                                fontWeight: FontWeight.w500,
+                              ),
+                            ),
+                          ],
+                        ),
+                        const SizedBox(height: 8),
+                        Text(
+                          'From: ${DateFormat('MMM d, h:mm a').format(DateTime.parse(booking['start_time']))}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                        Text(
+                          'To: ${DateFormat('MMM d, h:mm a').format(DateTime.parse(booking['end_time']))}',
+                          style: const TextStyle(
+                            fontSize: 14,
+                            color: Colors.grey,
+                          ),
+                        ),
+                      ],
+                    ),
+                  ),
+                ),
+              )
+              .toList()),
+      ],
+    );
+  }
+
+  // NEW: Build suggestions section
+  Widget _buildSuggestionsSection() {
+    if (_suggestions.isEmpty) return const SizedBox.shrink();
+
+    return Card(
+      elevation: 2,
+      shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
+      child: Padding(
+        padding: const EdgeInsets.all(16),
+        child: Column(
+          crossAxisAlignment: CrossAxisAlignment.start,
+          children: [
+            const Text(
+              'Suggested Alternatives',
+              style: TextStyle(
+                fontSize: 18,
+                fontWeight: FontWeight.bold,
+                color: Colors.orange,
+              ),
+            ),
+            const SizedBox(height: 12),
+            ...(_suggestions
+                .map(
+                  (suggestion) => Card(
+                    margin: const EdgeInsets.symmetric(vertical: 4),
+                    child: ListTile(
+                      title: Text('Resource ID: ${suggestion['resource_id']}'),
+                      subtitle: Column(
+                        crossAxisAlignment: CrossAxisAlignment.start,
+                        children: [
+                          Text(
+                            'Start: ${DateFormat('MMM d, h:mm a').format(DateTime.parse(suggestion['start_time']))}',
+                          ),
+                          Text(
+                            'End: ${DateFormat('MMM d, h:mm a').format(DateTime.parse(suggestion['end_time']))}',
+                          ),
+                          if (suggestion['type'] != null)
+                            Text('Type: ${suggestion['type']}'),
+                          if (suggestion['preference_score'] != null)
+                            Text('Score: ${suggestion['preference_score']}'),
+                        ],
+                      ),
+                      trailing: ElevatedButton(
+                        onPressed: () => _bookSuggestion(suggestion),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.green,
+                          foregroundColor: Colors.white,
+                        ),
+                        child: const Text('Book This'),
+                      ),
+                    ),
+                  ),
+                )
+                .toList()),
+          ],
+        ),
+      ),
+    );
+  }
+
+  // NEW: Book a suggestion
+  Future<void> _bookSuggestion(Map<String, dynamic> suggestion) async {
+    setState(() => _isLoading = true);
+
+    try {
+      SharedPreferences prefs = await SharedPreferences.getInstance();
+      final token = prefs.getString('token');
+
+      if (token == null) {
+        throw Exception('Authentication token not found.');
+      }
+
+      final response = await CallApi().postData({
+        'resource_id': suggestion['resource_id'],
+        'start_time': suggestion['start_time'],
+        'end_time': suggestion['end_time'],
+        'purpose': _purposeController.text.trim(),
+        'booking_type': _selectedBookingType?.toLowerCase() ?? 'other',
+        'user_id': _userData!.id.toString(),
+      }, 'bookings');
+
+      final data = json.decode(response.body);
+
+      if (response.statusCode == 201 && data['success'] == true) {
+        _showSuccessSnackBar('Booking created successfully!');
+        if (mounted) {
+          Navigator.pushReplacement(
+            context,
+            MaterialPageRoute(builder: (context) => const ResourcesScreen()),
+          );
+        }
+      } else {
+        _showErrorSnackBar(data['message'] ?? 'Failed to book suggestion.');
+      }
+    } catch (e) {
+      debugPrint("Suggestion booking error: $e");
+      _showErrorSnackBar('Failed to book suggestion. Please try again.');
+    } finally {
+      if (mounted) {
+        setState(() => _isLoading = false);
+      }
+    }
+  }
+
+  // NEW: Show success snackbar
+  void _showSuccessSnackBar(String message) {
+    if (mounted) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text(message),
+          backgroundColor: Colors.green,
+          behavior: SnackBarBehavior.floating,
+        ),
+      );
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     if (!_isInitialized) {
@@ -715,14 +1121,13 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-            decoration: const BoxDecoration(color: Color.fromARGB(255, 20, 148, 24)),
+            decoration: const BoxDecoration(
+              color: Color.fromARGB(255, 20, 148, 24),
+            ),
             child: Column(
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
-                Image.asset(
-                    "assets/images/logo.png",
-                    height: 50,
-                  ),
+                Image.asset("assets/images/logo.png", height: 50),
                 const Text(
                   'Mzuzu University',
                   style: TextStyle(
@@ -781,7 +1186,12 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       DrawerItem(
         'Report Issue',
         Icons.report,
-        () => Navigator.pushReplacement(context, MaterialPageRoute(builder: (context) => const IssueManagementScreen())),
+        () => Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(
+            builder: (context) => const IssueManagementScreen(),
+          ),
+        ),
       ),
       DrawerItem(
         'Notifications',
@@ -821,22 +1231,38 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   Widget _buildBody() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),
-      child: Center(
-        child: Form(
-          key: _formKey,
-          child: Column(
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              _buildResourceInfo(),
-              const SizedBox(height: 30),
-              _buildBookingForm(),
-              const SizedBox(height: 30),
-              _buildAvailabilityStatus(), // New availability status display
-              const SizedBox(height: 30),
-              _buildBookButton(),
-            ],
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.center,
+        children: [
+          // Main booking form section
+          Center(
+            child: Form(
+              key: _formKey,
+              child: Column(
+                crossAxisAlignment: CrossAxisAlignment.center,
+                children: [
+                  _buildResourceInfo(),
+                  const SizedBox(height: 30),
+                  _buildBookingForm(),
+                  const SizedBox(height: 30),
+                  _buildAvailabilityStatus(),
+                  const SizedBox(height: 30),
+                  _buildBookButton(),
+                ],
+              ),
+            ),
           ),
-        ),
+
+          // Suggestions section
+          if (_suggestions.isNotEmpty) ...[
+            const SizedBox(height: 30),
+            _buildSuggestionsSection(),
+          ],
+
+          // Calendar and booking status section
+          const SizedBox(height: 30),
+          _buildCalendar(),
+        ],
       ),
     );
   }
@@ -1014,7 +1440,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 0.0),
           child: DropdownButtonFormField<String>(
-            value: _selectedBookingType, 
+            value: _selectedBookingType,
             decoration: const InputDecoration(
               labelText: 'Booking Type',
               border: OutlineInputBorder(),
@@ -1024,9 +1450,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
                 _bookingType.map((String type) {
                   return DropdownMenuItem<String>(
                     value: type,
-                    child: Text(
-                      type.replaceAll('_', ' ').toTitleCase(),
-                    ), 
+                    child: Text(type.replaceAll('_', ' ').toTitleCase()),
                   );
                 }).toList(),
             onChanged: (String? newValue) {

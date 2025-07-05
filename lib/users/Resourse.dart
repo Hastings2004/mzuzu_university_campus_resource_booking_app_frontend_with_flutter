@@ -41,6 +41,26 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
   String _userIdFilter = '';
   bool _isAdmin = false;
 
+  // New features from React implementation
+  String _selectedCategory = 'all';
+  List<Map<String, dynamic>> _features = [];
+  String _selectedFeature = '';
+  int _currentPage = 1;
+  final int _resourcesPerPage = 16;
+  bool _isLoading = true;
+  String? _error;
+
+  // Define categories (matching React implementation)
+  final List<Map<String, String>> _categories = [
+    {'name': 'All', 'value': 'all'},
+    {'name': 'Classrooms', 'value': 'classrooms'},
+    {'name': 'ICT Labs', 'value': 'ict_labs'},
+    {'name': 'Science Labs', 'value': 'science_labs'},
+    {'name': 'Auditorium', 'value': 'auditorium'},
+    {'name': 'Sports', 'value': 'sports'},
+    {'name': 'Vehicles', 'value': 'cars'},
+  ];
+
   // Define resource types for the dropdown (from previous context)
   final List<String> _resourceTypes = [
     'Meeting Room',
@@ -55,8 +75,9 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
   void initState() {
     super.initState();
     _searchController.addListener(_onSearchChanged);
-    _resourcesFuture = _fetchResources();
-    _checkUserRole(); // Check user role on init
+    _checkUserRole();
+    _fetchFeatures();
+    _fetchResources();
   }
 
   @override
@@ -78,7 +99,104 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
     }
   }
 
-  Future<List<ResourceModel>> _fetchResources() async {
+  Future<void> _fetchFeatures() async {
+    try {
+      final response = await CallApi().getData('features');
+      final body = json.decode(response.body);
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        setState(() {
+          _features = List<Map<String, dynamic>>.from(body['features'] ?? []);
+        });
+      }
+    } catch (e) {
+      print('Error fetching features: $e');
+      // Don't show error to user as features are optional
+    }
+  }
+
+  Future<void> _fetchResources() async {
+    setState(() {
+      _isLoading = true;
+      _error = null;
+    });
+
+    try {
+      // Construct API URL with category and features filter
+      String apiUrl = 'resources';
+      List<String> params = [];
+
+      if (_selectedCategory != 'all') {
+        params.add('category=${Uri.encodeComponent(_selectedCategory)}');
+      }
+
+      if (_selectedFeature.isNotEmpty) {
+        params.add('features[]=${Uri.encodeComponent(_selectedFeature)}');
+      }
+
+      if (params.isNotEmpty) {
+        apiUrl += '?${params.join('&')}';
+      }
+
+      final response = await CallApi().getData(apiUrl);
+      final body = json.decode(response.body);
+
+      if (response.statusCode == 200 && body['success'] == true) {
+        List<dynamic> resourceJson = body['resources'];
+        setState(() {
+          _allResources =
+              resourceJson.map((json) => ResourceModel.fromJson(json)).toList();
+          _isLoading = false;
+          _currentPage = 1; // Reset to first page when filters change
+        });
+      } else {
+        setState(() {
+          _error = body['message'] ?? 'Failed to load resources';
+          _isLoading = false;
+        });
+      }
+    } catch (e) {
+      print('Error fetching resources: $e');
+      setState(() {
+        _error =
+            'An error occurred while fetching resources. Please check your network connection.';
+        _isLoading = false;
+      });
+    }
+  }
+
+  // Pagination logic
+  List<ResourceModel> get _currentResources {
+    final startIndex = (_currentPage - 1) * _resourcesPerPage;
+    final endIndex = startIndex + _resourcesPerPage;
+    return _allResources.take(endIndex).skip(startIndex).toList();
+  }
+
+  int get _totalPages => (_allResources.length / _resourcesPerPage).ceil();
+
+  void _handleCategoryChange(String? categoryValue) {
+    if (categoryValue != null) {
+      setState(() {
+        _selectedCategory = categoryValue;
+      });
+      _fetchResources();
+    }
+  }
+
+  void _handleFeatureChange(String? featureValue) {
+    setState(() {
+      _selectedFeature = featureValue ?? '';
+    });
+    _fetchResources();
+  }
+
+  void _handlePageChange(int pageNumber) {
+    setState(() {
+      _currentPage = pageNumber;
+    });
+  }
+
+  Future<List<ResourceModel>> _fetchResourcesForSearch() async {
     try {
       final response = await CallApi().getData('resources');
       final body = json.decode(response.body);
@@ -615,8 +733,367 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
     if (imageUrl == null || imageUrl.isEmpty) return '';
     if (imageUrl.startsWith('http')) return imageUrl;
     // Change this to your backend's base URL if needed
+    print(imageUrl);
     return 'http://localhost:8000/${imageUrl}';
   }
+
+  Widget _buildFiltersSection() {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Column(
+        children: [
+          // Category and Feature filters in a row
+          Row(
+            children: [
+              // Category Filter
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Category:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _selectedCategory,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items:
+                          _categories.map((category) {
+                            return DropdownMenuItem(
+                              value: category['value'],
+                              child: Text(category['name']!),
+                            );
+                          }).toList(),
+                      onChanged: _handleCategoryChange,
+                      style: TextStyle(color: colorScheme.onSurface),
+                      dropdownColor: colorScheme.surfaceContainerHighest,
+                    ),
+                  ],
+                ),
+              ),
+              const SizedBox(width: 16),
+              // Feature Filter
+              Expanded(
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    Text(
+                      'Feature:',
+                      style: TextStyle(
+                        fontWeight: FontWeight.bold,
+                        color: colorScheme.onSurface,
+                      ),
+                    ),
+                    const SizedBox(height: 8),
+                    DropdownButtonFormField<String>(
+                      value: _selectedFeature.isEmpty ? null : _selectedFeature,
+                      decoration: InputDecoration(
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(6),
+                        ),
+                        contentPadding: const EdgeInsets.symmetric(
+                          horizontal: 12,
+                          vertical: 8,
+                        ),
+                      ),
+                      items: [
+                        const DropdownMenuItem(
+                          value: null,
+                          child: Text('All Features'),
+                        ),
+                        ..._features.map((feature) {
+                          return DropdownMenuItem(
+                            value: feature['id'].toString(),
+                            child: Text(feature['name'] ?? 'Unknown'),
+                          );
+                        }).toList(),
+                      ],
+                      onChanged: _handleFeatureChange,
+                      style: TextStyle(color: colorScheme.onSurface),
+                      dropdownColor: colorScheme.surfaceContainerHighest,
+                    ),
+                  ],
+                ),
+              ),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildPaginationControls() {
+    final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+    if (_totalPages <= 1) return const SizedBox.shrink();
+
+    return Container(
+      padding: const EdgeInsets.all(16.0),
+      child: Row(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          // Previous button
+          ElevatedButton(
+            onPressed:
+                _currentPage > 1
+                    ? () => _handlePageChange(_currentPage - 1)
+                    : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  _currentPage > 1
+                      ? colorScheme.primary
+                      : colorScheme.surfaceVariant,
+              foregroundColor:
+                  _currentPage > 1
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
+            ),
+            child: const Text('Previous'),
+          ),
+          const SizedBox(width: 8),
+
+          // Page numbers
+          ...List.generate(_totalPages, (index) {
+            final pageNumber = index + 1;
+            return Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 4.0),
+              child: ElevatedButton(
+                onPressed:
+                    pageNumber != _currentPage
+                        ? () => _handlePageChange(pageNumber)
+                        : null,
+                style: ElevatedButton.styleFrom(
+                  backgroundColor:
+                      pageNumber == _currentPage
+                          ? colorScheme.primary
+                          : colorScheme.surfaceVariant,
+                  foregroundColor:
+                      pageNumber == _currentPage
+                          ? colorScheme.onPrimary
+                          : colorScheme.onSurfaceVariant,
+                  minimumSize: const Size(40, 40),
+                ),
+                child: Text(pageNumber.toString()),
+              ),
+            );
+          }),
+
+          const SizedBox(width: 8),
+          // Next button
+          ElevatedButton(
+            onPressed:
+                _currentPage < _totalPages
+                    ? () => _handlePageChange(_currentPage + 1)
+                    : null,
+            style: ElevatedButton.styleFrom(
+              backgroundColor:
+                  _currentPage < _totalPages
+                      ? colorScheme.primary
+                      : colorScheme.surfaceVariant,
+              foregroundColor:
+                  _currentPage < _totalPages
+                      ? colorScheme.onPrimary
+                      : colorScheme.onSurfaceVariant,
+            ),
+            child: const Text('Next'),
+          ),
+        ],
+      ),
+    );
+  }
+
+  // Widget _buildFiltersSection() {
+  //   final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+  //   return Container(
+  //     padding: const EdgeInsets.all(16.0),
+  //     child: Column(
+  //       children: [
+  //         // Category and Feature filters in a row
+  //         Row(
+  //           children: [
+  //             // Category Filter
+  //             Expanded(
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Text(
+  //                     'Category:',
+  //                     style: TextStyle(
+  //                       fontWeight: FontWeight.bold,
+  //                       color: colorScheme.onSurface,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 8),
+  //                   DropdownButtonFormField<String>(
+  //                     value: _selectedCategory,
+  //                     decoration: InputDecoration(
+  //                       border: OutlineInputBorder(
+  //                         borderRadius: BorderRadius.circular(6),
+  //                       ),
+  //                       contentPadding: const EdgeInsets.symmetric(
+  //                         horizontal: 12,
+  //                         vertical: 8,
+  //                       ),
+  //                     ),
+  //                     items:
+  //                         _categories.map((category) {
+  //                           return DropdownMenuItem(
+  //                             value: category['value'],
+  //                             child: Text(category['name']!),
+  //                           );
+  //                         }).toList(),
+  //                     onChanged: _handleCategoryChange,
+  //                     style: TextStyle(color: colorScheme.onSurface),
+  //                     dropdownColor: colorScheme.surfaceContainerHighest,
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //             const SizedBox(width: 16),
+  //             // Feature Filter
+  //             Expanded(
+  //               child: Column(
+  //                 crossAxisAlignment: CrossAxisAlignment.start,
+  //                 children: [
+  //                   Text(
+  //                     'Feature:',
+  //                     style: TextStyle(
+  //                       fontWeight: FontWeight.bold,
+  //                       color: colorScheme.onSurface,
+  //                     ),
+  //                   ),
+  //                   const SizedBox(height: 8),
+  //                   DropdownButtonFormField<String>(
+  //                     value: _selectedFeature.isEmpty ? null : _selectedFeature,
+  //                     decoration: InputDecoration(
+  //                       border: OutlineInputBorder(
+  //                         borderRadius: BorderRadius.circular(6),
+  //                       ),
+  //                       contentPadding: const EdgeInsets.symmetric(
+  //                         horizontal: 12,
+  //                         vertical: 8,
+  //                       ),
+  //                     ),
+  //                     items: [
+  //                       const DropdownMenuItem(
+  //                         value: null,
+  //                         child: Text('All Features'),
+  //                       ),
+  //                       ..._features.map((feature) {
+  //                         return DropdownMenuItem(
+  //                           value: feature['id'].toString(),
+  //                           child: Text(feature['name'] ?? 'Unknown'),
+  //                         );
+  //                       }).toList(),
+  //                     ],
+  //                     onChanged: _handleFeatureChange,
+  //                     style: TextStyle(color: colorScheme.onSurface),
+  //                     dropdownColor: colorScheme.surfaceContainerHighest,
+  //                   ),
+  //                 ],
+  //               ),
+  //             ),
+  //           ],
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
+
+  // Widget _buildPaginationControls() {
+  //   final ColorScheme colorScheme = Theme.of(context).colorScheme;
+
+  //   if (_totalPages <= 1) return const SizedBox.shrink();
+
+  //   return Container(
+  //     padding: const EdgeInsets.all(16.0),
+  //     child: Row(
+  //       mainAxisAlignment: MainAxisAlignment.center,
+  //       children: [
+  //         // Previous button
+  //         ElevatedButton(
+  //           onPressed:
+  //               _currentPage > 1
+  //                   ? () => _handlePageChange(_currentPage - 1)
+  //                   : null,
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor:
+  //                 _currentPage > 1
+  //                     ? colorScheme.primary
+  //                     : colorScheme.surfaceVariant,
+  //             foregroundColor:
+  //                 _currentPage > 1
+  //                     ? colorScheme.onPrimary
+  //                     : colorScheme.onSurfaceVariant,
+  //           ),
+  //           child: const Text('Previous'),
+  //         ),
+  //         const SizedBox(width: 8),
+
+  //         // Page numbers
+  //         ...List.generate(_totalPages, (index) {
+  //           final pageNumber = index + 1;
+  //           return Padding(
+  //             padding: const EdgeInsets.symmetric(horizontal: 4.0),
+  //             child: ElevatedButton(
+  //               onPressed:
+  //                   pageNumber != _currentPage
+  //                       ? () => _handlePageChange(pageNumber)
+  //                       : null,
+  //               style: ElevatedButton.styleFrom(
+  //                 backgroundColor:
+  //                     pageNumber == _currentPage
+  //                         ? colorScheme.primary
+  //                         : colorScheme.surfaceVariant,
+  //                 foregroundColor:
+  //                     pageNumber == _currentPage
+  //                         ? colorScheme.onPrimary
+  //                         : colorScheme.onSurfaceVariant,
+  //                 minimumSize: const Size(40, 40),
+  //               ),
+  //               child: Text(pageNumber.toString()),
+  //             ),
+  //           );
+  //         }),
+
+  //         const SizedBox(width: 8),
+  //         // Next button
+  //         ElevatedButton(
+  //           onPressed:
+  //               _currentPage < _totalPages
+  //                   ? () => _handlePageChange(_currentPage + 1)
+  //                   : null,
+  //           style: ElevatedButton.styleFrom(
+  //             backgroundColor:
+  //                 _currentPage < _totalPages
+  //                     ? colorScheme.primary
+  //                     : colorScheme.surfaceVariant,
+  //             foregroundColor:
+  //                 _currentPage < _totalPages
+  //                     ? colorScheme.onPrimary
+  //                     : colorScheme.onSurfaceVariant,
+  //           ),
+  //           child: const Text('Next'),
+  //         ),
+  //       ],
+  //     ),
+  //   );
+  // }
 
   Widget _buildSearchResults() {
     final ColorScheme colorScheme = Theme.of(context).colorScheme;
@@ -675,7 +1152,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   _isSearching = false; // Close search bar as well
                 });
                 _resourcesFuture =
-                    _fetchResources(); // Re-fetch all original resources
+                    _fetchResourcesForSearch(); // Re-fetch all original resources
               },
               style: ElevatedButton.styleFrom(
                 backgroundColor: colorScheme.secondary,
@@ -719,41 +1196,68 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
         },
       );
     }
-    // If not searching, display all resources
+    // If not searching, display filtered resources with pagination
     else if (!_isSearching) {
-      return FutureBuilder<List<ResourceModel>>(
-        future: _resourcesFuture,
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return Center(
-              child: CircularProgressIndicator(color: colorScheme.primary),
-            );
-          } else if (snapshot.hasError) {
-            return Center(
-              child: Text(
-                'Error: ${snapshot.error}',
-                style: TextStyle(color: colorScheme.error),
+      if (_isLoading) {
+        return Center(
+          child: CircularProgressIndicator(color: colorScheme.primary),
+        );
+      } else if (_error != null) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(Icons.error_outline, size: 64, color: colorScheme.error),
+              const SizedBox(height: 16),
+              Text(
+                _error!,
+                style: TextStyle(fontSize: 16, color: colorScheme.error),
+                textAlign: TextAlign.center,
               ),
-            );
-          } else if (!snapshot.hasData || snapshot.data!.isEmpty) {
-            return Center(
-              child: Text(
-                'No resources available.',
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: _fetchResources,
+                child: const Text('Retry'),
+              ),
+            ],
+          ),
+        );
+      } else if (_allResources.isEmpty) {
+        return Center(
+          child: Column(
+            mainAxisAlignment: MainAxisAlignment.center,
+            children: [
+              Icon(
+                Icons.inbox_outlined,
+                size: 64,
+                color: colorScheme.onSurfaceVariant,
+              ),
+              const SizedBox(height: 16),
+              Text(
+                'No resources available for this category and features.',
                 style: TextStyle(fontSize: 18, color: colorScheme.onSurface),
+                textAlign: TextAlign.center,
               ),
-            );
-          } else {
-            return ListView.builder(
-              itemCount: snapshot.data!.length,
-              padding: const EdgeInsets.all(8.0),
-              itemBuilder: (context, index) {
-                final resource = snapshot.data![index];
-                return _buildResourceCard(resource);
-              },
-            );
-          }
-        },
-      );
+            ],
+          ),
+        );
+      } else {
+        return Column(
+          children: [
+            Expanded(
+              child: ListView.builder(
+                itemCount: _currentResources.length,
+                padding: const EdgeInsets.all(8.0),
+                itemBuilder: (context, index) {
+                  final resource = _currentResources[index];
+                  return _buildResourceCard(resource);
+                },
+              ),
+            ),
+            _buildPaginationControls(),
+          ],
+        );
+      }
     }
 
     return const SizedBox.shrink();
@@ -774,7 +1278,11 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
             Navigator.push(
               context,
               MaterialPageRoute(
-                builder: (context) => ResourceDetails(resourceId: resource.id,resource: resource),
+                builder:
+                    (context) => ResourceDetails(
+                      resourceId: resource.id,
+                      resource: resource,
+                    ),
               ),
             );
           },
@@ -947,13 +1455,54 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                     ),
                   ],
                 )
-                : Text(
-                  "Resources",
-                  style: TextStyle(
-                    fontSize: 20,
-                    fontWeight: FontWeight.bold,
-                    color: colorScheme.onPrimary, // Text on app bar color
-                  ),
+                : Row(
+                  children: [
+                    Expanded(
+                      child: Text(
+                        "Available Resources",
+                        style: TextStyle(
+                          fontSize: 20,
+                          fontWeight: FontWeight.bold,
+                          color: colorScheme.onPrimary, // Text on app bar color
+                        ),
+                      ),
+                    ),
+                    if (_isAdmin)
+                      ElevatedButton.icon(
+                        onPressed: () {
+                          // TODO: Navigate to create resource page
+                          ScaffoldMessenger.of(context).showSnackBar(
+                            SnackBar(
+                              content: const Text(
+                                'Create Resource feature coming soon!',
+                              ),
+                              backgroundColor: colorScheme.primary,
+                            ),
+                          );
+                        },
+                        icon: Icon(
+                          Icons.add,
+                          color: colorScheme.onPrimary,
+                          size: 20,
+                        ),
+                        label: Text(
+                          'Create Resource',
+                          style: TextStyle(
+                            color: colorScheme.onPrimary,
+                            fontSize: 14,
+                            fontWeight: FontWeight.bold,
+                          ),
+                        ),
+                        style: ElevatedButton.styleFrom(
+                          backgroundColor: Colors.transparent,
+                          elevation: 0,
+                          padding: const EdgeInsets.symmetric(
+                            horizontal: 12,
+                            vertical: 8,
+                          ),
+                        ),
+                      ),
+                  ],
                 ),
         onSearchPressed: _toggleSearch,
         isSearching: _isSearching,
@@ -1110,6 +1659,7 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                 );
               },
             ),
+            Divider(),
             ListTile(
               title: Text('Logout', style: TextStyle(color: colorScheme.error)),
               leading: Icon(Icons.logout, color: colorScheme.error),
@@ -1118,7 +1668,14 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
           ],
         ),
       ),
-      body: _buildSearchResults(),
+      body: Column(
+        children: [
+          // Filters section (only show when not searching)
+          if (!_isSearching) _buildFiltersSection(),
+          // Main content
+          Expanded(child: _buildSearchResults()),
+        ],
+      ),
     );
   }
 }

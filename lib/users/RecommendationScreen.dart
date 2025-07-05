@@ -975,7 +975,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
       bottomNavigationBar: Bottombar(currentIndex: 0),
       appBar: MyAppBar(
         titleWidget: const Text(
-          "Home",
+          "Recommendations",
           style: TextStyle(
             fontSize: 20,
             fontWeight: FontWeight.bold,
@@ -1014,7 +1014,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
             ),
             ListTile(
               title: const Text('Home'),
-              leading: const Icon(Icons.home, color: Colors.blueAccent),
+              leading: const Icon(Icons.home, ),
               onTap: () {
                 Navigator.pop(context);
               },
