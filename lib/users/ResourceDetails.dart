@@ -1269,7 +1269,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
   Widget _buildResourceInfo() {
     return Column(
-      crossAxisAlignment: CrossAxisAlignment.center,
+      crossAxisAlignment: CrossAxisAlignment.start,
       children: [
         const SizedBox(height: 20),
         Text(
@@ -1281,9 +1281,15 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           ),
         ),
         const SizedBox(height: 10),
-        Text(
-          'Location: ${widget.resource.description}',
-          style: const TextStyle(fontSize: 20, color: Colors.black87),
+        ListTile(
+          leading: const Icon(Icons.location_on, color: Colors.blue),
+          title: Text(
+            widget.resource.location,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
         ),
       ],
     );

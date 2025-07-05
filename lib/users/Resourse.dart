@@ -1319,82 +1319,117 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
                   ),
                 ),
               Padding(
-                padding: const EdgeInsets.all(12.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text(
-                      resource.name,
-                      style: TextStyle(
-                        fontSize: 22,
-                        fontWeight: FontWeight.bold,
-                        color: colorScheme.primary,
-                      ),
-                    ),
-                    const SizedBox(height: 10),
-                    ClipRRect(
-                      borderRadius: BorderRadius.circular(12),
-                      child:
-                          resource.imageUrl != null &&
-                                  resource.imageUrl!.isNotEmpty
-                              ? Image.network(
-                                resource.imageUrl!,
-                                height: 150,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
-                                errorBuilder:
-                                    (context, error, stackTrace) => Image.asset(
-                                      'assets/images/default.png',
-                                      height: 150,
-                                      width: double.infinity,
-                                      fit: BoxFit.cover,
-                                    ),
-                              )
-                              : Image.asset(
-                                'assets/images/default.png',
-                                height: 150,
-                                width: double.infinity,
-                                fit: BoxFit.cover,
+                padding: const EdgeInsets.all(16.0),
+                child: Card(
+                  elevation: 4,
+                  shape: RoundedRectangleBorder(
+                    borderRadius: BorderRadius.circular(8),
+                  ),
+                  child: Padding(
+                    padding: const EdgeInsets.all(8.0),
+                    child: Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      children: [
+                        Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          children: [
+                            Text(
+                              resource.name,
+                              style: TextStyle(
+                                fontSize: 22,
+                                fontWeight: FontWeight.bold,
+                                color: Colors.green,
                               ),
-                    ),
-                    const SizedBox(height: 10),
-
-                    if (resource.location.isNotEmpty)
-                      Text(
-                        'Location: ${resource.location}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: colorScheme.onSurface,
+                            ),
+                          ],
                         ),
-                      ),
-                    const SizedBox(height: 5),
-                    if (resource.capacity != null && resource.capacity! > 0)
-                      Text(
-                        'Capacity: ${resource.capacity.toString()}',
-                        style: TextStyle(
-                          fontSize: 18,
-                          color: colorScheme.onSurface,
+                        const Divider(
+                          color: Colors.green,
+                          thickness: 2,
                         ),
-                      ),
-                    const SizedBox(height: 5),
-
-                    if (resource.description != null &&
-                        resource.description!.isNotEmpty)
-                      Padding(
-                        padding: const EdgeInsets.only(top: 5.0),
-                        child: Text(
-                          "Description: ${resource.description!}",
-                          style: TextStyle(
-                            fontSize: 16,
-                            color: colorScheme.onSurface.withOpacity(
-                              0.7,
-                            ), // Less prominent text
+                        const SizedBox(height: 10),
+                        ClipRRect(
+                          borderRadius: BorderRadius.circular(12),
+                          child:
+                              resource.imageUrl != null &&
+                                      resource.imageUrl!.isNotEmpty
+                                  ? Image.network(
+                                    resource.imageUrl!,
+                                    height: 150,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                    errorBuilder:
+                                        (context, error, stackTrace) => Image.asset(
+                                          'assets/images/default.png',
+                                          height: 150,
+                                          width: double.infinity,
+                                          fit: BoxFit.cover,
+                                        ),
+                                  )
+                                  : Image.asset(
+                                    'assets/images/default.png',
+                                    height: 150,
+                                    width: double.infinity,
+                                    fit: BoxFit.cover,
+                                  ),
+                        ),
+                        const SizedBox(height: 10),
+                    
+                        if (resource.location.isNotEmpty)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.location_on,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            title: Text(
+                              resource.location,
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
                           ),
-                          maxLines: 2,
-                          overflow: TextOverflow.ellipsis,
-                        ),
-                      ),
-                  ],
+                        const SizedBox(height: 5),
+                        if (resource.capacity != null && resource.capacity! > 0)
+                          ListTile(
+                            contentPadding: EdgeInsets.zero,
+                            leading: Icon(
+                              Icons.people,
+                              color: colorScheme.onSurfaceVariant,
+                            ),
+                            title: Text(
+                              'Capacity: ${resource.capacity.toString()}',
+                              style: TextStyle(
+                                fontSize: 18,
+                                color: colorScheme.onSurface,
+                              ),
+                            ),
+                          ),
+                        const SizedBox(height: 5),
+                    
+                        if (resource.description != null &&
+                            resource.description!.isNotEmpty)
+                          Padding(
+                            padding: const EdgeInsets.only(top: 5.0),
+                            child: ListTile(
+                              contentPadding: EdgeInsets.zero,
+                              leading: Icon(
+                                Icons.description,
+                                color: colorScheme.onSurfaceVariant,
+                              ),
+                              title: Text(
+                                resource.description!,
+                                style: TextStyle(
+                                  fontSize: 16,
+                                  color: colorScheme.onSurfaceVariant,
+                                ),
+                              ),
+                            ),
+                          ),
+                      ],
+                    ),
+                  ),
                 ),
               ),
             ],
