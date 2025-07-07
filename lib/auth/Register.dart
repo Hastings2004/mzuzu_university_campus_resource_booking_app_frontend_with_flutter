@@ -261,59 +261,59 @@ class _ApiRegisterState extends State<Register> {
                             return null;
                           },
                         ),
-                        const SizedBox(height: 10),
-                        //Dropdown for User Type
-                        Padding(
-                          padding: const EdgeInsets.symmetric(
-                            horizontal: 25.0,
-                          ), // Padding is applied to the Column's parent, so this can be 0.0 or adjusted as needed
-                          child: Container(
-                            decoration: BoxDecoration(
-                              border: Border.all(
-                                color: Colors.green,
-                                width: 1.5,
-                              ),
-                              borderRadius: BorderRadius.circular(15.0),
-                              color: Colors.grey.shade200,
-                            ),
-                            child: DropdownButtonHideUnderline(
-                              child: DropdownButton<String>(
-                                value: _userType,
-                                hint: const Padding(
-                                  padding: EdgeInsets.symmetric(
-                                    horizontal: 12.0,
-                                  ), // Adjust padding for hint
-                                  child: Text('Select User Type'),
-                                ),
-                                isExpanded: true,
-                                icon: const Icon(Icons.arrow_drop_down),
-                                style: TextStyle(
-                                  color: Colors.grey[700],
-                                  fontSize: 16,
-                                ),
-                                onChanged: (String? newValue) {
-                                  setState(() {
-                                    _userType = newValue;
-                                  });
-                                },
-                                items:
-                                    _userTypes.map<DropdownMenuItem<String>>((
-                                      String value,
-                                    ) {
-                                      return DropdownMenuItem<String>(
-                                        value: value,
-                                        child: Padding(
-                                          padding: const EdgeInsets.symmetric(
-                                            horizontal: 12.0,
-                                          ), // Adjust padding for items
-                                          child: Text(value),
-                                        ),
-                                      );
-                                    }).toList(),
-                              ),
-                            ),
-                          ),
-                        ),
+                        // const SizedBox(height: 10),
+                        // //Dropdown for User Type
+                        // Padding(
+                        //   padding: const EdgeInsets.symmetric(
+                        //     horizontal: 25.0,
+                        //   ), // Padding is applied to the Column's parent, so this can be 0.0 or adjusted as needed
+                        //   child: Container(
+                        //     decoration: BoxDecoration(
+                        //       border: Border.all(
+                        //         color: Colors.green,
+                        //         width: 1.5,
+                        //       ),
+                        //       borderRadius: BorderRadius.circular(15.0),
+                        //       color: Colors.grey.shade200,
+                        //     ),
+                        //     child: DropdownButtonHideUnderline(
+                        //       child: DropdownButton<String>(
+                        //         value: _userType,
+                        //         hint: const Padding(
+                        //           padding: EdgeInsets.symmetric(
+                        //             horizontal: 12.0,
+                        //           ), // Adjust padding for hint
+                        //           child: Text('Select User Type'),
+                        //         ),
+                        //         isExpanded: true,
+                        //         icon: const Icon(Icons.arrow_drop_down),
+                        //         style: TextStyle(
+                        //           color: Colors.grey[700],
+                        //           fontSize: 16,
+                        //         ),
+                        //         onChanged: (String? newValue) {
+                        //           setState(() {
+                        //             _userType = newValue;
+                        //           });
+                        //         },
+                        //         items:
+                        //             _userTypes.map<DropdownMenuItem<String>>((
+                        //               String value,
+                        //             ) {
+                        //               return DropdownMenuItem<String>(
+                        //                 value: value,
+                        //                 child: Padding(
+                        //                   padding: const EdgeInsets.symmetric(
+                        //                     horizontal: 12.0,
+                        //                   ), // Adjust padding for items
+                        //                   child: Text(value),
+                        //                 ),
+                        //               );
+                        //             }).toList(),
+                        //       ),
+                        //     ),
+                        //   ),
+                        // ),
                         const SizedBox(height: 10),
                         MyTextField(
                           controller: emailController,

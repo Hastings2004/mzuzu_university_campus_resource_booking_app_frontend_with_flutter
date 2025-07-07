@@ -25,6 +25,15 @@ class CallApi {
     );
   }
 
+  //delete 
+  deleteData(apiUrl) async {
+    var fullUrl = _url + apiUrl;
+    return await http.delete(
+      Uri.parse(fullUrl),
+      headers: await _setHeaders(), // Await headers as they now fetch token
+    );
+  }
+
   // Method for POST requests
   postData(data, apiUrl) async {
     var fullUrl = _url + apiUrl;

@@ -2,6 +2,7 @@ import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/terms.dart';
 import 'package:resource_booking_app/users/Home.dart';
+import 'package:resource_booking_app/users/SecuritySettings.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
@@ -699,105 +700,29 @@ class _SettingsScreenState extends State<SettingsScreen> {
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
-            Container(
-              decoration: BoxDecoration(
-                gradient: const LinearGradient(
-                  begin: Alignment.topLeft,
-                  end: Alignment.bottomRight,
-                  colors: [Colors.green, Colors.green],
-                ),
-                borderRadius: BorderRadius.circular(20),
-                boxShadow: [
-                  BoxShadow(
-                    color: Colors.blue.withOpacity(0.3),
-                    blurRadius: 10,
-                    offset: const Offset(0, 5),
-                  ),
-                ],
-              ),
-              child: Padding(
-                padding: const EdgeInsets.all(20.0),
-                child: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Row(
-                      children: [
-                        Container(
-                          padding: const EdgeInsets.all(12),
-                          decoration: BoxDecoration(
-                            color: Colors.white.withOpacity(0.2),
-                            borderRadius: BorderRadius.circular(12),
-                          ),
-                          child: const Icon(
-                            Icons.person,
-                            color: Colors.white,
-                            size: 24,
-                          ),
-                        ),
-                        const SizedBox(width: 15),
-                        const Expanded(
-                          child: Column(
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text(
-                                "Current User",
-                                style: TextStyle(
-                                  fontSize: 16,
-                                  fontWeight: FontWeight.w500,
-                                  color: Colors.white70,
-                                ),
-                              ),
-                              SizedBox(height: 4),
-                            ],
-                          ),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(height: 15),
-                    Container(
-                      padding: const EdgeInsets.all(15),
-                      decoration: BoxDecoration(
-                        color: Colors.white.withOpacity(0.1),
-                        borderRadius: BorderRadius.circular(12),
-                        border: Border.all(
-                          color: Colors.white.withOpacity(0.2),
-                        ),
-                      ),
-                      child: Row(
-                        children: [
-                          const Icon(
-                            Icons.email,
-                            color: Colors.white70,
-                            size: 20,
-                          ),
-                          const SizedBox(width: 10),
-                          Flexible(
-                            child: Text(
-                              _userEmail != null
-                                  ? _userEmail!
-                                  : "Loading user email...",
-                              style: const TextStyle(
-                                fontSize: 16,
-                                fontWeight: FontWeight.w500,
-                                color: Colors.white,
-                              ),
-                            ),
-                          ),
-                        ],
-                      ),
-                    ),
-                  ],
-                ),
-              ),
-            ),
-
+            
             const SizedBox(height: 30),
 
             // Account Settings Section
+            
             _buildSettingsSection(
               title: "Account Settings",
               icon: Icons.account_circle,
               children: [
+                _buildSettingsTile(
+                  icon: Icons.policy,
+                  title: "Security Settings",
+                  subtitle: "Your security settings",
+                  onTap: () {
+                    Navigator.pushReplacement(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => const SecuritySettingsScreen(),
+                      ),
+                    );
+                  },
+                ),
+                
                 _buildSettingsTile(
                   icon: Icons.email,
                   title: "Change Email",
@@ -975,13 +900,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
                     );
                   },
                 ),
-                _buildSettingsTile(
-                  icon: Icons.delete_forever,
-                  title: "Delete Account",
-                  subtitle: "Permanently delete your account",
-                  color: Colors.red,
-                  onTap: _deleteAccount,
-                ),
+                
               ],
             ),
 
@@ -1102,11 +1021,11 @@ class _SettingsScreenState extends State<SettingsScreen> {
                 _buildSettingsTile(
                   icon: Icons.info,
                   title: "About App",
-                  subtitle: "Version 1.0.1 • Developed by Hastings",
+                  subtitle: "Version 1.0.1 • Developed by Hastings Hastings",
                   onTap: () {
                     _showInfoDialog(
                       "About Resource Booking App",
-                      "Version: 1.0.0\nDeveloped by Hastings.\nThis app allows users to book resources on campus easily and efficiently.",
+                      "Version: 1.0.1\nDeveloped by Hastings.\nThis app allows users to book resources on campus easily and efficiently.",
                     );
                   },
                 ),
