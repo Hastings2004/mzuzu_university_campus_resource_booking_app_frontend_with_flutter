@@ -3,7 +3,6 @@ import 'package:resource_booking_app/auth/Api.dart'; // Assuming this handles ht
 import 'package:resource_booking_app/components/Button.dart';
 import 'package:resource_booking_app/components/TextField.dart';
 import 'dart:convert';
-import 'package:resource_booking_app/auth/EmailVerification.dart';
 import 'package:shared_preferences/shared_preferences.dart'; 
 
 class Register extends StatefulWidget {
@@ -22,7 +21,6 @@ class _ApiRegisterState extends State<Register> {
   final lastNameController = TextEditingController();
 
   String? _userType; // New variable for user type (student/staff)
-  final List<String> _userTypes = ['Student', 'Staff'];
   String? _errorMessage; // To display error messages below the form
 
   @override

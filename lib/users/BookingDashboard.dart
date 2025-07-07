@@ -26,7 +26,7 @@ class _BookingDashboardState extends State<BookingDashboard>
     with SingleTickerProviderStateMixin {
   bool _loading = true;
   String _error = '';
-  int _activeTabIndex = 0; // This variable isn't used after refactor, can remove if not needed elsewhere.
+  // This variable isn't used after refactor, can remove if not needed elsewhere.
 
   Map<String, dynamic> _dashboardData = {
     'recentBookings': <Booking>[],
