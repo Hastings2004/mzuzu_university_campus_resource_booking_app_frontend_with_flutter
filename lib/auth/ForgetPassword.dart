@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/components/TextField.dart';
-import 'package:resource_booking_app/auth/Api.dart'; // Import your API service
+import 'package:resource_booking_app/auth/Api.dart'; 
 import 'dart:convert'; // For json.decode
 
 class Forgetpassword extends StatefulWidget {
@@ -12,7 +12,7 @@ class Forgetpassword extends StatefulWidget {
 
 class _ForgetpasswordState extends State<Forgetpassword> {
   final emailController = TextEditingController();
-  bool _isLoading = false; // To show a loading indicator
+  bool _isLoading = false;
 
   @override
   void dispose() {
@@ -40,8 +40,8 @@ class _ForgetpasswordState extends State<Forgetpassword> {
       final body = json.decode(res.body);
 
       if (res.statusCode == 200 || res.statusCode == 201) {
-        // Assuming your API returns success if the email is sent
-        if (body['success'] == true) { // Adjust 'success' key based on your API response
+        
+        if (body['success'] == true) { 
           _showSuccessDialog(
               "Password reset link sent to your email. Please check your inbox (and spam folder).");
         } else {
@@ -49,7 +49,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
           _showErrorDialog(body['message'] ?? "Failed to send password reset link. Please try again.");
         }
       } else {
-        // Handle other HTTP status codes (e.g., 400, 404, 500)
+        // Handle other HTTP status codes
         String errorMessage = "Failed to send password reset link. Server error.";
         if (body.containsKey('message')) {
           errorMessage = body['message'];
@@ -63,7 +63,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
       _showErrorDialog("An error occurred. Please check your internet connection and try again.");
     } finally {
       setState(() {
-        _isLoading = false; // Hide loading indicator
+        _isLoading = false; 
       });
     }
   }
@@ -98,9 +98,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
           actions: [
             TextButton(
               onPressed: () {
-                Navigator.pop(context); // Close the dialog
-                // Optionally, navigate back to the login screen
-                // Navigator.pop(context); // uncomment if you want to go back to login after success
+                Navigator.pop(context); 
               },
               child: const Text("OK"),
             ),
@@ -126,7 +124,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
         ),
       ),
       body: Center(
-        child: SingleChildScrollView( // Added SingleChildScrollView to prevent overflow on small screens
+        child: SingleChildScrollView( 
           child: Column(
             mainAxisAlignment: MainAxisAlignment.center,
             children: [
@@ -144,7 +142,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
                 controller: emailController,
                 obscureText: false,
                 prefixIcon: const Icon(Icons.email),
-                keyboardType: TextInputType.emailAddress, // Added keyboard type
+                keyboardType: TextInputType.emailAddress, 
                 validator: (value) {
                       if (value == null || value.isEmpty) {
                         return 'Email is required.';
@@ -154,7 +152,7 @@ class _ForgetpasswordState extends State<Forgetpassword> {
               ),
               const SizedBox(height: 20),
               _isLoading
-                  ? const CircularProgressIndicator() // Show loading indicator
+                  ? const CircularProgressIndicator() 
                   : MaterialButton(
                       onPressed: passwordReset,
                       color: const Color.fromARGB(255, 17, 105, 20),
