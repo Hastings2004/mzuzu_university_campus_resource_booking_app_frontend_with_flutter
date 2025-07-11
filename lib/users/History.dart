@@ -32,7 +32,7 @@ class _HistoryScreenState extends State<HistoryScreen> {
   }
 
   Future<List<Booking>> _fetchBookingHistory() async {
-    final response = await CallApi().getData('bookings/user');
+    final response = await CallApi().getData('booking-history');
     if (response.statusCode == 200) {
       final List<dynamic> bookingData = json.decode(response.body);
       return bookingData.map((data) => Booking.fromJson(data)).toList();

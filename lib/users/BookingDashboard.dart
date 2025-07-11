@@ -768,7 +768,7 @@ class _BookingDashboardState extends State<BookingDashboard>
             ),
           ),
         ),
-        drawer: _buildDrawer(), // Use the new _buildDrawer
+        drawer: _buildDrawer(), 
         bottomNavigationBar: const Bottombar(currentIndex: 0),
         body: Center(
           child: Column(
