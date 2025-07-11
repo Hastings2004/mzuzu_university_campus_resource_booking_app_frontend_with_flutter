@@ -4,18 +4,10 @@ import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/components/MyDrawer.dart';
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/History.dart';
-import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/Profile.dart'; 
 import 'package:resource_booking_app/users/ResourceDetails.dart';
-import 'package:resource_booking_app/models/resource_model.dart'; // Make sure this path is correct
-import 'package:intl/intl.dart'; // For date formatting
-import 'package:resource_booking_app/users/Resourse.dart';
+import 'package:resource_booking_app/models/resource_model.dart'; 
+import 'package:intl/intl.dart'; 
 import 'dart:convert';
-
-import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/users/user_issues.dart';
 
 class RecommendationScreen extends StatefulWidget {
   const RecommendationScreen({super.key});

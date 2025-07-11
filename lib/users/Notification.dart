@@ -1,16 +1,11 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/components/MyDrawer.dart';
-import 'package:resource_booking_app/models/notification.dart'; // Ensure this path is correct
+import 'package:resource_booking_app/models/notification.dart'; 
 import 'package:shared_preferences/shared_preferences.dart';
-import 'dart:convert'; // For json.decode
-import 'package:resource_booking_app/auth/Api.dart'; //API service
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
-import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/users/History.dart';
+import 'dart:convert'; 
+import 'package:resource_booking_app/auth/Api.dart'; 
+
 
 class NotificationScreen extends StatefulWidget {
   const NotificationScreen({super.key});

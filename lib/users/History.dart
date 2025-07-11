@@ -6,12 +6,6 @@ import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:resource_booking_app/models/booking.dart';
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
-import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart'; 
 import 'package:intl/intl.dart';
 
@@ -40,17 +34,6 @@ class _HistoryScreenState extends State<HistoryScreen> {
     } else {
       throw Exception('Failed to load booking history');
     }
-  }
-
- 
-  Future<void> _handleLogout(BuildContext context) async {
-    SharedPreferences prefs = await SharedPreferences.getInstance();
-    await prefs.clear(); 
-    Navigator.pushAndRemoveUntil(
-      context,
-      MaterialPageRoute(builder: (context) => const Auth()), 
-      (Route<dynamic> route) => false, 
-    );
   }
 
   @override

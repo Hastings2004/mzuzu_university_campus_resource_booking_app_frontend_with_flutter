@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/components/MyDrawer.dart';
-import 'package:resource_booking_app/users/user_issues.dart';
 import 'dart:convert';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'package:intl/intl.dart';
@@ -9,13 +8,7 @@ import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/models/resource_model.dart';
-import 'package:resource_booking_app/users/Notification.dart';
 import 'package:resource_booking_app/users/ResourceDetails.dart';
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Profile.dart';
-import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/users/History.dart';
 
 class ResourcesScreen extends StatefulWidget {
   const ResourcesScreen({super.key});

@@ -7,12 +7,7 @@ import 'package:http/http.dart' as http;
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/users/History.dart';
+
 
 class ReportIssuePage extends StatefulWidget {
   final int resourceId;

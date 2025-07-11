@@ -11,13 +11,7 @@ import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
 import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:resource_booking_app/models/resource_model.dart';
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/Profile.dart';
 import 'package:resource_booking_app/users/Resourse.dart';
-import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 class ResourceDetails extends StatefulWidget {
