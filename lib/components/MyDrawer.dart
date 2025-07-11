@@ -10,11 +10,6 @@ import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-// Import your main home screen or the screen that uses this drawer,
-// so we can navigate back to it without creating a new instance if already there.
-// For demonstration, let's assume your dashboard is the "home" equivalent.
-import 'package:resource_booking_app/users/BookingDashboard.dart'; // Or your actual home screen
-
 class Mydrawer extends StatefulWidget {
   const Mydrawer({super.key});
 
