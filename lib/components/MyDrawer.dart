@@ -10,35 +10,45 @@ import 'package:resource_booking_app/users/Settings.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
-class Mydrawer extends StatelessWidget {
+// Import your main home screen or the screen that uses this drawer,
+// so we can navigate back to it without creating a new instance if already there.
+// For demonstration, let's assume your dashboard is the "home" equivalent.
+import 'package:resource_booking_app/users/BookingDashboard.dart'; // Or your actual home screen
+
+class Mydrawer extends StatefulWidget {
   const Mydrawer({super.key});
 
+  @override
+  State<Mydrawer> createState() => _MydrawerState();
+}
+
+class _MydrawerState extends State<Mydrawer> {
+  // Track the selected index to highlight the current drawer item
+  int? _selectedIndex;
+  
   void logout(BuildContext context) async {
-    // Show a confirmation dialog
-    final bool confirmLogout =
-        await showDialog(
+    final bool confirmLogout = await showDialog(
           context: context,
-          builder:
-              (context) => AlertDialog(
-                title: const Text('Confirm Logout'),
-                content: const Text('Are you sure you want to log out?'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed: () => Navigator.of(context).pop(false),
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed: () => Navigator.of(context).pop(true),
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                    ),
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
+          builder: (context) => AlertDialog(
+            title: const Text('Confirm Logout'),
+            content: const Text('Are you sure you want to log out?'),
+            actions: <Widget>[
+              TextButton(
+                onPressed: () => Navigator.of(context).pop(false),
+                child: const Text('Cancel'),
               ),
+              ElevatedButton(
+                onPressed: () => Navigator.of(context).pop(true),
+                style: ElevatedButton.styleFrom(
+                  backgroundColor: Colors.red,
+                ),
+                child: const Text(
+                  'Logout',
+                  style: TextStyle(color: Colors.white),
+                ),
+              ),
+            ],
+          ),
         ) ??
         false;
 
@@ -50,9 +60,30 @@ class Mydrawer extends StatelessWidget {
     }
   }
 
+  // Helper method to navigate and update selected index
+  void _onItemTap(BuildContext context, Widget screen, int index) {
+    setState(() {
+      _selectedIndex = index;
+    });
+      Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(builder: (context) => screen),
+    );
+  }
 
   @override
   Widget build(BuildContext context) {
+    final currentRoute = ModalRoute.of(context)?.settings.name;
+    if (_selectedIndex == null) {
+      if (currentRoute == '/') { 
+        _selectedIndex = 0; 
+      } else if (currentRoute == '/profile') { 
+         _selectedIndex = 1; 
+      }
+      
+    }
+
+
     return Drawer(
       child: ListView(
         padding: EdgeInsets.zero,
@@ -61,6 +92,7 @@ class Mydrawer extends StatelessWidget {
             decoration: BoxDecoration(color: Color.fromARGB(255, 20, 148, 24)),
             child: Column(
               children: [
+                
                 Image(image: AssetImage("assets/images/logo.png"), height: 50),
                 Text(
                   'Mzuzu University',
@@ -77,112 +109,76 @@ class Mydrawer extends StatelessWidget {
               ],
             ),
           ),
-          ListTile(
-            title: const Text('Home'),
-            leading: const Icon(Icons.home, color: Colors.blueAccent),
-            onTap: () {
-              Navigator.pop(context);
-            },
+
+          _buildDrawerItem(
+            context,
+            Icons.home,
+            'Home',
+            0, // Index 0
+            const BookingDashboard(), 
           ),
-          ListTile(
-            title: const Text('Profile'),
-            leading: const Icon(Icons.person),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const ProfileScreen()),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.person,
+            'Profile',
+            1, // Index 1
+            const ProfileScreen(),
           ),
-          ListTile(
-            title: const Text('Resources'),
-            leading: const Icon(Icons.grid_view),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const ResourcesScreen(),
-                ),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.grid_view,
+            'Resources',
+            2, // Index 2
+            const ResourcesScreen(),
           ),
-          ListTile(
-            title: const Text('Bookings'),
-            leading: const Icon(Icons.book_online),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => BookingScreen()),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.book_online,
+            'Bookings',
+            3, // Index 3
+            BookingScreen(),
           ),
-          ListTile(
-            title: const Text('Booking Dashboard'),
-            leading: const Icon(Icons.dashboard),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BookingDashboard(),
-                ),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.dashboard,
+            'Booking Dashboard',
+            4, // Index 4
+            const BookingDashboard(), 
           ),
-          ListTile(
-            title: const Text('Booking Calendar'),
-            leading: const Icon(Icons.calendar_month),
-            onTap: () {
-              Navigator.push(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const BookingCalendar(),
-                ),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.calendar_month,
+            'Booking Calendar',
+            5, // Index 5
+            const BookingCalendar(),
           ),
-          ListTile(
-            title: const Text('Notifications'),
-            leading: const Icon(Icons.notifications),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const NotificationScreen(),
-                ),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.notifications,
+            'Notifications',
+            6, // Index 6
+            const NotificationScreen(),
           ),
-          ListTile(
-            title: const Text('Report Issue'),
-            leading: const Icon(Icons.report),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(
-                  builder: (context) => const IssueManagementScreen(),
-                ),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.report,
+            'Report Issue',
+            7, // Index 7
+            const IssueManagementScreen(),
           ),
-          ListTile(
-            title: const Text('Settings'),
-            leading: const Icon(Icons.settings),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const SettingsScreen()),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.settings,
+            'Settings',
+            8, // Index 8
+            const SettingsScreen(),
           ),
-          ListTile(
-            title: const Text('History'),
-            leading: const Icon(Icons.history),
-            onTap: () {
-              Navigator.pushReplacement(
-                context,
-                MaterialPageRoute(builder: (context) => const HistoryScreen()),
-              );
-            },
+          _buildDrawerItem(
+            context,
+            Icons.history,
+            'History',
+            9, // Index 9
+            const HistoryScreen(),
           ),
           const Divider(),
           ListTile(
@@ -192,6 +188,32 @@ class Mydrawer extends StatelessWidget {
           ),
         ],
       ),
+    );
+  }
+
+  Widget _buildDrawerItem(
+      BuildContext context, IconData icon, String title, int index, Widget screen) {
+    bool isSelected = _selectedIndex == index;
+    return ListTile(
+      title: Text(
+        title,
+        style: TextStyle(
+          color: isSelected ? Colors.blueAccent : null, 
+          fontWeight: isSelected ? FontWeight.bold : null,
+        ),
+      ),
+      leading: Icon(
+        icon,
+        color: isSelected ? Colors.blueAccent : null, 
+      ),
+      tileColor: isSelected ? Colors.blueAccent.withOpacity(0.1) : null, 
+      onTap: () {
+        if (!isSelected) {
+          _onItemTap(context, screen, index);
+        } else {
+          Navigator.pop(context);
+        }
+      },
     );
   }
 }
