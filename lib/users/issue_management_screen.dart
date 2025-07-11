@@ -4,14 +4,9 @@ import 'package:flutter/material.dart';
 import 'package:image_picker/image_picker.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:http/http.dart' as http;
+import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:resource_booking_app/users/user_issues.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-import 'package:resource_booking_app/users/Home.dart';
-import 'package:resource_booking_app/users/Resourse.dart';
-import 'package:resource_booking_app/users/Booking.dart';
-import 'package:resource_booking_app/users/Notification.dart';
-import 'package:resource_booking_app/users/Settings.dart';
-import 'package:resource_booking_app/users/History.dart';
 
 class ReportIssuePage extends StatefulWidget {
   final int resourceId;
@@ -164,121 +159,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
         ),
       ),
       bottomNavigationBar: BottomAppBar(),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            DrawerHeader(
-              decoration: const BoxDecoration(
-                color: Color.fromARGB(255, 20, 148, 24),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image.asset("assets/images/logo.png", height: 50),
-                  const Text(
-                    'Mzuzu University',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  const Text(
-                    'Campus Resource Booking',
-                    style: TextStyle(color: Colors.white, fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              title: const Text('Home'),
-              leading: const Icon(Icons.home),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => Home()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Profile'),
-              leading: const Icon(Icons.person, color: Colors.blueAccent),
-              onTap: () {
-                // If this is the current screen, pop the drawer. Otherwise, navigate.
-                Navigator.pop(context); // Close the drawer
-              },
-            ),
-            ListTile(
-              title: const Text('Resources'),
-              leading: const Icon(Icons.grid_view),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ResourcesScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Bookings'),
-              leading: const Icon(Icons.book_online),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => BookingScreen()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Notifications'),
-              leading: const Icon(Icons.notifications),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Settings'),
-              leading: const Icon(Icons.settings),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('History'),
-              leading: const Icon(
-                Icons.history,
-                color: Colors.green,
-              ), // Highlight current page
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HistoryScreen(),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              title: const Text('Logout'),
-              leading: const Icon(Icons.logout, color: Colors.red),
-              onTap: () => _handleLogout(context), // Call the logout function
-            ),
-          ],
-        ),
-      ),
+      drawer: Mydrawer(),
       body: SingleChildScrollView(
         padding: const EdgeInsets.all(16.0),
         child: Form(

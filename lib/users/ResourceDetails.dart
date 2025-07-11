@@ -9,6 +9,7 @@ import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
+import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:resource_booking_app/models/resource_model.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/Home.dart';
@@ -1109,124 +1110,11 @@ class _ResourceDetailsState extends State<ResourceDetails> {
         ),
       ),
       bottomNavigationBar: const Bottombar(),
-      drawer: _buildDrawer(),
+      drawer: Mydrawer(),
       body: _buildBody(),
     );
   }
-
-  Widget _buildDrawer() {
-    return Drawer(
-      child: ListView(
-        padding: EdgeInsets.zero,
-        children: [
-          DrawerHeader(
-            decoration: const BoxDecoration(
-              color: Color.fromARGB(255, 20, 148, 24),
-            ),
-            child: Column(
-              mainAxisAlignment: MainAxisAlignment.center,
-              children: [
-                Image.asset("assets/images/logo.png", height: 50),
-                const Text(
-                  'Mzuzu University',
-                  style: TextStyle(
-                    color: Colors.white,
-                    fontSize: 24,
-                    fontWeight: FontWeight.bold,
-                  ),
-                ),
-                const Text(
-                  'Campus Resource Booking',
-                  style: TextStyle(color: Colors.white, fontSize: 15),
-                ),
-              ],
-            ),
-          ),
-          ..._buildDrawerItems(),
-        ],
-      ),
-    );
-  }
-
-  List<Widget> _buildDrawerItems() {
-    final items = [
-      DrawerItem(
-        'Home',
-        Icons.home,
-        () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const Home()),
-        ),
-      ),
-      DrawerItem(
-        'Profile',
-        Icons.person,
-        () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ProfileScreen()),
-        ),
-      ),
-      DrawerItem(
-        'Resources',
-        Icons.grid_view,
-        () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const ResourcesScreen()),
-        ),
-      ),
-      DrawerItem(
-        'Bookings',
-        Icons.book_online,
-        () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => BookingScreen()),
-        ),
-      ),
-      DrawerItem(
-        'Report Issue',
-        Icons.report,
-        () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(
-            builder: (context) => const IssueManagementScreen(),
-          ),
-        ),
-      ),
-      DrawerItem(
-        'Notifications',
-        Icons.notifications,
-        () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const NotificationScreen()),
-        ),
-      ),
-      DrawerItem(
-        'Settings',
-        Icons.settings,
-        () => Navigator.pushReplacement(
-          context,
-          MaterialPageRoute(builder: (context) => const SettingsScreen()),
-        ),
-      ),
-    ];
-
-    return [
-      ...items.map(
-        (item) => ListTile(
-          title: Text(item.title),
-          leading: Icon(item.icon),
-          onTap: item.onTap,
-        ),
-      ),
-      const Divider(),
-      ListTile(
-        title: const Text('Logout'),
-        leading: const Icon(Icons.logout, color: Colors.red),
-        onTap: logout,
-      ),
-    ];
-  }
-
+  
   Widget _buildBody() {
     return SingleChildScrollView(
       padding: const EdgeInsets.all(16.0),

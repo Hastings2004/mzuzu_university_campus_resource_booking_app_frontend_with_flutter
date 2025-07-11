@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
+import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:resource_booking_app/models/notification.dart'; // Ensure this path is correct
 import 'package:shared_preferences/shared_preferences.dart';
 import 'dart:convert'; // For json.decode
@@ -309,140 +310,7 @@ class _NotificationScreenState extends State<NotificationScreen> {
           ),
         ],
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 20, 148, 24),
-              ),
-              child: Column(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Image(
-                    image: AssetImage("assets/images/logo.png"),
-                    height: 50,
-                  ),
-                  Text(
-                    'Mzuzu University',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Campus Resource Booking',
-                    style: TextStyle(color: Colors.white, fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              title: const Text('Home'),
-              leading: const Icon(Icons.home),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => const Home()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Profile'),
-              leading: const Icon(Icons.person),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Resources'),
-              leading: const Icon(Icons.grid_view),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ResourcesScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Bookings'),
-              leading: const Icon(Icons.book_online),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => BookingScreen()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Notifications'),
-              leading: const Icon(
-                Icons.notifications,
-                color: Colors.blueAccent,
-              ),
-              trailing:
-                  _unreadNotificationCount > 0
-                      ? Container(
-                        padding: const EdgeInsets.all(6),
-                        decoration: const BoxDecoration(
-                          color: Colors.red,
-                          shape: BoxShape.circle,
-                        ),
-                        child: Text(
-                          '$_unreadNotificationCount',
-                          style: const TextStyle(
-                            color: Colors.white,
-                            fontSize: 12,
-                          ),
-                        ),
-                      )
-                      : null,
-              onTap: () {
-                Navigator.pop(context); // Close the drawer
-              },
-            ),
-            ListTile(
-              title: const Text('Settings'),
-              leading: const Icon(Icons.settings),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('History'),
-              leading: const Icon(Icons.history),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HistoryScreen(),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              title: const Text('Logout'),
-              leading: const Icon(Icons.logout, color: Colors.red),
-              onTap: logout,
-            ),
-          ],
-        ),
-      ),
+      drawer: Mydrawer(),
       body:
           _isLoading
               ? const Center(child: CircularProgressIndicator())

@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:resource_booking_app/auth/Api.dart';
 import 'package:resource_booking_app/components/AppBar.dart';
 import 'package:resource_booking_app/components/BottomBar.dart';
+import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:resource_booking_app/users/Booking.dart';
 import 'package:resource_booking_app/users/History.dart';
 import 'package:resource_booking_app/users/Notification.dart';
@@ -984,133 +985,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
           ),
         ),
       ),
-      drawer: Drawer(
-        child: ListView(
-          padding: EdgeInsets.zero,
-          children: [
-            const DrawerHeader(
-              decoration: BoxDecoration(
-                color: Color.fromARGB(255, 20, 148, 24),
-              ),
-              child: Column(
-                children: [
-                  Image(
-                    image: AssetImage("assets/images/logo.png"),
-                    height: 50,
-                  ),
-                  Text(
-                    'Mzuzu University',
-                    style: TextStyle(
-                      color: Colors.white,
-                      fontSize: 24,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                  Text(
-                    'Campus Resource Booking',
-                    style: TextStyle(color: Colors.white, fontSize: 15),
-                  ),
-                ],
-              ),
-            ),
-            ListTile(
-              title: const Text('Home'),
-              leading: const Icon(Icons.home, ),
-              onTap: () {
-                Navigator.pop(context);
-              },
-            ),
-            ListTile(
-              title: const Text('Profile'),
-              leading: const Icon(Icons.person),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ProfileScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Resources'),
-              leading: const Icon(Icons.grid_view),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const ResourcesScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Bookings'),
-              leading: const Icon(Icons.book_online),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(builder: (context) => BookingScreen()),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Notifications'),
-              leading: const Icon(Icons.notifications),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const NotificationScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Report Issue'),
-              leading: const Icon(Icons.report),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const IssueManagementScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('Settings'),
-              leading: const Icon(Icons.settings),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const SettingsScreen(),
-                  ),
-                );
-              },
-            ),
-            ListTile(
-              title: const Text('History'),
-              leading: const Icon(Icons.history),
-              onTap: () {
-                Navigator.pushReplacement(
-                  context,
-                  MaterialPageRoute(
-                    builder: (context) => const HistoryScreen(),
-                  ),
-                );
-              },
-            ),
-            const Divider(),
-            ListTile(
-              title: const Text('Logout'),
-              leading: const Icon(Icons.logout, color: Colors.red),
-              onTap: logout,
-            ),
-          ],
-        ),
-      ),
+      drawer: Mydrawer(),
       body: SafeArea(
         child: _isLoading &&
                 _personalizedRecommendations.isEmpty &&
