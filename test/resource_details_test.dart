@@ -1,6 +1,6 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:resource_booking_app/models/resource_model.dart';
-import 'package:resource_booking_app/users/ResourceDetails.dart';
+
 
 void main() {
   group('ResourceDetails Features', () {
@@ -13,6 +13,7 @@ void main() {
         capacity: 10,
         imageUrl: 'test.jpg',
         type: 'classroom',
+        specialApproval: ""
       );
 
       // This is a basic test to ensure the ResourceDetails widget can be created

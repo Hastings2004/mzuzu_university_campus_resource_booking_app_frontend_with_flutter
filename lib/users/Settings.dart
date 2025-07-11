@@ -65,7 +65,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     SharedPreferences localStorage = await SharedPreferences.getInstance();
     setState(() {
       _userEmail = localStorage.getString('email');
-      // _userId = localStorage.getInt('user_id'); // userId not directly used in this screen, can remove if not needed
+      // _userId = localStorage.getInt('user_id'); 
     });
   }
 
@@ -73,7 +73,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   Future<void> _loadNotificationSettings() async {
     try {
       final response = await CallApi().getData(
-        'user/settings',
+        '',
       ); // Adjust endpoint as needed
       final body = json.decode(response.body);
 

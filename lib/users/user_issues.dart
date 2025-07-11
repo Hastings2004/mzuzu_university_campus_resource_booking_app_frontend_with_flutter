@@ -113,7 +113,9 @@ class _IssueManagementScreenState extends State<IssueManagementScreen> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      backgroundColor: const Color(0xFFF5F5F5),
+      
+
+      
       appBar: MyAppBar(
         titleWidget: const Text(
           'My Reported Issues',

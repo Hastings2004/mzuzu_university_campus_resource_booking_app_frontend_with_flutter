@@ -131,11 +131,11 @@ class _BookingScreenState extends State<BookingScreen> {
       await prefs.clear();
 
       if (mounted) {
-        // Navigate to your login/auth screen and remove all previous routes
+        
         Navigator.of(context).pushNamedAndRemoveUntil(
           '/',
           (route) => false,
-        ); // Assuming '/' is your initial login route
+        ); 
       }
     }
   }
@@ -410,14 +410,20 @@ class _BookingScreenState extends State<BookingScreen> {
                                     crossAxisAlignment:
                                         CrossAxisAlignment.start,
                                     children: [
-                                      Text(
-                                        booking.resourceName,
-                                        style: const TextStyle(
-                                          fontSize: 20,
-                                          fontWeight: FontWeight.bold,
-                                          color: Colors.blueAccent,
-                                        ),
+                                      Row(
+                                        mainAxisAlignment: MainAxisAlignment.center,
+                                        children: [
+                                          Text(
+                                            booking.resourceName,
+                                            style: const TextStyle(
+                                              fontSize: 20,
+                                              fontWeight: FontWeight.bold,
+                                              color: Colors.blueAccent,
+                                            ),
+                                          ),
+                                        ],
                                       ),
+                                      const Divider(),
                                       const SizedBox(height: 8),
                                       Text(
                                         'Reference Number: ${booking.bookingReference}',

@@ -36,7 +36,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   UserData? _userData;
 
   String? _selectedBookingType;
-  String? _selectedPriority;
+  //String? _selectedPriority;
   String _bookingOption = "single_day";
 
   final List<String> _bookingType = [
@@ -48,7 +48,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     'Other',
   ];
 
-  final List<String> _priority = ['low', 'medium', 'high', 'urgent'];
+  //final List<String> _priority = ['low', 'medium', 'high', 'urgent'];
 
   // Form controllers
   final _formKey = GlobalKey<FormState>();
@@ -74,7 +74,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   // Cache for conflict checking
   final Map<String, bool> _conflictCache = {};
 
-  // NEW: Calendar and booking features
+  
   DateTime _selectedCalendarDate = DateTime.now();
   List<Map<String, dynamic>> _resourceBookings = [];
   List<Map<String, dynamic>> _bookingsForSelectedDate = [];
@@ -264,7 +264,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   Future<void> _checkForConflicts() async {
     setState(() {
       _isResourceAvailable = null;
-      _suggestions = []; // Clear suggestions on new check
+      _suggestions = []; 
     });
 
     DateTime fullStartTime, fullEndTime;
@@ -562,9 +562,9 @@ class _ResourceDetailsState extends State<ResourceDetails> {
       if (_selectedBookingType != null) {
         request.fields['booking_type'] = _selectedBookingType!.toLowerCase();
       }
-      if (_selectedPriority != null) {
-        request.fields['priority'] = _selectedPriority!.toLowerCase();
-      }
+      // if (_selectedPriority != null) {
+      //   request.fields['priority'] = _selectedPriority!.toLowerCase();
+      // }
 
       if (_supportingDocument != null) {
         if (kIsWeb) {
@@ -846,7 +846,6 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     _updateBookingsForSelectedDate();
   }
 
-  // NEW: Build calendar widget
   Widget _buildCalendar() {
     return Card(
       elevation: 2,
@@ -861,7 +860,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
               style: TextStyle(
                 fontSize: 18,
                 fontWeight: FontWeight.bold,
-                color: Colors.blue,
+                color: Colors.green,
               ),
             ),
             const SizedBox(height: 16),
@@ -1241,7 +1240,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.center,
                 children: [
-                  _buildResourceInfo(),
+                  //_buildResourceInfo(),
+                  _buildCalendar(),
                   const SizedBox(height: 30),
                   _buildBookingForm(),
                   const SizedBox(height: 30),
@@ -1260,8 +1260,8 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           ],
 
           // Calendar and booking status section
-          const SizedBox(height: 30),
-          _buildCalendar(),
+          
+          
         ],
       ),
     );
@@ -1271,20 +1271,33 @@ class _ResourceDetailsState extends State<ResourceDetails> {
     return Column(
       crossAxisAlignment: CrossAxisAlignment.start,
       children: [
-        const SizedBox(height: 20),
-        Text(
-          widget.resource.name,
-          style: const TextStyle(
-            fontSize: 28,
-            fontWeight: FontWeight.bold,
-            color: Colors.green,
+        
+        const SizedBox(height: 10),
+        ListTile(
+          leading: const Icon(Icons.location_on, color: Colors.green),
+          title: Text(
+            widget.resource.location,
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
           ),
         ),
         const SizedBox(height: 10),
         ListTile(
-          leading: const Icon(Icons.location_on, color: Colors.blue),
+          leading: const Icon(Icons.info, color: Colors.green),
           title: Text(
-            widget.resource.location,
+            widget.resource.description ?? '',
+            style: const TextStyle(
+              fontSize: 16,
+              color: Colors.black87,
+            ),
+          ),
+        ),
+        ListTile(
+          leading: const Icon(Icons.people, color: Colors.green),
+          title: Text(
+            widget.resource.capacity.toString(),
             style: const TextStyle(
               fontSize: 16,
               color: Colors.black87,
@@ -1305,7 +1318,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           style: TextStyle(
             fontSize: 22,
             fontWeight: FontWeight.bold,
-            color: Colors.blue,
+            color: Colors.green,
           ),
         ),
         const SizedBox(height: 15),
@@ -1485,38 +1498,42 @@ class _ResourceDetailsState extends State<ResourceDetails> {
           const SizedBox(height: 15),
           _buildSupportingDocumentField(),
         ],
+        if(widget.resource.specialApproval == 'yes')...[
+           const SizedBox(height: 15),
+          _buildSupportingDocumentField(),
+        ],
         const SizedBox(height: 15),
         // Priority Dropdown
-        Padding(
-          padding: const EdgeInsets.symmetric(horizontal: 0.0),
-          child: DropdownButtonFormField<String>(
-            value: _selectedPriority,
-            decoration: const InputDecoration(
-              labelText: 'Priority',
-              border: OutlineInputBorder(),
-              prefixIcon: Icon(Icons.priority_high),
-            ),
-            items:
-                _priority.map((String priority) {
-                  return DropdownMenuItem<String>(
-                    value: priority,
-                    child: Text(priority.toTitleCase()),
-                  );
-                }).toList(),
-            onChanged: (String? newValue) {
-              setState(() {
-                _selectedPriority = newValue;
-              });
-            },
-            validator: (value) {
-              if (value == null || value.isEmpty) {
-                return 'Please select a priority level';
-              }
-              return null;
-            },
-          ),
-        ),
-        const SizedBox(height: 15),
+        // Padding(
+        //   padding: const EdgeInsets.symmetric(horizontal: 0.0),
+        //   child: DropdownButtonFormField<String>(
+        //     value: _selectedPriority,
+        //     decoration: const InputDecoration(
+        //       labelText: 'Priority',
+        //       border: OutlineInputBorder(),
+        //       prefixIcon: Icon(Icons.priority_high),
+        //     ),
+        //     items:
+        //         _priority.map((String priority) {
+        //           return DropdownMenuItem<String>(
+        //             value: priority,
+        //             child: Text(priority.toTitleCase()),
+        //           );
+        //         }).toList(),
+        //     onChanged: (String? newValue) {
+        //       setState(() {
+        //         _selectedPriority = newValue;
+        //       });
+        //     },
+        //     validator: (value) {
+        //       if (value == null || value.isEmpty) {
+        //         return 'Please select a priority level';
+        //       }
+        //       return null;
+        //     },
+        //   ),
+        // ),
+        // const SizedBox(height: 15),
         TextFormField(
           controller: _purposeController,
           decoration: const InputDecoration(
@@ -1639,15 +1656,15 @@ class _ResourceDetailsState extends State<ResourceDetails> {
 
   Widget _buildAvailabilityStatus() {
     if (_isResourceAvailable == null) {
-      return const Row(
+      return Row(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(strokeWidth: 2),
-          SizedBox(width: 10),
+          const CircularProgressIndicator(strokeWidth: 2),
+          const SizedBox(width: 10),
           Text(
             'Checking Availability...',
             style: TextStyle(
-              color: Colors.blue,
+              color: Colors.green[500],
               fontWeight: FontWeight.bold,
               fontSize: 16,
             ),

@@ -163,6 +163,7 @@ class _ReportIssuePageState extends State<ReportIssuePage> {
           style: TextStyle(color: Colors.white),
         ),
       ),
+      bottomNavigationBar: BottomAppBar(),
       drawer: Drawer(
         child: ListView(
           padding: EdgeInsets.zero,

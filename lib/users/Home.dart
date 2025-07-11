@@ -71,7 +71,7 @@ class _HomeState extends State<Home> {
 
     // Fetch upcoming booking
     try {
-      var res = await CallApi().getData('user/upcoming-booking');
+      var res = await CallApi().getData('bookings');
       var body = json.decode(res.body);
 
       if (res.statusCode == 200 && body['success'] == true) {
@@ -414,34 +414,45 @@ class _HomeState extends State<Home> {
                         ],
                       ),
                       const Divider(),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            "Welcome, $_firstName $_lastName!",
-                            style: const TextStyle(
-                              fontSize: 18,
-                              fontWeight: FontWeight.bold,
-                              color: Colors.green,
-                            ),
-                          ),
-                        ),
+                      Column(
+                        mainAxisAlignment: MainAxisAlignment.center,
+                        children: [
+                          Text(
+                                "Welcome",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              const SizedBox(height: 10,),
+                              Text(
+                                "$_firstName $_lastName",
+                                style: const TextStyle(
+                                  fontSize: 18,
+                                  fontWeight: FontWeight.bold,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              const SizedBox(height: 10,),
+                              Text(
+                                "$_userEmail",
+                                style: const TextStyle(
+                                  fontSize: 12,
+                                  color: Colors.green,
+                                ),
+                              ),
+                              const Divider(),
+                              Text(
+                                "Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}",
+                                style: const TextStyle(
+                                  fontSize: 14,
+                                  color: Colors.black54,
+                                ),
+                              ),
+                        ],
                       ),
                       const SizedBox(height: 10),
-                      Padding(
-                        padding: const EdgeInsets.symmetric(horizontal: 16.0),
-                        child: Align(
-                          alignment: Alignment.centerLeft,
-                          child: Text(
-                            "Today is ${DateFormat('EEEE, MMMM d, yyyy').format(DateTime.now())}",
-                            style: const TextStyle(
-                              fontSize: 14,
-                              color: Colors.black54,
-                            ),
-                          ),
-                        ),
-                      ),
                     ],
                   ),
                 ),

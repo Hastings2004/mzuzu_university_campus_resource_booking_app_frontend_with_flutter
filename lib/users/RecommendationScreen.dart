@@ -276,6 +276,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
             capacity: capacity,
             imageUrl: imageUrl,
             type: category,
+            specialApproval: resourceData['special_approval']
           );
 
           Navigator.push(
@@ -283,7 +284,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
             MaterialPageRoute(
               builder: (context) => ResourceDetails(
                 resource: resourceModel,
-                resourceId: resourceData['id'], // Pass the actual ID
+                resourceId: resourceData['id'], 
               ),
             ),
           );
@@ -294,7 +295,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
           children: [
             // Image or placeholder with error handling
             Container(
-              height: 180, // Increased height for single-column view
+              height: 180, 
               width: double.infinity,
               decoration: BoxDecoration(
                 color: Colors.grey[200],
@@ -327,7 +328,7 @@ class _RecommendationScreenState extends State<RecommendationScreen>
                       ),
                     ),
             ),
-            Padding( // No need for Expanded around this padding since it's in a Column directly
+            Padding( 
               padding: const EdgeInsets.all(12),
               child: Column(
                 crossAxisAlignment: CrossAxisAlignment.start,
@@ -335,11 +336,11 @@ class _RecommendationScreenState extends State<RecommendationScreen>
                   Text(
                     name,
                     style: const TextStyle(
-                      fontSize: 18, // Slightly larger font for single column
+                      fontSize: 18, 
                       fontWeight: FontWeight.bold,
                     ),
-                    maxLines: 2, // Limit name to 2 lines
-                    overflow: TextOverflow.ellipsis, // Add ellipsis if it overflows
+                    maxLines: 2, 
+                    overflow: TextOverflow.ellipsis, 
                   ),
                   const SizedBox(height: 4),
                   Row(

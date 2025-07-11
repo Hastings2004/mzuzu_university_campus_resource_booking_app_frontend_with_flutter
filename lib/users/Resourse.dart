@@ -56,19 +56,18 @@ class _ResourcesScreenState extends State<ResourcesScreen> {
     {'name': 'Classrooms', 'value': 'classrooms'},
     {'name': 'ICT Labs', 'value': 'ict_labs'},
     {'name': 'Science Labs', 'value': 'science_labs'},
-    {'name': 'Auditorium', 'value': 'auditorium'},
+    {'name': 'Auditorium', 'value': 'auditoriums'},
     {'name': 'Sports', 'value': 'sports'},
-    {'name': 'Vehicles', 'value': 'cars'},
+    {'name': 'Board Rooms', 'value': 'board_rooms'},
   ];
-
   // Define resource types for the dropdown (from previous context)
   final List<String> _resourceTypes = [
     'Meeting Room',
     'Projector',
-    'Vehicle',
-    'Lab PC',
-    'Auditorium',
-    'Conference Hall',
+    'Board Rooms',
+    'Ict Lab',
+    'Auditoriums',
+    '',
   ];
 
   @override
