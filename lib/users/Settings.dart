@@ -1,5 +1,4 @@
 import 'package:flutter/material.dart';
-import 'package:resource_booking_app/auth/Auth.dart';
 import 'package:resource_booking_app/components/MyDrawer.dart';
 import 'package:resource_booking_app/components/terms.dart';
 import 'package:resource_booking_app/users/SecuritySettings.dart';
@@ -19,7 +18,7 @@ class SettingsScreen extends StatefulWidget {
 }
 
 class _SettingsScreenState extends State<SettingsScreen> {
-  String? _userEmail; // To store the current user's email
+  String? _userEmail; 
 
   // Controllers for updating email and password
   final TextEditingController _newEmailController = TextEditingController();
@@ -32,8 +31,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
   // Form Keys for dialogs to enable validation
   final GlobalKey<FormState> _emailFormKey = GlobalKey<FormState>();
   final GlobalKey<FormState> _passwordFormKey = GlobalKey<FormState>();
-  final GlobalKey<FormState> _deleteAccountFormKey =
-      GlobalKey<FormState>(); // For password confirmation during delete
 
   // Notification toggles
   bool _emailNotificationsEnabled = true;
@@ -43,7 +40,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
   void initState() {
     super.initState();
     _loadUserData();
-    _loadNotificationSettings(); // Load settings when screen initializes
+    _loadNotificationSettings(); 
   }
 
   @override
@@ -152,65 +149,6 @@ class _SettingsScreenState extends State<SettingsScreen> {
       }
     }
   }
-
-  Future<void> _logout() async {
-    final bool confirmLogout =
-        await showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                title: const Text(
-                  'Confirm Logout',
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                content: const Text('Are you sure you want to log out?'),
-                actions: <Widget>[
-                  TextButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(false), // User cancels
-                    child: const Text('Cancel'),
-                  ),
-                  ElevatedButton(
-                    onPressed:
-                        () => Navigator.of(context).pop(true), // User confirms
-                    style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.red,
-                      shape: RoundedRectangleBorder(
-                        borderRadius: BorderRadius.circular(10),
-                      ),
-                    ),
-                    child: const Text(
-                      'Logout',
-                      style: TextStyle(color: Colors.white),
-                    ),
-                  ),
-                ],
-              ),
-        ) ??
-        false;
-
-    if (confirmLogout) {
-      // Clear shared preferences
-      SharedPreferences prefs = await SharedPreferences.getInstance();
-      await prefs.clear();
-
-      if (mounted) {
-        // Navigate to your login/auth screen and remove all previous routes
-        Navigator.of(context).pushAndRemoveUntil(
-          MaterialPageRoute(
-            builder: (context) => Auth(),
-          ), // Use AuthPage for explicit navigation
-          (route) => false,
-        );
-      }
-    }
-  }
-
-  // --- Account Management Functions (API based) ---
-
   // Function to change email
   Future<void> _changeEmail() async {
     if (!_emailFormKey.currentState!.validate()) return; // Validate form
@@ -324,158 +262,7 @@ class _SettingsScreenState extends State<SettingsScreen> {
     }
   }
 
-  // Function to delete account
-  Future<void> _deleteAccount() async {
-    bool confirm =
-        await showDialog(
-          context: context,
-          builder:
-              (context) => AlertDialog(
-                shape: RoundedRectangleBorder(
-                  borderRadius: BorderRadius.circular(20),
-                ),
-                title: const Text(
-                  "Delete Account",
-                  style: TextStyle(fontWeight: FontWeight.bold),
-                ),
-                content: const Text(
-                  "Are you sure you want to delete your account? This action cannot be undone. You will be permanently logged out.",
-                ),
-                actions: [
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, false),
-                    child: const Text("Cancel"),
-                  ),
-                  TextButton(
-                    onPressed: () => Navigator.pop(context, true),
-                    child: const Text(
-                      "Delete",
-                      style: TextStyle(color: Colors.red),
-                    ),
-                  ),
-                ],
-              ),
-        ) ??
-        false;
 
-    if (!confirm) {
-      return;
-    }
-
-    _currentPasswordController.clear(); // Clear before using for confirmation
-    String? password = await showDialog<String>(
-      context: context,
-      builder:
-          (context) => AlertDialog(
-            shape: RoundedRectangleBorder(
-              borderRadius: BorderRadius.circular(20),
-            ),
-            title: const Text(
-              "Confirm Password to Delete Account",
-              style: TextStyle(fontWeight: FontWeight.bold),
-            ),
-            content: Form(
-              key: _deleteAccountFormKey, // Use a form key for validation
-              child: MyTextField(
-                controller: _currentPasswordController,
-                obscureText: true,
-                hintText: "Enter current password",
-                prefixIcon: const Icon(Icons.lock),
-                keyboardType: TextInputType.text,
-                validator: (value) {
-                  if (value == null || value.isEmpty) {
-                    return 'Password is required to delete account.';
-                  }
-                  return null;
-                },
-              ),
-            ),
-            actions: [
-              TextButton(
-                onPressed: () {
-                  Navigator.pop(context);
-                },
-                child: const Text("Cancel"),
-              ),
-              ElevatedButton(
-                onPressed: () {
-                  if (_deleteAccountFormKey.currentState!.validate()) {
-                    Navigator.pop(
-                      context,
-                      _currentPasswordController.text.trim(),
-                    );
-                  }
-                },
-                style: ElevatedButton.styleFrom(
-                  backgroundColor: Colors.red,
-                  shape: RoundedRectangleBorder(
-                    borderRadius: BorderRadius.circular(10),
-                  ),
-                ),
-                child: const Text(
-                  "Confirm",
-                  style: TextStyle(color: Colors.white),
-                ),
-              ),
-            ],
-          ),
-    );
-
-    if (password == null || password.isEmpty) {
-      if (mounted)
-        _showErrorDialog("Password confirmation failed or was cancelled.");
-      return;
-    }
-
-    showDialog(
-      context: context,
-      barrierDismissible: false,
-      builder:
-          (context) => const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Colors.red),
-            ),
-          ),
-    );
-
-    try {
-      final data = {'current_password': password};
-      final response = await CallApi().postData(data, 'user/delete-account');
-      final body = json.decode(response.body);
-
-      if (mounted) Navigator.pop(context);
-
-      if (response.statusCode == 200 && body['success'] == true) {
-        if (mounted) {
-          _showSuccessDialog(
-            body['message'] ?? "Account deleted successfully!",
-          );
-        }
-        SharedPreferences localStorage = await SharedPreferences.getInstance();
-        await localStorage.clear();
-        if (mounted) {
-          Navigator.pushAndRemoveUntil(
-            context,
-            MaterialPageRoute(builder: (context) => Auth()),
-            (Route<dynamic> route) => false,
-          );
-        }
-      } else {
-        if (mounted) {
-          _showErrorDialog(
-            body['message'] ?? 'Failed to delete account. Please try again.',
-          );
-        }
-      }
-    } catch (e) {
-      if (mounted) Navigator.pop(context); // Dismiss loading indicator
-      if (mounted) {
-        _showErrorDialog('An unexpected error occurred: $e');
-      }
-    }
-  }
-
-  // --- Helper Dialogs ---
   void _showErrorDialog(String message) {
     showDialog(
       context: context,

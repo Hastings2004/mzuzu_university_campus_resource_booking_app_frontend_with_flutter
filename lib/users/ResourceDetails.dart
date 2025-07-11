@@ -74,6 +74,7 @@ class _ResourceDetailsState extends State<ResourceDetails> {
   List<Map<String, dynamic>> _resourceBookings = [];
   List<Map<String, dynamic>> _bookingsForSelectedDate = [];
   List<Map<String, dynamic>> _suggestions = [];
+  // ignore: unused_field
   bool _isLoadingBookings = false;
 
   @override
